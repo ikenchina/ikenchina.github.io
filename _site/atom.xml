@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ 
+ <title></title>
+ <link href="http:///atom.xml" rel="self"/>
+ <link href="http://"/>
+ <updated>2018-10-13T01:32:27-07:00</updated>
+ <author>
+   <name>ken</name>
+   <email>ikenchina#163.com</email>
+ </author>
+
+ 
+ <entry>
+   <title>人生什么更重要？</title>
+   <link href="http:///posts/which-more-important.html"/>
+   <updated>2018-01-01T00:00:00-08:00</updated>
+   <id>/posts/which-more-important</id>
+   <content type="html">&lt;h3 id=&quot;keep-health&quot;&gt;keep health&lt;/h3&gt;
+&lt;p&gt;Keep health is most important thing in life.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ 
+</feed>

@@ -1,0 +1,27 @@
+---
+layout: post
+category: "read"
+title:  "NUMA"
+tags: [cpu]
+---
+
+
+
+# NUMA 概念
+
+NUMA的几个概念（Node，socket，core，thread）
+
+![cputhreads](/images/cpu/cpu-socket-threads.png)
+
+socket就是主板上的CPU插槽;   
+Core就是socket里独立的一组程序执行的硬件单元，比如寄存器，计算单元等;    
+Thread：就是超线程hyperthread的概念，逻辑的执行单元，独立的执行上下文，但是共享core内的寄存器和计算单元。   
+
+NUMA体系结构中多了Node的概念，这个概念其实是用来解决core的分组的问题，具体参见下图来理解（图中的OS CPU可以理解thread，那么core就没有在图中画出），从图中可以看出每个Socket里有两个node，共有4个socket，每个socket 2个node，每个node中有8个thread，总共`4（Socket）× 2（Node）× 8 （4core × 2 Thread） = 64个thread`。   
+另外每个node有自己的内部CPU，总线和内存，同时还可以访问其他node内的内存，NUMA的最大的优势就是可以方便的增加CPU的数量，因为Node内有自己内部总线，所以增加CPU数量可以通过增加Node的数目来实现，如果单纯的增加CPU的数量，会对总线造成很大的压力，所以UMA结构不可能支持很多的核。
+
+![numacpus](/images/cpu/numa-cpus.png)  
+ 《此图出自：NUMA Best Practices for Dell PowerEdge 12th Generation Servers》
+
+根据上面提到的，由于每个node内部有自己的CPU总线和内存，所以如果一个虚拟机的vCPU跨不同的Node的话，就会导致一个node中的CPU去访问另外一个node中的内存的情况，这就导致内存访问延迟的增加。在有些特殊场景下，比如NFV环境中，对性能有比较高的要求，就非常需要同一个虚拟机的vCPU尽量被分配到同一个Node中的pCPU上，所以在OpenStack的Kilo版本中增加了基于NUMA感知的虚拟机调度的特性。
+

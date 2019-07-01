@@ -13,7 +13,7 @@ date: 2018-04-12
 
 NUMA的几个概念（Node，socket，core，thread）
 
-![cputhreads](/images/cpu/cpu-socket-threads.png)
+![cputhreads](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/cputhreads.jpg)
 
 
 - socket就是主板上的CPU插槽;   
@@ -24,8 +24,8 @@ NUMA体系结构中多了Node的概念，这个概念其实是用来解决core�
 
 另外每个node有自己的内部CPU，总线和内存，同时还可以访问其他node内的内存，NUMA的最大的优势就是可以方便的增加CPU的数量，因为Node内有自己内部总线，所以增加CPU数量可以通过增加Node的数目来实现，如果单纯的增加CPU的数量，会对总线造成很大的压力，所以UMA结构不可能支持很多的核。
 
-![numacpus](/images/cpu/numa-cpus.png)  
- 《此图出自：NUMA Best Practices for Dell PowerEdge 12th Generation Servers》
+![numacpus](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/numa-cpus.png)  
+ 《NUMA Best Practices for Dell PowerEdge 12th Generation Servers》
 
 
 
@@ -72,7 +72,7 @@ NUMA node1 CPU(s):     1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41
 这样的访问对于软件层面来说非常容易实现：总线模型保证了所有的内存访问是一致的，不必考虑由不同内存地址之前的差异。
 
 
-![cpubus123](/images/cpu/cpubus123.png)
+![cpubus123](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/cpubus123.png)
 
 
 之后的x86平台经历了一场从“拼频率”到“拼核心数”的转变，越来越多的核心被尽可能地塞进了同一块芯片上，各个核心对于内存带宽的争抢访问成为了瓶颈；此时软件、OS方面对于SMP多核心CPU的支持也愈发成熟；再加上各种商业上的考量，x86平台也搞了NUMA（Non-uniform memory access, 非一致性内存访问）。
@@ -83,18 +83,18 @@ NUMA中，虽然内存直接attach在CPU上，但是由于内存被平均分配�
 在这种架构之下，每个Socket都会有一个独立的内存控制器IMC（integrated memory controllers, 集成内存控制器），分属于不同的socket之内的IMC之间通过QPI link通讯。
 
 
-![cpubus-imc123](/images/cpu/cpubus-imc123.png)
+![cpubus-imc123](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/cpubus-imc123.png)
 
 然后就是进一步的架构演进，由于每个socket上都会有多个core进行内存访问，这就会在每个core的内部出现一个类似最早SMP架构相似的内存访问总线，这个总线被称为IMC bus。
 
-![cpubus-imc124](/images/cpu/cpubus-imc124.png)
+![cpubus-imc124](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/cpubus-imc124.png)
 
 于是，很明显的，在这种架构之下，两个socket各自管理1/2的内存插槽，如果要访问不属于本socket的内存则必须通过QPI link。也就是说内存的访问出现了本地/远程（local/remote）的概念，内存的延时是会有显著的区别的。
 
 以Xeon 2699 v4系列CPU的标准来看，两个Socket之之间通过各自的一条9.6GT/s的QPI link互访。而每个Socket事实上有2个内存控制器。双通道的缘故，每个控制器又有两个内存通道（channel），每个通道最多支持3根内存条（DIMM）。理论上最大单socket支持76.8GB/s的内存带宽，而两个QPI link，每个QPI link有9.6GT/s的速率（~57.6GB/s）事实上QPI link已经出现瓶颈了。
 
 
-![image](/images/cpu/cpu-intel-xeon-e5-2600.png)
+![image](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/cpu-intel-xeon-e5-2600.png)
 
 核心数还是源源不断的增加，Skylake桌面版本的i7 EE已经有了18个core，Skylake Xeon 28个Core(2017)。为了塞进更多的core，原本核心之间类似环网的设计变成了复杂的路由。
 由于这种架构上的变化，导致内存的访问变得更加复杂。两个IMC也有了local/remote的区别，在保证兼容性的前提和性能导向的纠结中，系统允许用户进行更为灵活的内存访问架构划分。于是就有了“NUMA之上的NUMA”这种妖异的设定（SNC）。
@@ -129,7 +129,7 @@ node   0   1
 可以看出：0 node 到0 node之间距离为10，是最近的距离。
 
 
-![image](/images/cpu/numa-sample1.png)
+![image](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/numa-sample1.png)
 
 上图记录了某个Benchmark工具，在开启/关闭NUMA功能时QPI带宽消耗的情况。很明显的是，在开启了NUMA支持以后，QPI的带宽消耗有了两个数量级以上的下降，性能也有了显著的提升！
 
@@ -266,7 +266,7 @@ MySQL在NUMA架构上遇到的典型问题
 **为什么Interleave的策略就解决了问题？**  
 借用两张 Carrefour性能测试 的结果图，可以看到几乎所有情况下Interleave模式下的程序性能都要比默认的亲和模式要高，有时甚至能高达30%。究其根本原因是Linux服务器的大多数workload分布都是随机的：即每个线程在处理各个外部请求对应的逻辑时，所需要访问的内存是在物理上随机分布的。而Interleave模式就恰恰是针对这种特性将内存page随机打散到各个CPU Core上，使得每个CPU的负载和Remote Access的出现频率都均匀分布。相较NUMA默认的内存分配模式，死板的把内存都优先分配在线程所在Core上的做法，显然普遍适用性要强很多。
 
-![image](/images/cpu/numa-compare1.png)
+![image](https://raw.githubusercontent.com/ikenchina/img1/master/1/cpu/numa/numa-compare1.png)
 
 也就是说，像MySQL这种外部请求随机性强，各个线程访问内存在地址上平均分布的这种应用，Interleave的内存分配模式相较默认模式可以带来一定程度的性能提升。此外`各种论文 中也都通过实验证实，真正造成程序在NUMA系统上性能瓶颈的并不是Remote Acess带来的响应时间损耗，而是内存的不合理分布导致Remote Access将interconnect这个小水管塞满所造成的结果`。而Interleave恰好，把这种不合理分布情况下的Remote Access请求平均分布在了各个小水管中。所以这也是Interleave效果奇佳的一个原因。
 

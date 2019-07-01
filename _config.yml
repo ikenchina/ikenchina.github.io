@@ -3,10 +3,10 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
+title: Ken's blog
 subtitle:
 description:
-keywords:
+keywords: ikenchina
 author: Ken
 language: zh-CN
 timezone: Asia/Shanghai
@@ -85,9 +85,14 @@ theme: next
 
 deploy:
   type: git
-  repository: https://github.com/ikenchina/ikenchina.github.io.git
+  repository: git@github.com:ikenchina/ikenchina.github.io.git
   branch: master
 
 
 
+search:
+  path: search.xml
+  field: post
+  format: html
+  limit: 10000
 

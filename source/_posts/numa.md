@@ -1,6 +1,6 @@
 ---
 layout: post
-category: "read"
+category: "2018"
 title:  "NUMA"
 tags: [cpu]
 date: 2018-04-12

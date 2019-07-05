@@ -90,7 +90,7 @@
 <meta property="og:image" content="https://grpc.io/img/landing-2.svg">
 <meta property="og:image" content="https://github.com/ikenchina/img1/raw/master/1/network/rpc/grpc/debug/wireshark/grpc_request_stream_decoded_wireshark.png">
 <meta property="og:image" content="https://github.com/ikenchina/img1/raw/master/1/network/rpc/grpc/debug/wireshark/grpc_response_stream_decoded_wireshark.png">
-<meta property="og:updated_time" content="2019-07-01T14:56:10.604Z">
+<meta property="og:updated_time" content="2019-07-04T23:51:53.489Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="grpc">
 <meta name="twitter:description" content="grpc 特性、原理、实践、生态">
@@ -374,11 +374,26 @@
 
           
             
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2018/06/02/grpc/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/06/02/grpc/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
           
 
           
           
 
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
           
 
           
@@ -548,6 +563,21 @@
 
 <p>如果在 .proto 文件中定义了 RPC 服务接口， 编译器将使用生成服务接口代码和 stubs。</p>
 <p><code>import &quot;user.proto&quot;;</code> 导入user结构定义的proto文件。</p>
+<h2 id="插件"><a href="#插件" class="headerlink" title="插件"></a>插件</h2><p>protoc编译器通过插件机制实现对不同语言的支持。<br>protoc会先查找是否有内置的语言插件，如果没有，则会去查找系统中是否存在<code>protoc-gen-$LANGUAGE</code> 的插件。<br>例如：<br>如果指定<code>--go_out</code>参数，那么protoc会查询是否有内置的<code>go</code>插件，如果没有则继续查询系统中是否存在<code>protoc-gen-go</code>的可执行程序，再通过插件来生成相关的语言代码。</p>
+<p><strong>插件运行流程：</strong></p>
+<ul>
+<li>protoc 启动 protoc-gen-xx</li>
+<li>将<code>CodeGeneratorRequest</code>的protobuf二进制传入到 protoc-gen-xx的标准输入<ul>
+<li>protoc-gen-xx读取标准输入再反序列化成<code>CodeGeneratorRequest</code></li>
+<li>遍历<code>CodeGeneratorRequest</code>的<code>FileDescriptorProto</code>数组，其描述了proto文件的语法树</li>
+<li>将<code>FileDescriptorProto</code>编译成语言源码</li>
+<li>生成<code>CodeGeneratorResponse</code>对象输出到标准输出</li>
+</ul>
+</li>
+<li>protoc根据protoc-gen-xx的标准输出再生成源码文件</li>
+</ul>
+<p><a href="https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/compiler/plugin.proto" target="_blank" rel="noopener">plugin.proto</a>定义了<code>CodeGeneratorRequest</code> 和 <code>CodeGeneratorResponse</code>，是protoc与插件交互的对象。  </p>
+<p><a href="https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/descriptor.proto" target="_blank" rel="noopener">descriptor.proto</a>描述的是一个<code>.proto</code>文件的语法树</p>
 <h1 id="gRPC-原理"><a href="#gRPC-原理" class="headerlink" title="gRPC 原理"></a>gRPC 原理</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><img src="https://grpc.io/img/landing-2.svg" alt="image"></p>
 <p>gRPC 定义服务，服务包含远程调用的方法。<br>在服务器端，服务器实现rpc接口并运行一个gRPC服务器来处理客户端请求。<br>在客户端，客户端有一个”存根stub”，提供与服务器相同签名的方法，来处理客户端请求的编码、解码等，再将请求转发到服务器端，这样客户端调用rpc方法就像调用本地函数一样。  </p>
 <h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>gRPC把HTTP2的steam identifier当作请求ID，每一次请求都发起一个新的stream。</p>
@@ -638,9 +668,9 @@
 </ul>
 </li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">protoc --go_out=plugins=grpc:. pb/user.proto</span><br><span class="line"></span><br><span class="line"># 如果没有rpc定义</span><br><span class="line">protoc --go_out=. pb/user.proto</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">protoc --go_out=plugins=grpc:. pb/user.proto</span><br><span class="line"></span><br><span class="line"># 如果没有rpc定义</span><br><span class="line">protoc --go_out=. pb/user.proto</span><br></pre></td></tr></table></figure>
 
-<h3 id="服务端"><a href="#服务端" class="headerlink" title="服务端"></a>服务端</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;net&quot;</span><br><span class="line"></span><br><span class="line">	pb &quot;testgrpc/protos_golang/user&quot;</span><br><span class="line"></span><br><span class="line">	&quot;google.golang.org/grpc&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">const (</span><br><span class="line">	port = &quot;:50000&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">type server struct&#123;&#125;</span><br><span class="line"></span><br><span class="line">func (s *server) GetUserInfo(ctx context.Context, in *pb.UserRequest) (*pb.UserResponse, error) &#123;</span><br><span class="line"></span><br><span class="line">	return &amp;pb.UserResponse&#123;</span><br><span class="line">		User: &amp;pb.User&#123;</span><br><span class="line">			Name: &quot;test_user&quot;,</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;, nil</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	lis, err := net.Listen(&quot;tcp&quot;, port)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;failed to listen: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	s := grpc.NewServer()</span><br><span class="line">	pb.RegisterUserServiceServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	if err := s.Serve(lis); err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;failed to serve: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="服务端"><a href="#服务端" class="headerlink" title="服务端"></a>服务端</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;net&quot;</span><br><span class="line"></span><br><span class="line">    &quot;google.golang.org/grpc&quot;</span><br><span class="line">    &quot;google.golang.org/grpc/reflection&quot;</span><br><span class="line">    </span><br><span class="line">	pb &quot;testgrpc/protos_golang/user&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">const (</span><br><span class="line">	port = &quot;:50000&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">// grpc server</span><br><span class="line">type server struct&#123;&#125;</span><br><span class="line"></span><br><span class="line">// 实现gRPC接口</span><br><span class="line">func (s *server) GetUserInfo(ctx context.Context, in *pb.UserRequest) (*pb.UserResponse, error) &#123;</span><br><span class="line"></span><br><span class="line">	return &amp;pb.UserResponse&#123;</span><br><span class="line">		User: &amp;pb.User&#123;</span><br><span class="line">			Name: &quot;test_user&quot;,</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;, nil</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 拦截器，简单打印下日志</span><br><span class="line">func LogUnaryInterceptorMiddleware() grpc.UnaryServerInterceptor &#123;</span><br><span class="line">	return func(ctx context.Context, req interface&#123;&#125;, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (r interface&#123;&#125;, err error) &#123;</span><br><span class="line">		r, err = handler(ctx, req)</span><br><span class="line"></span><br><span class="line">		fmt.Printf(&quot;fullMethod(%s), errCode(%v)\n&quot;, info.FullMethod, err)</span><br><span class="line">		return r, err</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	lis, err := net.Listen(&quot;tcp&quot;, port)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;failed to listen: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    // 拦截器</span><br><span class="line">    options := grpc.UnaryInterceptor(LogUnaryInterceptorMiddleware())</span><br><span class="line">	s := grpc.NewServer(options)</span><br><span class="line">	</span><br><span class="line">	// 注册服务器实现</span><br><span class="line">	pb.RegisterUserServiceServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	</span><br><span class="line">	// 注册服务端反射</span><br><span class="line">	reflection.Register(s)</span><br><span class="line">	</span><br><span class="line">	// 启动服务器</span><br><span class="line">	if err := s.Serve(lis); err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;failed to serve: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;time&quot;</span><br><span class="line"></span><br><span class="line">	&quot;google.golang.org/grpc&quot;</span><br><span class="line"></span><br><span class="line">	pb &quot;testgrpc/protos_golang/user&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">const (</span><br><span class="line">	address = &quot;localhost:50000&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line"></span><br><span class="line">	conn, err := grpc.Dial(address, grpc.WithInsecure())</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;did not connect: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">	defer conn.Close()</span><br><span class="line">	c := pb.NewUserServiceClient(conn)</span><br><span class="line"></span><br><span class="line">	ctx, cancel := context.WithTimeout(context.Background(), time.Second)</span><br><span class="line">	defer cancel()</span><br><span class="line"></span><br><span class="line">	r, err := c.GetUserInfo(ctx, &amp;pb.UserRequest&#123;&#125;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;fatal: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Printf(&quot;response: %s&quot;, r)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -785,7 +815,7 @@
 <h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://grpc.io/docs/guides" target="_blank" rel="noopener">grpc.io</a></p>
 <p><a href="https://developers.google.com/protocol-buffers/docs" target="_blank" rel="noopener">developers.google.com</a></p>
 <p><a href="https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#Requests" target="_blank" rel="noopener">gRPC github doc</a></p>
-<p><a href="https://tools.ietf.org/html/rfc7540" target="_blank" rel="noopener">http2 specs</a>  or  <a href="http://http2.github.io/http2-spec/#StreamPriority" target="_blank" rel="noopener">github http2 spec</a></p>
+<p><a href="https://tools.ietf.org/html/rfc7540" target="_blank" rel="noopener">http2 specs</a><br>or<br><a href="http://http2.github.io/http2-spec/#StreamPriority" target="_blank" rel="noopener">github http2 spec</a></p>
 
       
     </div>
@@ -902,6 +932,9 @@
           
 
   
+    <div class="comments" id="comments">
+    </div>
+  
 
 
 
@@ -1016,7 +1049,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC"><span class="nav-number">1.</span> <span class="nav-text">gRPC</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#概述"><span class="nav-number">2.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#特性"><span class="nav-number">3.</span> <span class="nav-text">特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP-2"><span class="nav-number">4.</span> <span class="nav-text">HTTP/2</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-1"><span class="nav-number">4.1.</span> <span class="nav-text">HTTP/2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-特性"><span class="nav-number">4.2.</span> <span class="nav-text">HTTP/2 特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-站点demo"><span class="nav-number">4.3.</span> <span class="nav-text">HTTP/2 站点demo</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ProtoBuf"><span class="nav-number">5.</span> <span class="nav-text">ProtoBuf</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ProtoBuf-1"><span class="nav-number">5.1.</span> <span class="nav-text">ProtoBuf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#protobuf-基本数据类型"><span class="nav-number">5.2.</span> <span class="nav-text">protobuf 基本数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据结构定义"><span class="nav-number">5.3.</span> <span class="nav-text">数据结构定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务定义"><span class="nav-number">5.4.</span> <span class="nav-text">服务定义</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-原理"><span class="nav-number">6.</span> <span class="nav-text">gRPC 原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概念"><span class="nav-number">6.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">6.2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#请求"><span class="nav-number">6.2.1.</span> <span class="nav-text">请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应"><span class="nav-number">6.2.2.</span> <span class="nav-text">响应</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gRPC通信方式"><span class="nav-number">6.3.</span> <span class="nav-text">gRPC通信方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">6.4.</span> <span class="nav-text">配置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-实践"><span class="nav-number">7.</span> <span class="nav-text">gRPC 实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#环境"><span class="nav-number">7.1.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Coding"><span class="nav-number">7.2.</span> <span class="nav-text">Coding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#定义proto文件"><span class="nav-number">7.2.1.</span> <span class="nav-text">定义proto文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成代码"><span class="nav-number">7.2.2.</span> <span class="nav-text">生成代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务端"><span class="nav-number">7.2.3.</span> <span class="nav-text">服务端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端"><span class="nav-number">7.2.4.</span> <span class="nav-text">客户端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调试"><span class="nav-number">7.2.5.</span> <span class="nav-text">调试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#go-gRPC-生态"><span class="nav-number">7.3.</span> <span class="nav-text">go gRPC 生态</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务组件"><span class="nav-number">7.3.1.</span> <span class="nav-text">服务组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务框架、组件"><span class="nav-number">7.3.2.</span> <span class="nav-text">微服务框架、组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gRPC-与-负载均衡"><span class="nav-number">7.3.3.</span> <span class="nav-text">gRPC 与 负载均衡</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-生态环境"><span class="nav-number">8.</span> <span class="nav-text">gRPC 生态环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#组件"><span class="nav-number">8.1.</span> <span class="nav-text">组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#grpc-文档与交流"><span class="nav-number">8.2.</span> <span class="nav-text">grpc 文档与交流</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">9.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC"><span class="nav-number">1.</span> <span class="nav-text">gRPC</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#概述"><span class="nav-number">2.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#特性"><span class="nav-number">3.</span> <span class="nav-text">特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP-2"><span class="nav-number">4.</span> <span class="nav-text">HTTP/2</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-1"><span class="nav-number">4.1.</span> <span class="nav-text">HTTP/2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-特性"><span class="nav-number">4.2.</span> <span class="nav-text">HTTP/2 特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-站点demo"><span class="nav-number">4.3.</span> <span class="nav-text">HTTP/2 站点demo</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ProtoBuf"><span class="nav-number">5.</span> <span class="nav-text">ProtoBuf</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ProtoBuf-1"><span class="nav-number">5.1.</span> <span class="nav-text">ProtoBuf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#protobuf-基本数据类型"><span class="nav-number">5.2.</span> <span class="nav-text">protobuf 基本数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据结构定义"><span class="nav-number">5.3.</span> <span class="nav-text">数据结构定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务定义"><span class="nav-number">5.4.</span> <span class="nav-text">服务定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#插件"><span class="nav-number">5.5.</span> <span class="nav-text">插件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-原理"><span class="nav-number">6.</span> <span class="nav-text">gRPC 原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概念"><span class="nav-number">6.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">6.2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#请求"><span class="nav-number">6.2.1.</span> <span class="nav-text">请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应"><span class="nav-number">6.2.2.</span> <span class="nav-text">响应</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gRPC通信方式"><span class="nav-number">6.3.</span> <span class="nav-text">gRPC通信方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">6.4.</span> <span class="nav-text">配置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-实践"><span class="nav-number">7.</span> <span class="nav-text">gRPC 实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#环境"><span class="nav-number">7.1.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Coding"><span class="nav-number">7.2.</span> <span class="nav-text">Coding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#定义proto文件"><span class="nav-number">7.2.1.</span> <span class="nav-text">定义proto文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成代码"><span class="nav-number">7.2.2.</span> <span class="nav-text">生成代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务端"><span class="nav-number">7.2.3.</span> <span class="nav-text">服务端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端"><span class="nav-number">7.2.4.</span> <span class="nav-text">客户端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调试"><span class="nav-number">7.2.5.</span> <span class="nav-text">调试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#go-gRPC-生态"><span class="nav-number">7.3.</span> <span class="nav-text">go gRPC 生态</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务组件"><span class="nav-number">7.3.1.</span> <span class="nav-text">服务组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务框架、组件"><span class="nav-number">7.3.2.</span> <span class="nav-text">微服务框架、组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gRPC-与-负载均衡"><span class="nav-number">7.3.3.</span> <span class="nav-text">gRPC 与 负载均衡</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-生态环境"><span class="nav-number">8.</span> <span class="nav-text">gRPC 生态环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#组件"><span class="nav-number">8.1.</span> <span class="nav-text">组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#grpc-文档与交流"><span class="nav-number">8.2.</span> <span class="nav-text">grpc 文档与交流</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">9.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
 
           </div>
@@ -1036,7 +1069,8 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
@@ -1056,6 +1090,26 @@
 
 
         
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>访问
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
 
 
 
@@ -1200,6 +1254,28 @@
 
 
 
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'p5Hbkh5aS4MFndlbI9msQ0OF-gzGzoHsz',
+        appKey: 'gAYKVuvBLmJ2d8V0RrxlrYyF',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
 
 
 

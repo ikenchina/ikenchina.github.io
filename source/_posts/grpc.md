@@ -382,6 +382,38 @@ message UserResponse {
 
 
 
+## 插件
+
+protoc编译器通过插件机制实现对不同语言的支持。  
+protoc会先查找是否有内置的语言插件，如果没有，则会去查找系统中是否存在`protoc-gen-$LANGUAGE` 的插件。  
+例如：
+如果指定`--go_out`参数，那么protoc会查询是否有内置的`go`插件，如果没有则继续查询系统中是否存在`protoc-gen-go`的可执行程序，再通过插件来生成相关的语言代码。
+
+
+
+**插件运行流程：**
+- protoc 启动 protoc-gen-xx
+- 将`CodeGeneratorRequest`的protobuf二进制传入到 protoc-gen-xx的标准输入
+  - protoc-gen-xx读取标准输入再反序列化成`CodeGeneratorRequest`
+  - 遍历`CodeGeneratorRequest`的`FileDescriptorProto`数组，其描述了proto文件的语法树
+  - 将`FileDescriptorProto`编译成语言源码
+  - 生成`CodeGeneratorResponse`对象输出到标准输出
+- protoc根据protoc-gen-xx的标准输出再生成源码文件
+
+
+
+[plugin.proto](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/compiler/plugin.proto)定义了`CodeGeneratorRequest` 和 `CodeGeneratorResponse`，是protoc与插件交互的对象。  
+
+[descriptor.proto](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/descriptor.proto)描述的是一个`.proto`文件的语法树
+
+
+
+
+
+
+
+
+
 
 # gRPC 原理
 
@@ -701,12 +733,10 @@ option go_package = "protos_golang/user";
   - 如果.pb中没有指定`go_package` : 则代码路径是 `./pb/user.pb.go`
 
 ```
-
 protoc --go_out=plugins=grpc:. pb/user.proto
 
 # 如果没有rpc定义
 protoc --go_out=. pb/user.proto
-
 ```
 
 
@@ -722,17 +752,20 @@ import (
 	"log"
 	"net"
 
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/reflection"
+    
 	pb "testgrpc/protos_golang/user"
-
-	"google.golang.org/grpc"
 )
 
 const (
 	port = ":50000"
 )
 
+// grpc server
 type server struct{}
 
+// 实现gRPC接口
 func (s *server) GetUserInfo(ctx context.Context, in *pb.UserRequest) (*pb.UserResponse, error) {
 
 	return &pb.UserResponse{
@@ -742,14 +775,34 @@ func (s *server) GetUserInfo(ctx context.Context, in *pb.UserRequest) (*pb.UserR
 	}, nil
 }
 
+// 拦截器，简单打印下日志
+func LogUnaryInterceptorMiddleware() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (r interface{}, err error) {
+		r, err = handler(ctx, req)
+
+		fmt.Printf("fullMethod(%s), errCode(%v)\n", info.FullMethod, err)
+		return r, err
+	}
+}
+
+
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+    // 拦截器
+    options := grpc.UnaryInterceptor(LogUnaryInterceptorMiddleware())
+	s := grpc.NewServer(options)
+	
+	// 注册服务器实现
 	pb.RegisterUserServiceServer(s, &server{})
+	
+	// 注册服务端反射
+	reflection.Register(s)
+	
+	// 启动服务器
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
@@ -1031,7 +1084,7 @@ tracing信息包含traceid,spanid,请求时间,错误信息,日志等等。
 
 **集中式LB(Proxy Model)**
 
-proxy 实现服务发现，健康检查，负载均衡等等。
+proxy 实现服务发现，健康检查，负载均衡等等。  
 还方便做限流等控制和其他统一控制策略。
 
 缺点：
@@ -1147,6 +1200,6 @@ https://grpc.io/community/ 交流的方式有：
 
 [gRPC github doc](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#Requests)
 
-[http2 specs](https://tools.ietf.org/html/rfc7540)  or  [github http2 spec](http://http2.github.io/http2-spec/#StreamPriority)
-
-
+[http2 specs](https://tools.ietf.org/html/rfc7540)    
+or   
+[github http2 spec](http://http2.github.io/http2-spec/#StreamPriority)

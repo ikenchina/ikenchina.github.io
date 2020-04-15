@@ -260,28 +260,24 @@ https://developers.google.com/protocol-buffers/docs/proto#scalar
 
 user.proto
 ```
-syntax = "proto2";
-// syntax = "proto3";
+syntax = "proto3";
 
-package user;
-// option go_package = "protos_golang/user";
+import "google/protobuf/any.proto";
 
-import "common.proto";
+//package user;
+option go_package = "protos_golang/user";
 
 message User {
-  required int32 id = 1;
+  int32 id = 1;
   string name = 2;
   uint32 age = 3;
-  
   enum Flag {
     NORMAL = 0;
     VIP = 1;
     SVIP = 2;
   }
-  optional FLag flag = 4 [default = NORMAL];
   repeated int32 friends_ids = 5;
   reserved 6, 7, 8;
-  
   message Command {
       int32 id = 1;
       oneof cmd_value {
@@ -289,10 +285,9 @@ message User {
          int32 age = 3;
       }
   }
-  
   Command cmd = 9;
   map<int32, string> tags = 10;
-  common.Flag feature = 11;
+  google.protobuf.Any details = 11;
 }
 ```
 
@@ -348,6 +343,17 @@ oneof与数据结构联合体(UNION)类似，一次最多只有一个字段有�
 
 map 类型则可以用来表示键值对。  
 key_type 可以是任何 int 或者 string 类型，float、double 和 bytes除外
+
+**any**
+
+Any类型包括:
+- bytes : 被序列化为bytes类型的任意消息
+- URL : 全局标识符
+
+使用`import google/protobuf/any.proto`来导入any类型
+
+any可以用来替换proto2中的extension
+
 
 
 **嵌套类型**
@@ -407,8 +413,25 @@ protoc会先查找是否有内置的语言插件，如果没有，则会去查�
 [descriptor.proto](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/descriptor.proto)描述的是一个`.proto`文件的语法树
 
 
+**插件的plugins**
 
+插件本身的也是支持以内部plugins形式进行扩展的。
 
+例如：生成go grpc的命令中：
+```
+protoc --go_out=plugins=grpc:. pb/user.proto
+```
+grpc就是 proto-gen-go的plugin。  
+
+[代码](https://github.com/golang/protobuf/blob/master/protoc-gen-go/grpc/grpc.go#L72) 
+
+`Name()`返回grpc命名就是plugin的名字，就是上面`plugins=grpc`
+```
+// Name returns the name of this plugin, "grpc".
+func (g *grpc) Name() string {
+	return "grpc"
+}
+```
 
 
 
@@ -675,6 +698,9 @@ go get -u github.com/golang/protobuf/{protoc-gen-go,proto}
 
 ```
 syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
 //package user;
 option go_package = "protos_golang/user";
 
@@ -698,6 +724,7 @@ message User {
   }
   Command cmd = 9;
   map<int32, string> tags = 10;
+  google.protobuf.Any details = 11;
 }
 
 service UserService {

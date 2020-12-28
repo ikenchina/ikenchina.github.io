@@ -92,7 +92,7 @@
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkdJQzdPQkFZVzVWRTJLRjM3UDNOUjZXVUgyVFhVRzA3IiwidyI6MTA1OCwiaCI6NTg2LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MTQxMTE2OTM2ODg1MDYxNTg3NDN9?format=originalOFGHLERTH">
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IllEM0pEVVNXVUlNTENJQ0lNSEU3S1ZTNVdIR0c3UjA2IiwidyI6MTU1OCwiaCI6MTAxMiwiZCI6MCwibXQiOiJpbWFnZS9qcGVnIiwiZGgiOjEwMTQzNzQ2MzEwOTk2MTAxMjIzfQ?format=originalOFGHLERTH">
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IllRUlhXR1JWR09SWDJFVFVFTDZGR0hWSllVSUs2SDA2IiwidyI6NzIwLCJoIjo3NjAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo4MTI0NzE0NTA4MjAyNTY5ODI0fQ?format=originalOFGHLERTH">
-<meta property="og:updated_time" content="2020-09-23T02:31:21.267Z">
+<meta property="og:updated_time" content="2020-12-28T02:23:05.399Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="顺序、时钟与分布式系统">
 <meta name="twitter:description" content="顺序、时钟与分布式系统">
@@ -536,7 +536,7 @@
 </ul>
 <p>根据以上条件，对于任意的两个事件，都能判断出它们之间的关系，因此是total ordering的。</p>
 <p>当Lamport timestamp一致时，通过义Pi &lt; Pj来定义顺序，确保分布式场景下各个进程间发生的事件的全序定义。至于Pj &lt; Pj：可采用不同的方式，Lamport Logical Clock提到的 arbitrary total ordering。</p>
-<h3 id="vector-clock"><a href="#vector-clock" class="headerlink" title="vector clock"></a>vector clock</h3><p>Lamport timestamp得到的是全序关系，但无法严格表示对于没有因果关系、存在同时发生关系(concurrent)的事件。</p>
+<h3 id="vector-clock"><a href="#vector-clock" class="headerlink" title="vector clock"></a>vector clock</h3><p>Lamport timestamp得到的是偏序关系，但无法严格表示对于没有因果关系、存在同时发生关系(concurrent)的事件。</p>
 <p>Vector clock是在Lamport timestamp基础上改进的一种逻辑时钟方法，它构不但记录本节点的Lamport timestamp，同时也记录了其他节点的Lamport timestamp。</p>
 <p>原理如下:</p>
 <ul>

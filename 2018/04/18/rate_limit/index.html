@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="SOA,microservice,rate limit,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="限流的概念，算法，分布式限流以及微服务架构下限流的难点">
+<meta name="keywords" content="SOA,microservice,rate limit">
+<meta property="og:type" content="article">
+<meta property="og:title" content="高可用之限流">
+<meta property="og:url" content="http://yoursite.com/2018/04/18/rate_limit/index.html">
+<meta property="og:site_name" content="Ken&#39;s blog">
+<meta property="og:description" content="限流的概念，算法，分布式限流以及微服务架构下限流的难点">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkFIRUZCSVdFQlVRS0JWQU5PUkNWT0pLUVVHV1hKMzA1IiwidyI6NjUzLCJoIjo0MzAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzg5Mzg3OTA0OTIwOTg5ODAyMCwiYWIiOjB9?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlJLQzNHVFdIVUlYTjY3SE83SkxDVlBXRjVGUVBIUDA1IiwidyI6NzI2LCJoIjozMzksImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo1MzE2NzQ3MTc3MDk5ODQ1NzMwLCJhYiI6MH0?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlRJMkI3S1JZQko3R1lOREFRTFhTSUhNRldCRFRLWDA1IiwidyI6NTMwLCJoIjozODYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo3MjcwMTY3NTAxOTM0Mjg0NDM2LCJhYiI6MH0?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkFKUEFPWFdYVzRCQlpVSzdDQ0tUU1gzWlA1U09aTDA1IiwidyI6NjYzLCJoIjo0MzQsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMjk4NTA2MzIwODQwMDM1MTQ1NywiYWIiOjB9?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlFCWUlXNVlCVDNPVEFJRFZLN1dWRkk0S0FBWDJCNTA1IiwidyI6NTk2LCJoIjozODYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDE0MzM4MDMzNjkzMzM3NTA0NiwiYWIiOjB9?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkZDQUdQUFNGVldSWjZXWUVGUjdKSUFVV1dTNFdNQjA1IiwidyI6NDY0LCJoIjoyNzgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo2MTk3MjQwMDY4ODY4NTA2NTQ0LCJhYiI6MH0?format=originalOFGHLERTH">
+<meta property="og:updated_time" content="2020-11-22T23:54:55.137Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="高可用之限流">
+<meta name="twitter:description" content="限流的概念，算法，分布式限流以及微服务架构下限流的难点">
+<meta name="twitter:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkFIRUZCSVdFQlVRS0JWQU5PUkNWT0pLUVVHV1hKMzA1IiwidyI6NjUzLCJoIjo0MzAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzg5Mzg3OTA0OTIwOTg5ODAyMCwiYWIiOjB9?format=originalOFGHLERTH">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/04/18/rate_limit/">
+
+
+
+
+
+  <title>高可用之限流 | Ken's blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?46ee37f7c4a6bed681519fb13fb55b02";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ken's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            Search
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="Searching..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/18/rate_limit/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ken">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ken's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">高可用之限流</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-18T00:00:00+08:00">
+                2018-04-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/2018/" itemprop="url" rel="index">
+                    <span itemprop="name">2018</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2018/04/18/rate_limit/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/04/18/rate_limit/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>限流的概念，算法，分布式限流以及微服务架构下限流的难点 <a id="more"></a>  </p>
+</blockquote>
+<h1 id="限流概念"><a href="#限流概念" class="headerlink" title="限流概念"></a>限流概念</h1><h2 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h2><ul>
+<li>通过对并发/请求进行限速来保护系统，防止系统过载。   </li>
+<li>做到有损服务，而不是不服务。   </li>
+<li>负载过高时，优先保护核心服务或业务</li>
+</ul>
+<h2 id="限流方式"><a href="#限流方式" class="headerlink" title="限流方式"></a>限流方式</h2><p>限流的方式有很多：</p>
+<ul>
+<li>QPS：限制每秒的请求数</li>
+<li>并发数：避免开启过多线程导致资源耗尽</li>
+<li>连接数：限制TCP连接数</li>
+</ul>
+<p>以下指的限流都是指QPS的限制，不涉及并发数和连接数。</p>
+<h2 id="限流规则"><a href="#限流规则" class="headerlink" title="限流规则"></a>限流规则</h2><p>限流策略是根据业务特征来设置的，可以设置静态策略，也可以动态变化的。   </p>
+<p>规则包含有：</p>
+<ul>
+<li>限流算法</li>
+<li>参数，限流阈值</li>
+<li>相应策略等(处理方式等)</li>
+</ul>
+<h3 id="静态规则"><a href="#静态规则" class="headerlink" title="静态规则"></a>静态规则</h3><p><strong>限流阈值</strong><br>服务端提前做好整个服务端链路的性能压测，先了解业务特征，需要请求API的QPS，估算好整个服务集群的水位及下游水位(下游服务和相关存储等中间件)。服务端集群的限流阈值建立在压测的数据基础上。</p>
+<p>压测需要得到的相关指标</p>
+<ul>
+<li>服务：对于计算型服务，需要考虑服务本身计算带来的系统资源消耗</li>
+<li>缓存及数据库：需要访问存储的服务，需要考虑数据库的负载</li>
+<li>消息队列：虽然一般消息队列可以用来作为削峰用途，但是有的消息队列是作为其他业务事务等用途的，也需要考虑其负载情况</li>
+<li>其他：下游链路中涉及到的各种服务或者中间件，都应该考虑到其负载</li>
+</ul>
+<p>需要考虑：</p>
+<ul>
+<li>不同API的不同阈值</li>
+<li>整个链路涉及到的服务阈值：如果某个请求链路需要请求10个服务，则阈值计算需要考虑这10个服务能够提供给此服务的流量配额</li>
+<li>不同的限流策略有不同的限流阈值</li>
+<li>理论上每次API实现的业务逻辑的改变，以及增加、减少API都要进行重新压测，相对比较麻烦</li>
+<li>阈值的估算应该考虑整个服务的安全水位，阈值定义过高则容易产生过载，过低则浪费资源</li>
+</ul>
+<h3 id="动态规则"><a href="#动态规则" class="headerlink" title="动态规则"></a>动态规则</h3><p>动态规则的两种实现：</p>
+<ul>
+<li>自适应：服务根据RT，负载，QPS等等指标动态变更限流规则</li>
+<li>外部通知：通过调用服务API来通知服务更新或服务自己轮询规则服务器   </li>
+</ul>
+<p><strong>限流阈值</strong><br>根据响应时间或在监控系统以及服务治理中心之上根据服务及下游的负载来动态计算阈值</p>
+<h2 id="服务端限流-vs-客户端限流-vs-网关限流"><a href="#服务端限流-vs-客户端限流-vs-网关限流" class="headerlink" title="服务端限流 vs 客户端限流 vs 网关限流"></a>服务端限流 vs 客户端限流 vs 网关限流</h2><p>绝大多数情况下限流都是发生在服务端的，因为很多情况下客户端的数量是不确定的。但有时候为了防止单个客户端过度使用服务，那么此处可以在客户端来完成，当然在服务端也可以同时进行。</p>
+<blockquote>
+<p>一般都推荐在服务端做限流</p>
+</blockquote>
+<h3 id="服务端限流"><a href="#服务端限流" class="headerlink" title="服务端限流"></a>服务端限流</h3><p>服务在处理请求前，应该对请求进行限流计算，防止系统过载。<br>同时也要考虑到为不同的业务的客户端提供不同的限流策略，不能因为某个业务的问题达到达到限流阈值而造成其他业务无法请求服务。</p>
+<p><strong>服务端限流优点</strong></p>
+<ul>
+<li>更好控制整个服务的负载情况：服务端的限流阈值不会因为客户端数量增加或减少而改变</li>
+<li>方便对不同上游服务进行不同阈值的限流策略：可以对不同的调用者进行不同的限流配额，也可以给不同业务打上不同的tag再根据tag来限流。</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>如果服务端只针对QPS限流，而不考虑连接数：服务在建连过程中也会产生一些资源消耗，而这些压力往往可能会成为瓶颈。特别是短连接，不断的建链过程会产生大量的资源消耗</li>
+<li>如果服务端也针对连接数进行限制：则不好对不同链路或服务进行配额区分。容易造成某个业务或服务的连接过多而导致其他服务也被限制</li>
+</ul>
+<h3 id="客户端限流"><a href="#客户端限流" class="headerlink" title="客户端限流"></a>客户端限流</h3><p>客户端调用下游服务时，以每个服务集群的限流配额对下游服务进行过载保护。</p>
+<p><strong>优点</strong></p>
+<ul>
+<li>达到阈值不会请求服务端，避免服务端产生额外的资源消耗，如建立连接</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>客户端的数量的增加或减少需要重新计算每个客户端的限流阈值</li>
+<li>客户端限流可能出现bug，或者客户端负载均衡产生倾斜导致限流失效</li>
+<li>服务不同API不同限流阈值：下游服务较多，而每个服务的不同API有不同限流配额，则客户端的限流较为复杂</li>
+</ul>
+<h3 id="网关限流"><a href="#网关限流" class="headerlink" title="网关限流"></a>网关限流</h3><p>请求通过网关来请求服务端，在网关中对不同服务及不同的API进行限流。</p>
+<p><strong>优点</strong></p>
+<ul>
+<li>能很好的保护整个集群的负载压力，服务端数量增加或减少，则网关进行相应的阈值调整即可</li>
+<li>对不同的上游业务的服务设置不同的限流配额和不同的限流策略</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>需要网关资源</li>
+<li>网关本身高可用性</li>
+</ul>
+<h2 id="限流粒度"><a href="#限流粒度" class="headerlink" title="限流粒度"></a>限流粒度</h2><p>限流的粒度可以分为：</p>
+<ul>
+<li>服务：对服务所有API进行统一的限流策略</li>
+<li>API：每个API会有不同的请求链路，则相应会有不同的限流策略(阈值等)</li>
+<li>API参数：很多时候我们希望能够对某个热点数据中访问频次最高的 Top K 数据进行限制。例如：秒杀，大促等场景，不要因为某个商品的频繁访问引起的限流导致其他商品无法访问。</li>
+</ul>
+<h3 id="服务粒度"><a href="#服务粒度" class="headerlink" title="服务粒度"></a>服务粒度</h3><p>一个服务提供一个统一的限流的策略。<br>优点是非常简单，但很容易造成限流失效，无法保护服务本身及下游。</p>
+<p>如：服务提供两种API，都是访问数据，两种API的查询语句并不一致，API1 查询非常复杂，数据库安全水位只能提供10/s的TPS，而对于API2，数据库可以提供1000/s的TPS，这种情况下，如果按照服务粒度进行限流，则只能提供10/s QPS的限流阈值。所以是非常不合理的。</p>
+<h3 id="API粒度"><a href="#API粒度" class="headerlink" title="API粒度"></a>API粒度</h3><p>不同的API进行不同的限流策略，这种方式相对复杂些，但是更为合理，也能很好的保护服务。<br>要考虑几种情况：</p>
+<ul>
+<li>增加或减少API，则限流策略要做相应的调整</li>
+<li>API实现的改变：请求处理实现变化则可能需要重新对限流阈值进行调整，避免因为增加一些业务逻辑而导致服务本身或者下游服务过载。</li>
+</ul>
+<blockquote>
+<p>大多数情况下，都应该进行API粒度的限流，这样才能更好的保护服务本身及服务的下游服务和中间件，达到更好的限流效果。</p>
+</blockquote>
+<h2 id="限流的处理方式"><a href="#限流的处理方式" class="headerlink" title="限流的处理方式"></a>限流的处理方式</h2><p>如果达到了流量限制的阈值，一般处理方式有：</p>
+<ul>
+<li>直接返回错误码：可以返回资源耗尽或者busy等状态码，或者带backoff的重试</li>
+<li>等待及重试：要注意不要超过请求超时时间</li>
+</ul>
+<h1 id="限流算法"><a href="#限流算法" class="headerlink" title="限流算法"></a>限流算法</h1><h2 id="固定窗口算法Fixed-window"><a href="#固定窗口算法Fixed-window" class="headerlink" title="固定窗口算法Fixed window"></a>固定窗口算法Fixed window</h2><p>通过维护一个单位时间内的计数值，每当一个请求通过时，就将计数值加1，当计数值超过阈值时，就进入限流处理流程。如果单位时间已经结束，则将计数器清零，开启下一轮的计数。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkFIRUZCSVdFQlVRS0JWQU5PUkNWT0pLUVVHV1hKMzA1IiwidyI6NjUzLCJoIjo0MzAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzg5Mzg3OTA0OTIwOTg5ODAyMCwiYWIiOjB9?format=originalOFGHLERTH" alt="fixed_window1.png"></p>
+<p><strong>这种方式的缺点是：窗口是固定的，会存在两个窗口边界突发流量问题。当然，取决于窗口的大小，如果足够小，则这种问题是可以忽略的</strong>   </p>
+<p>如下图：<br>时间窗口为1s，1s的限制阈值是4，如果一个恶意用户在1s的最后的最后500毫秒发送3个请求，在下一秒的前500毫秒发送3个请求，那么实际在1秒内发送了6个请求，就超过了流量的限制。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlJLQzNHVFdIVUlYTjY3SE83SkxDVlBXRjVGUVBIUDA1IiwidyI6NzI2LCJoIjozMzksImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo1MzE2NzQ3MTc3MDk5ODQ1NzMwLCJhYiI6MH0?format=originalOFGHLERTH" alt="fixedwindow2.png"></p>
+<h2 id="滑动窗口算法Sliding-window"><a href="#滑动窗口算法Sliding-window" class="headerlink" title="滑动窗口算法Sliding window"></a>滑动窗口算法Sliding window</h2><p>将时间窗口在进行细化，分为N个小窗口，窗口以小窗口为最小滑动单位，这样就可以避免在两个时间窗口之间产生毛刺现象。（当然在小窗口之间仍然会产生毛刺）</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlRJMkI3S1JZQko3R1lOREFRTFhTSUhNRldCRFRLWDA1IiwidyI6NTMwLCJoIjozODYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo3MjcwMTY3NTAxOTM0Mjg0NDM2LCJhYiI6MH0?format=originalOFGHLERTH" alt="fixedwindow2.png"></p>
+<h2 id="令牌桶算法Token-Bucket"><a href="#令牌桶算法Token-Bucket" class="headerlink" title="令牌桶算法Token Bucket"></a>令牌桶算法Token Bucket</h2><p>令牌桶算法是网络流量整形（Traffic Shaping）和速率限制（Rate Limiting）中最常使用的一种算法。   </p>
+<p>有3个阶段</p>
+<ul>
+<li>令牌的产生：以r/s的速率将token放入bucket中，如果bucket中token数已到达bucket的容量b，则丢弃token</li>
+<li>获取令牌：在请求处理前从bucket中获取(移除)一个令牌，只有获取到令牌才进行处理</li>
+<li>无法获取令牌：当bucket中令牌不够，请求进入限流处理流程（阻塞等待或者直接返回失败，等待应该计算好超时时间）</li>
+</ul>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkFKUEFPWFdYVzRCQlpVSzdDQ0tUU1gzWlA1U09aTDA1IiwidyI6NjYzLCJoIjo0MzQsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMjk4NTA2MzIwODQwMDM1MTQ1NywiYWIiOjB9?format=originalOFGHLERTH" alt="token_bucket1.png"><br>   【图来源于dev.to】</p>
+<p>token bucket特点</p>
+<ul>
+<li>最常见的单机限流算法，开源组件很多，使用也简单   </li>
+<li>token bucket可以应对短时间的突发流量。例如：bucket容量为10，速率为2/s，而请求QPS为2/s，那么bucket中有8个tokens可以用来应对突发流量。</li>
+</ul>
+<h2 id="漏桶算法Leaky-Bucket"><a href="#漏桶算法Leaky-Bucket" class="headerlink" title="漏桶算法Leaky Bucket"></a>漏桶算法Leaky Bucket</h2><ul>
+<li>图左边a：一个桶，不断的倒水进来，桶底下有个洞，按照固定的速率把水漏走，如果水进来的速度比漏走的快，桶可能就会满了，水就溢出了</li>
+<li>图右边b：类似于左边a，将请求放入桶中，以固定的速率从桶中拿出请求进行处理，当桶满了，请求将被阻塞或直接拒绝服务</li>
+</ul>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlFCWUlXNVlCVDNPVEFJRFZLN1dWRkk0S0FBWDJCNTA1IiwidyI6NTk2LCJoIjozODYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDE0MzM4MDMzNjkzMzM3NTA0NiwiYWIiOjB9?format=originalOFGHLERTH" alt="leakybucket1.png"><br>   【图来源于dev.to】</p>
+<p><strong>leaky bucket特点</strong></p>
+<ul>
+<li>不能很好应付突发的流量：例如，桶容量为10，请求处理速率为2/s；请求放入桶的速率为2/s，那么可以容纳8个突发请求放入桶中，其他等待或者丢弃。</li>
+<li>桶可以是普通队列形式，也可以是优先队列：优先队列是很有必要的</li>
+<li>放入桶中的请求应该计算好其超时时间，如果请求放入桶中到请求被处理，已经超过请求的超时间，则是没有意义的，反而阻塞了其他请求。</li>
+</ul>
+<blockquote>
+<p>和令牌桶区别是：令牌桶是固定速率往桶里放令牌，请求来了取走令牌，桶空了，请求阻塞；漏桶是请求来了往桶里放请求，以固定速率取走请求，桶满了，请求阻塞。令牌桶允许突发流量，而漏桶是不允许的。</p>
+</blockquote>
+<h2 id="动态限流算法"><a href="#动态限流算法" class="headerlink" title="动态限流算法"></a>动态限流算法</h2><p>前面的算法都是以恒定速率进行限流的(令牌桶以固定速率将令牌放入桶中，固定和滑动窗口限制阈值都是固定的)，这种最大的问题就是每次业务逻辑变更，都要重新进行压力测试以计算出最新的阈值。<br>在TCP拥塞控制算法中，流量发送速率是跟网络环境相关的。那其实服务的限流也可以根据服务处理请求的时延或负载等指标来进行动态调整。</p>
+<h3 id="预热期慢启动"><a href="#预热期慢启动" class="headerlink" title="预热期慢启动"></a>预热期慢启动</h3><p>类似于TCP的慢启动，定义一个启动时的限制阈值，在定义的预热时间周期内逐步提升限制阈值，直到周期结束达到定义的正常值。<br>这非常适合于服务本身或其依赖的存储等需要进行预热的场景。</p>
+<p>可以参考 <a href="https://guava.dev/releases/19.0/api/docs/index.html?com/google/common/util/concurrent/RateLimiter.html" target="_blank" rel="noopener">guava</a> </p>
+<p>例如：<br>以令牌桶为例，开始时限制阈值为4/s，预热时间为3/s，正常限制阈值为7/s，那么就在3秒内，将限制阈值每秒增加1最终达到7/s的阈值。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkZDQUdQUFNGVldSWjZXWUVGUjdKSUFVV1dTNFdNQjA1IiwidyI6NDY0LCJoIjoyNzgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo2MTk3MjQwMDY4ODY4NTA2NTQ0LCJhYiI6MH0?format=originalOFGHLERTH" alt="warmup.png"></p>
+<h3 id="根据响应时间"><a href="#根据响应时间" class="headerlink" title="根据响应时间"></a>根据响应时间</h3><p>这种方式根据请求响应时间来实时调整限流的规则，相对较为合理。<br>请求响应快则平滑调整增加阈值，响应慢则减少阈值，以及定义一个最大安全阈值。</p>
+<p>关键在于如何量化快与慢：</p>
+<ul>
+<li>根据压测得到服务的安全水位，估算出最大阈值。</li>
+<li>启动时设置一个保守的阈值</li>
+<li>与前一个时间窗口内响应时间比较，比之前快则可以调高阈值。</li>
+</ul>
+<p>那么随着响应时间的变化，阈值也在不断的变化中，阈值的范围在[1, max_value]之间调整。   </p>
+<h3 id="基于监控系统"><a href="#基于监控系统" class="headerlink" title="基于监控系统"></a>基于监控系统</h3><p>如果服务是消耗CPU资源的计算型或者消耗IO资源的存储型等，则基于监控系统更为合理。   </p>
+<p>根据CPU，load，内存，IO等系统指标和请求响应时间等业务指标综合考虑，随着监控指标的变化动态改变限流规则，这种限流相对较为复杂，根据自己业务设计适合自己的计算方式。<br>如果是IO型，则IO指标的权重相对要高一些，如果是计算型，则CPU和Load要权重高一些。</p>
+<hr>
+<h1 id="分布式限流"><a href="#分布式限流" class="headerlink" title="分布式限流"></a>分布式限流</h1><p>单节点限流最大的问题是当服务节点动态添加或减少后，每个服务的限流配额也要跟随动态改变。<br>如果服务节点增加了，而原来节点限流配额没有减少，则下游服务就可能过载。</p>
+<p>而分布式限流则避免了这种问题，通过像redis集群或发票服务器这种取号的方式来限制某个资源的流量。</p>
+<h2 id="redis限流"><a href="#redis限流" class="headerlink" title="redis限流"></a>redis限流</h2><p>基于redis的单线程及原子操作特性来实现限流功能，这种方式可以实现简单的分布式限流。但是redis本身也容易成为瓶颈，且redis不管是主从结构还是其cluster模式，都存在主节点故障问题。</p>
+<h3 id="方案1：固定窗口计数"><a href="#方案1：固定窗口计数" class="headerlink" title="方案1：固定窗口计数"></a>方案1：固定窗口计数</h3><p>将要限制的资源名+时间窗口为精度的时间戳 作为redis 的key，设置略大于时间戳的超时时间，然后用redis的<code>incrby</code>的原子特性来增加计数。</p>
+<p>如果限流的时间窗口以秒为单位，则</p>
+<ul>
+<li>redis key : 资源名 + unix timestamp</li>
+<li>count : incrby key count</li>
+<li>expire 2</li>
+<li>检查count是否达到阈值</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">local key = KEYS[1]</span><br><span class="line">local limit = tonumber(ARGV[1])</span><br><span class="line">local acquireCount = tonumber(ARGV[2])</span><br><span class="line">local current = tonumber(redis.call(&apos;get&apos;, key) or &quot;0&quot;)</span><br><span class="line">if current + acquireCount &gt; limit then</span><br><span class="line">    return 0</span><br><span class="line">else</span><br><span class="line">    redis.call(&quot;incrby&quot;, key, acquireCount)</span><br><span class="line">    redis.call(&quot;expire&quot;, key, &quot;2&quot;)</span><br><span class="line">    return 1</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+
+<p>这种方案存在的问题：</p>
+<ul>
+<li>要和redis进行交互：时延较差</li>
+<li>热点资源redis容易成为瓶颈</li>
+<li>redis进行主从切换会导致限流失效</li>
+<li>服务的时钟会有误差：由于lua中有写操作就不能使用带随机性质的读操作所以不能通过redis lua获取</li>
+<li>属于固定窗口算法，在窗口之间容易产生突发流量问题</li>
+</ul>
+<h3 id="方案2：令牌桶"><a href="#方案2：令牌桶" class="headerlink" title="方案2：令牌桶"></a>方案2：令牌桶</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">local function acquire(key, acquireTokens, currentTimeMillSecond)</span><br><span class="line"></span><br><span class="line">    local rateLimiterInfo = redis.pcall(&quot;HMGET&quot;, key, &quot;lastTimeMilliSecond&quot;, &quot;availableTokens&quot;, &quot;maxLimit&quot;, &quot;rate&quot;)</span><br><span class="line">    local lastTimeMilliSecond = rateLimiterInfo[1]</span><br><span class="line">    local availableTokens = tonumber(rateLimiterInfo[2])</span><br><span class="line">    local maxLimit = tonumber(rateLimiterInfo[3])</span><br><span class="line">    local rate = rateLimiterInfo[4]</span><br><span class="line">    local currentTokens = availableTokens;</span><br><span class="line"></span><br><span class="line">    local result = -1</span><br><span class="line"></span><br><span class="line">    if (type(lastTimeMilliSecond) ~= &apos;boolean&apos; and lastTimeMilliSecond ~= false and lastTimeMilliSecond ~= nil) then</span><br><span class="line">        local diffTime = currentTimeMillSecond - lastTimeMilliSecond</span><br><span class="line">        if diffTime &gt; 0 then</span><br><span class="line">            local fillTokens = math.floor((diffTime / 1000) * rate)</span><br><span class="line">            local allTokens = fillTokens + availableTokens;</span><br><span class="line">            currentTokens = math.min(allTokens, maxLimit);</span><br><span class="line">        end</span><br><span class="line">    end</span><br><span class="line"></span><br><span class="line">    if (currentTokens - acquireTokens &gt;= 0) then</span><br><span class="line">        result = 1</span><br><span class="line">        redis.pcall(&quot;HMSET&quot;, key, &quot;lastTimeMilliSecond&quot;, currentTimeMillSecond, &quot;availableTokens&quot;, currentTokens - acquireTokens)</span><br><span class="line">    end</span><br><span class="line"></span><br><span class="line">    return result</span><br><span class="line">end</span><br><span class="line"></span><br><span class="line">local key = KEYS[1]</span><br><span class="line">local acquireTokens = ARGV[1]</span><br><span class="line">local currentTimeMillSecond = ARGV[2]</span><br><span class="line"></span><br><span class="line">local ret = acquire(key, acquireTokens, currentTimeMillSecond)</span><br><span class="line">return ret</span><br></pre></td></tr></table></figure>
+
+<p>这种方案存在的问题：</p>
+<ul>
+<li>要和redis进行交互：时延较差</li>
+<li>热点资源redis容易成为瓶颈</li>
+<li>redis进行主从切换会导致限流失效</li>
+<li>服务的时钟会有误差：由于lua中有写操作就不能使用带随机性质的读操作所以不能通过redis lua获取</li>
+</ul>
+<h2 id="发票服务器"><a href="#发票服务器" class="headerlink" title="发票服务器"></a>发票服务器</h2><p>上述redis方案，是将redis作为一种发票服务器，但是由于redis这种方案本身存在可用性问题(主从切换等)，控制规则也比较简单，所以对于可用性要求比较高且规则复杂的需求，都选择自己开发服务器程序来作为发票服务器。<br>如<a href="https://github.com/alibaba/Sentinel" target="_blank" rel="noopener">阿里开源的sentinel</a></p>
+<p>发票服务器一般由一些服务进程组成一个或多个发票集群。<br>而服务通过RPC向发票服务器领票，成功则可以执行，否则则进入限流机制。为了减少RPC通信带来的延迟，一般可以批量获取。</p>
+<p><strong>发票规则</strong><br>发票规则(限流算法)可以存储到一致性存储或者数据库等，发票服务器定期更新或者监听通知来获取规则的变化。<br>也可以通过其他服务来动态调整算法和阈值，然后通知发票服务器，也可以发票服务器自己根据负载情况来计算。</p>
+<p>发票服务器特点：</p>
+<ul>
+<li>发票服务器可用性高：通过集群模式，且可以持久化到数据库。</li>
+<li>发票服务器负载均衡：服务从发票服务集群领票要注意发票服务器负载均衡，避免造成有的发票服务器发票领完有的却有大量剩余发票</li>
+<li>发票服务器高性能：因为发票服务器的计算和存储都基于内存，所以性能不容易成为瓶颈</li>
+<li>发票服务器一致性：类似于ID生成器，对于极高要求的场景，可以定期将发票服务器发票的信息等进行持久化存储，故障时再从中进行恢复</li>
+</ul>
+<h1 id="微服务架构下限流的难点"><a href="#微服务架构下限流的难点" class="headerlink" title="微服务架构下限流的难点"></a>微服务架构下限流的难点</h1><p>在微服务架构下，调用链路很长，服务的调用关系复杂，上游服务一个小的改动，将影响所有下游服务，还会产生叠加效应。   </p>
+<h2 id="流控规则"><a href="#流控规则" class="headerlink" title="流控规则"></a>流控规则</h2><p>微服务架构下，固定流控规则是不合适的，固定规则往往根据压测结果进行计算得来，而微服务架构下，链路上一个节点的变化都会导致固定规则的失效。<br>如：<br>服务某个链路为 <code>A-&gt;B-&gt;C-&gt;D</code><br>而B做了一些业务逻辑的变更，那么链路就有可能产生变化，导致之前的链路压测结果不准确，如果还按照之前的阈值，则可能导致流控失效。   </p>
+<blockquote>
+<p>微服务架构下，应该采用动态规则，让服务自适应或者规则服务器来通知服务改变限流规则</p>
+</blockquote>
+<h2 id="根据调用链路的限流规则"><a href="#根据调用链路的限流规则" class="headerlink" title="根据调用链路的限流规则"></a>根据调用链路的限流规则</h2><p>下游服务进行限流时，也要考虑给予上游服务的流量配额，否则很容易因为由于某个上游服务的故障，导致整个下游链路不可用。    </p>
+<p>如：<br>链路1：<code>A-&gt;B-&gt;C-&gt;D</code><br>链路2：<code>D-&gt;B-&gt;C</code><br>A如果故障，导致调用B流量暴涨，那么调用C的流量也会暴涨。这个时候链路2的D服务则会收到B或C的流控影响。    </p>
+<blockquote>
+<p>所以B和C应该根据给予链路1和链路2进行不同的配额，链路1达到阈值则对链路1的调用进行限流，不影响链路2的调用。</p>
+</blockquote>
+<h2 id="考虑调用链路优先级"><a href="#考虑调用链路优先级" class="headerlink" title="考虑调用链路优先级"></a>考虑调用链路优先级</h2><p>一般微服务场景会根据业务来定义其可用性权重。权重高的业务往往要优先保证其可用性。<br>那么就存在复杂调用链路上，针对不同业务的请求来进行限流，服务压力过大时，优先保证重要的业务可运行。</p>
+<p>如：<br>链路1：<code>A-&gt;B-&gt;C-&gt;D</code><br>链路2：<code>D-&gt;B-&gt;C</code><br>链路1的重要性高于链路2，那么如果C的负载升高时，C就要降低整体的限流阈值，那么就要降低链路2的限流阈值，牺牲链路2的可用性来保证链路1。</p>
+<blockquote>
+<p>所以就需要将链路进行tag标识，服务C根据tag来区分链路。</p>
+</blockquote>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ul>
+<li>限流算法往往相对简单且开源方案很多。而难点在于如何选择适合自己的限流算法。  </li>
+<li>不管是单节点线路还是分布式限流，都有各自的优缺点，需要根据自身业务特性、规模以及架构复杂性来选择适合自己的方案。</li>
+<li>微服务架构下，限流变得相当复杂，要考虑清楚各种可能导致限流失效的场景。</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="Ken WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <footer class="post-footer"> 原有内容
+<div>    
+ 
+ 
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+      <strong>本文作者：</strong>Ken
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="/2018/04/18/rate_limit/" title="高可用之限流">2018/04/18/rate_limit/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权： </strong>
+    本站文章均采用 <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0 CN</a> 许可协议，请勿用于商业，转载注明出处！
+  </li>
+</ul>
+
+</div>
+      </footer></div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SOA/" rel="tag"><i class="fa fa-tag"></i> SOA</a>
+          
+            <a href="/tags/microservice/" rel="tag"><i class="fa fa-tag"></i> microservice</a>
+          
+            <a href="/tags/rate-limit/" rel="tag"><i class="fa fa-tag"></i> rate limit</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/12/numa/" rel="next" title="NUMA笔记">
+                <i class="fa fa-chevron-left"></i> NUMA笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/06/02/grpc/" rel="prev" title="grpc">
+                grpc <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Ken">
+            
+              <p class="site-author-name" itemprop="name">Ken</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ikenchina" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#限流概念"><span class="nav-number">1.</span> <span class="nav-text">限流概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#目的"><span class="nav-number">1.1.</span> <span class="nav-text">目的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#限流方式"><span class="nav-number">1.2.</span> <span class="nav-text">限流方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#限流规则"><span class="nav-number">1.3.</span> <span class="nav-text">限流规则</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#静态规则"><span class="nav-number">1.3.1.</span> <span class="nav-text">静态规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#动态规则"><span class="nav-number">1.3.2.</span> <span class="nav-text">动态规则</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务端限流-vs-客户端限流-vs-网关限流"><span class="nav-number">1.4.</span> <span class="nav-text">服务端限流 vs 客户端限流 vs 网关限流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务端限流"><span class="nav-number">1.4.1.</span> <span class="nav-text">服务端限流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端限流"><span class="nav-number">1.4.2.</span> <span class="nav-text">客户端限流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网关限流"><span class="nav-number">1.4.3.</span> <span class="nav-text">网关限流</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#限流粒度"><span class="nav-number">1.5.</span> <span class="nav-text">限流粒度</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务粒度"><span class="nav-number">1.5.1.</span> <span class="nav-text">服务粒度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API粒度"><span class="nav-number">1.5.2.</span> <span class="nav-text">API粒度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#限流的处理方式"><span class="nav-number">1.6.</span> <span class="nav-text">限流的处理方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#限流算法"><span class="nav-number">2.</span> <span class="nav-text">限流算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#固定窗口算法Fixed-window"><span class="nav-number">2.1.</span> <span class="nav-text">固定窗口算法Fixed window</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#滑动窗口算法Sliding-window"><span class="nav-number">2.2.</span> <span class="nav-text">滑动窗口算法Sliding window</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#令牌桶算法Token-Bucket"><span class="nav-number">2.3.</span> <span class="nav-text">令牌桶算法Token Bucket</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏桶算法Leaky-Bucket"><span class="nav-number">2.4.</span> <span class="nav-text">漏桶算法Leaky Bucket</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态限流算法"><span class="nav-number">2.5.</span> <span class="nav-text">动态限流算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#预热期慢启动"><span class="nav-number">2.5.1.</span> <span class="nav-text">预热期慢启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#根据响应时间"><span class="nav-number">2.5.2.</span> <span class="nav-text">根据响应时间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于监控系统"><span class="nav-number">2.5.3.</span> <span class="nav-text">基于监控系统</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分布式限流"><span class="nav-number">3.</span> <span class="nav-text">分布式限流</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#redis限流"><span class="nav-number">3.1.</span> <span class="nav-text">redis限流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#方案1：固定窗口计数"><span class="nav-number">3.1.1.</span> <span class="nav-text">方案1：固定窗口计数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方案2：令牌桶"><span class="nav-number">3.1.2.</span> <span class="nav-text">方案2：令牌桶</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#发票服务器"><span class="nav-number">3.2.</span> <span class="nav-text">发票服务器</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#微服务架构下限流的难点"><span class="nav-number">4.</span> <span class="nav-text">微服务架构下限流的难点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#流控规则"><span class="nav-number">4.1.</span> <span class="nav-text">流控规则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#根据调用链路的限流规则"><span class="nav-number">4.2.</span> <span class="nav-text">根据调用链路的限流规则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#考虑调用链路优先级"><span class="nav-number">4.3.</span> <span class="nav-text">考虑调用链路优先级</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ken</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>访问
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'p5Hbkh5aS4MFndlbI9msQ0OF-gzGzoHsz',
+        appKey: 'gAYKVuvBLmJ2d8V0RrxlrYyF',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  
+
+
+  
+
+  
+
+</body>
+</html>

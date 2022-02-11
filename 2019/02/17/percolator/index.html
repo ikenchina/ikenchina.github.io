@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="分布式事务,percolator,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="对percolator的理解与tidb实现">
+<meta name="keywords" content="分布式事务,percolator">
+<meta property="og:type" content="article">
+<meta property="og:title" content="percolator的理解与开源实现分析">
+<meta property="og:url" content="http://yoursite.com/2019/02/17/percolator/index.html">
+<meta property="og:site_name" content="Ken&#39;s blog">
+<meta property="og:description" content="对percolator的理解与tidb实现">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlFMNFlEVlBDT1BVVFBHRjI3NTVFWVQ0QUpXRU1KSjA2IiwidyI6NTU3LCJoIjoxODIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDA0Mjc5MTYxNTY5OTg1MDM4OX0">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkVWNFoyUE1QNkNPRkFEUVRISVlPSkFCQUVLWkRUVTA3IiwidyI6NTQ5LCJoIjoyMzksImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTI2NDYyNjQyODkxNjU3Nzc2NH0">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IjdGSE1CRTRWTzZNVkdGSkpFWVo1U05BUVdDT0xPNTA3IiwidyI6NTY1LCJoIjozMDYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMjI5NzgzODM4NDM1ODE0MzE0MH0">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IktYRE9SUkQ0SUZOVkRJRUhUS09YUExJQVhLRkpWSDA3IiwidyI6NTY4LCJoIjozMzEsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDA2NzQzMDY1MTcyNDA3ODIyOH0">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IllOSUdWUFNUVlBJNkpXS1NHSjVSSE1GWDVTVlVHRTA3IiwidyI6NTU4LCJoIjoyODUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTQ2ODMzOTIzNjAyNjIyNjA3MH0">
+<meta property="og:updated_time" content="2022-02-11T06:03:52.335Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="percolator的理解与开源实现分析">
+<meta name="twitter:description" content="对percolator的理解与tidb实现">
+<meta name="twitter:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlFMNFlEVlBDT1BVVFBHRjI3NTVFWVQ0QUpXRU1KSjA2IiwidyI6NTU3LCJoIjoxODIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDA0Mjc5MTYxNTY5OTg1MDM4OX0">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/02/17/percolator/">
+
+
+
+
+
+  <title>percolator的理解与开源实现分析 | Ken's blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?46ee37f7c4a6bed681519fb13fb55b02";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ken's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            Search
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="Searching..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/17/percolator/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ken">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ken's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">percolator的理解与开源实现分析</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-02-17T00:00:00+08:00">
+                2019-02-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/2019/" itemprop="url" rel="index">
+                    <span itemprop="name">2019</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/02/17/percolator/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/02/17/percolator/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>对percolator的理解与tidb实现 <a id="more"></a>  </p>
+</blockquote>
+<h1 id="论文"><a href="#论文" class="headerlink" title="论文"></a>论文</h1><p><strong>论文地址</strong><br><a href="https://research.google/pubs/pub36726/" target="_blank" rel="noopener">https://research.google/pubs/pub36726/</a></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>设计percolator的目的</strong><br>为大数据集群进行增量处理更新的系统，主要用于google网页搜索索引服务。使用基于Percolator的增量处理系统代替原有的批处理索引系统后，Google在处理同样数据量的文档时，将文档的平均搜索延时降低了50%。</p>
+<p><strong>基于bigtable单行事务实现跨行事务</strong><br>Percolator 在 Bigtable 之上实现的，以client library 的方式实现。<br>Percolator 利用 Bigtable 的单行事务能力，依靠client的协议和一个全局的授时服务器 TSO 以及两阶段提交协议来实现了跨机器的多行事务。</p>
+<p><strong>MVCC与snapshot isolation</strong><br>Percolator依据全局时间戳和MVCC实现 Snapshot Isolation 隔离级别的并发控制协议。</p>
+<p><strong>percolator特点</strong>   </p>
+<ul>
+<li>事务: 跨行、跨表的、基于快照隔离的ACID事务</li>
+<li>观察者(observers)：一种类似触发器的通知机制</li>
+</ul>
+<h1 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h1><h2 id="隔离等级"><a href="#隔离等级" class="headerlink" title="隔离等级"></a>隔离等级</h2><p>通过MVCC来实现SI(Snapshop isolation)隔离等级。</p>
+<p>Percolator 使用Bigtable的时间戳记维度实现了数据的多版本化。优点如下：</p>
+<ul>
+<li>读操作：可以读取任何指定时间戳版本的记录</li>
+<li>写操作，能很好的应对写写冲突：若两个事务操作同一记录，只有一个会提交成功</li>
+</ul>
+<blockquote>
+<p>I存在write skew(写偏斜)</p>
+</blockquote>
+<h2 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h2><blockquote>
+<p>Because it is built as a client library accessing Bigtable, rather than controlling access to storage itself, Percolator faces a different set of challenges implementing distributed transactions than traditional PDBMSs. Other parallel databases integrate locking into the system component that manages access to the disk: since each node already mediates access to data on the disk it can grant locks on requests and deny accesses that violate locking requirements.</p>
+</blockquote>
+<p>Percolator锁的管理必须满足以下条件：</p>
+<ul>
+<li>能应对机器故障：若一个锁在两阶段提交时消失，系统可能将两个有冲突的事务都提交</li>
+<li>高吞吐量：上千台机器会同时请求获取锁</li>
+<li>低延时</li>
+</ul>
+<p>锁服务要实现：</p>
+<ul>
+<li>多副本 ： survive failure</li>
+<li>distributed and balanced ： handle load</li>
+<li>写入持久化存储系统</li>
+</ul>
+<h2 id="时间戳"><a href="#时间戳" class="headerlink" title="时间戳"></a>时间戳</h2><p>Timestamp Oracle(不是Oracle数据库)： TSO通过统一中心授权可以保证按照递增的方式分配逻辑时钟,任何事件申请的时钟都不会重复，能够保证事务版本号的单调递增，确保分布式事务的时序。</p>
+<p>所以TSO是一个分配严格的单调递增时间戳的服务器。  </p>
+<p><strong>优化</strong><br>因为每个事务都需要调用oracle两次，所以这个服务必须有很好的可伸缩性。<br>Oracle会定期分配一个范围的时间戳，然后将范围中的最大值写入持久化，Oracle在内存中原子递增来快速分配时间戳，查询时不涉及磁盘I/O。如果oracle重启，将以存储中的最大值作为开始值。<br>worker会维持一个长连接RPC到oracle，低频率的、批量的获取时间戳。</p>
+<p><strong>性能</strong><br>Oracle中单台机器每秒向外分配接近两百万的时间戳。</p>
+<p><strong>关于批量获取时间戳</strong>   </p>
+<p>批量获取时间戳并不会造成乱序问题，因为就算事务A先获取时间戳T1，事务B后获取时间戳T2，T1&lt;T2，那么分布式系统中，也无法保证事务A先执行，事务B后执行。<br>如果事务B先执行，那么事务A势必能发现写冲突从而rollback。</p>
+<p><strong>单点</strong>   </p>
+<p>为了保证单调递增的特性，所以很多TSO的开源实现都存在单点问题。如tidb的TSO。<br>而且，一般TSO也存在跨数据中心高延迟的问题。</p>
+<p><strong>其他时序方案</strong></p>
+<ul>
+<li>Logic Clock: dynamoDB </li>
+<li>True Time : spanner</li>
+<li>Hybrid Logic Clock : cockroachDB，没有单点问题，但是为了解决时钟误差而无法避免的时延问题。</li>
+</ul>
+<h2 id="数据存储"><a href="#数据存储" class="headerlink" title="数据存储"></a>数据存储</h2><p>percolator定义了5个列</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>c:lock</td>
+<td>An uncommitted transaction is writing this cell; contains the location of primary lock</td>
+</tr>
+<tr>
+<td>c:write</td>
+<td>Committed data present; stores the Bigtable timestamp of the data</td>
+</tr>
+<tr>
+<td>c:data</td>
+<td>Stores the data itself</td>
+</tr>
+<tr>
+<td>c:notify Hint:</td>
+<td>observers may need to run</td>
+</tr>
+<tr>
+<td>c:ack</td>
+<td>O Observer “O” has run ; stores start timestamp of successful last run</td>
+</tr>
+</tbody></table>
+<p><strong>Lock</strong>   </p>
+<p>事务的锁，key value映射</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,start_ts) ==&gt; (primary_key,lock_type)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>key：数据的key</li>
+<li>start_ts：事务开始时间</li>
+<li>primary：该锁的primary的引用。事务从待修改的keys中选择一个作为primary,其余的则作为secondary，secondary的primary_key指向primary的key，事务的上锁和解锁都由primary key决定。</li>
+</ul>
+<p><strong>Write</strong><br>已提交的数据对应的时间戳。key value映射</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,commit_ts) ==&gt; (start_ts)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>key：数据的key</li>
+<li>commit_ts：事务的提交时间</li>
+<li>start_ts：事务的开始时间（此数据在data中的时间戳版本）</li>
+</ul>
+<p><strong>Data</strong>   </p>
+<p>存储数据的列，key value映射</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,start_ts) ==&gt; (value)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>key：对应的主键</li>
+<li>start_ts：事务的开始时间</li>
+<li>value：除主键外的数据列</li>
+</ul>
+<p><strong>Notify</strong><br>notify列仅仅是一个hint值（可能是个bool值），表示是否需要触发通知。</p>
+<p><strong>Ack</strong><br>ack列是一个简单的时间戳值，表示最近执行通知的观察者的开始时间。</p>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><p>以银行转账为案例<br>Bob 向 Joe 转账7元。<br>事务开始时间：start timestamp =7 ，提交时间：commit timestamp=8。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlFMNFlEVlBDT1BVVFBHRjI3NTVFWVQ0QUpXRU1KSjA2IiwidyI6NTU3LCJoIjoxODIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDA0Mjc5MTYxNTY5OTg1MDM4OX0" alt="percolator-demo1.png"></p>
+<ul>
+<li>Bob有10元：查询column write获取最新时间戳版本的数据(data@5),然后从column data里面获取时间戳为5的数据($10），Joe($2)</li>
+</ul>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkVWNFoyUE1QNkNPRkFEUVRISVlPSkFCQUVLWkRUVTA3IiwidyI6NTQ5LCJoIjoyMzksImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTI2NDYyNjQyODkxNjU3Nzc2NH0" alt="percolator-demo2.png"></p>
+<ul>
+<li>stat timestamp=7 作为当前事务的开始时间戳，将Bob选为此事务的primary key，再写入column:lock对Bob上锁，同时将column:data列更新为7:$3。</li>
+</ul>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjdGSE1CRTRWTzZNVkdGSkpFWVo1U05BUVdDT0xPNTA3IiwidyI6NTY1LCJoIjozMDYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMjI5NzgzODM4NDM1ODE0MzE0MH0" alt="percolator-demo3.png"></p>
+<ul>
+<li>start timestamp=7作为锁定Joe账户的时间戳，更新其column:data为$9，其锁是secondary指向primary</li>
+</ul>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IktYRE9SUkQ0SUZOVkRJRUhUS09YUExJQVhLRkpWSDA3IiwidyI6NTY4LCJoIjozMzEsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDA2NzQzMDY1MTcyNDA3ODIyOH0" alt="percolator-demo4.png"></p>
+<ul>
+<li>当前时间戳commit timestamp=8作为事务提交时间戳：删除primary所在的lock，在write列中写入commit_ts：data@7</li>
+</ul>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllOSUdWUFNUVlBJNkpXS1NHSjVSSE1GWDVTVlVHRTA3IiwidyI6NTU4LCJoIjoyODUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTQ2ODMzOTIzNjAyNjIyNjA3MH0" alt="percolator-demo5.png"></p>
+<ul>
+<li>在所有secondary中写入column:write且清理column:lock，事务完成。</li>
+</ul>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><h3 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">class Transaction &#123;</span><br><span class="line">    struct Write&#123; Row row; Column: col; string value;&#125;;</span><br><span class="line">    vector&lt;Write&gt; writes_;</span><br><span class="line">    int start_ts_;</span><br><span class="line"></span><br><span class="line">    Transaction():start_ts_(oracle.GetTimestamp()) &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    // 往事务中添加一行数据</span><br><span class="line">    void Set(Write w) &#123;writes_.push_back(w);&#125;</span><br><span class="line">    </span><br><span class="line">    bool Get(Row row, Column c, string* value) &#123;</span><br><span class="line">        while(true) &#123;</span><br><span class="line">        </span><br><span class="line">            // 开启bigtable事务</span><br><span class="line">            bigtable::Txn = bigtable::StartRowTransaction(row);</span><br><span class="line">            </span><br><span class="line">            // Check for locks that signal concurrent writes.</span><br><span class="line">            // 检查[0, start_ts]内是否有锁，有则等待再重试</span><br><span class="line">            if (T.Read(row, c+&quot;locks&quot;, [0, start_ts_])) &#123;</span><br><span class="line">                // There is a pending lock; try to clean it and wait</span><br><span class="line">                BackoffAndMaybeCleanupLock(row, c);</span><br><span class="line">                continue;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Find the latest write below our start_timestamp.</span><br><span class="line">        // 读取column:wriet的[0, start_ts]的最新提交记录版本</span><br><span class="line">        latest_write = T.Read(row, c+&quot;write&quot;, [0, start_ts_]);</span><br><span class="line">        if(!latest_write.found()) return false; // no data</span><br><span class="line">        </span><br><span class="line">        // 根据此时间戳版本去column:data读取数据</span><br><span class="line">        int data_ts = latest_write.start_timestamp();</span><br><span class="line">        *value = T.Read(row, c+&quot;data&quot;, [data_ts, data_ts]);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // prewrite : 尝试上锁+写数据，如果锁冲突则返回失败</span><br><span class="line">    bool Prewrite(Write w, Write primary) &#123;</span><br><span class="line">        Column c = w.col;</span><br><span class="line">        </span><br><span class="line">        // bigtable 事务</span><br><span class="line">        bigtable::Txn T = bigtable::StartRowTransaction(w.row);</span><br><span class="line"></span><br><span class="line">        // 检查写写冲突：从column:write获取最新数据，如果commit_ts&gt;=事务开始时间，则冲突</span><br><span class="line">        if (T.Read(w.row, c+&quot;write&quot;, [start_ts_, max])) return false;</span><br><span class="line">        </span><br><span class="line">        // 检查column:lock，如果存在已存在，则锁冲突</span><br><span class="line">        if (T.Read(w.row, c+&quot;lock&quot;, [0, max])) return false;</span><br><span class="line">        </span><br><span class="line">        // 往column:lock写入锁，若为secondary，则指向primary</span><br><span class="line">        T.Write(w.row, c+&quot;lock&quot;, start_ts_, &#123;primary.row, primary.col&#125;)</span><br><span class="line">        </span><br><span class="line">        // 往column:data写入(key, start_ts = value)</span><br><span class="line">        T.Write(w.row, c+&quot;data&quot;, start_ts_, w.value);</span><br><span class="line">        </span><br><span class="line">        // 提交bigtable事务</span><br><span class="line">        return T.Commit();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // 此commit整合 2PC的prewrite和commit，</span><br><span class="line">    // 对外caller而言不需要关注是2PC提交，直接commit就好</span><br><span class="line">    bool Commit() &#123;</span><br><span class="line">        // ***** Prewrite *****//</span><br><span class="line">        // 2PC 第一阶段：prewrite</span><br><span class="line">        // 第一行为primary</span><br><span class="line">        Write primary = write_[0];</span><br><span class="line">        // 其余为secondary</span><br><span class="line">        vector&lt;Write&gt; secondaries(write_.begin() + 1, write_.end());</span><br><span class="line">        </span><br><span class="line">        if (!Prewrite(primary, primary)) return false;</span><br><span class="line">        for (Write w : secondaries)</span><br><span class="line">            if (!Prewrite(w, primary)) return false;</span><br><span class="line">        </span><br><span class="line">        // ***** Commit *****//</span><br><span class="line">        // 2PC第二阶段：commit</span><br><span class="line">        </span><br><span class="line">        // 从oracle获取commit timestamp</span><br><span class="line">        int commit_ts = oracle.GetTimestamp();</span><br><span class="line"></span><br><span class="line">        // Commit primary first. </span><br><span class="line">        Write p = primary;</span><br><span class="line">        </span><br><span class="line">        // primary : 先开始bigtable的事务</span><br><span class="line">        bigtable::Txn T = bigtable::StartRowTransaction(p.row);</span><br><span class="line">        </span><br><span class="line">        // primary : 如果primiary的锁不存在，则abort</span><br><span class="line">        if (!T.Read(p.row, p.col+&quot;lock&quot;, [start_ts_, start_ts_]))</span><br><span class="line">            return false; // aborted while working</span><br><span class="line">        </span><br><span class="line">        // primary : 在column:write 列写入开始时间（Pointer to data written at start_ts_）</span><br><span class="line">        T.Write(p.row, p.col+&quot;write&quot;, commit_ts, start_ts_); </span><br><span class="line">        // primary : 移除column:lock 列</span><br><span class="line">        T.Erase(p.row, p.col+&quot;lock&quot;, commit_ts);</span><br><span class="line">        </span><br><span class="line">        // primary : 提交bigtable 事务</span><br><span class="line">        if(!T.Commit()) return false;</span><br><span class="line"></span><br><span class="line">        // Second phase: write our write records for secondary cells.</span><br><span class="line">        // 遍历所有secondary，写入column:write数据同时删除column:lock</span><br><span class="line">        for (Write w:secondaries) &#123;</span><br><span class="line">            bigtable::write(w.row, w.col+&quot;write&quot;, commit_ts, start_ts_);</span><br><span class="line">            bigtable::Erase(w.row, w.col+&quot;lock&quot;, commit_ts);</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>事务</strong>   </p>
+<ul>
+<li>第一阶段<ul>
+<li>获取时间戳T1,</li>
+<li>写入column:data和锁：时间戳都为T1</li>
+</ul>
+</li>
+<li>第二阶段<ul>
+<li>获取时间戳T2</li>
+<li>写入column:write：key:commit_ts:start_ts (key:T2:T1)</li>
+<li>删除锁</li>
+</ul>
+</li>
+</ul>
+<p><strong>读取</strong>   </p>
+<ul>
+<li>获取时间戳Tx</li>
+<li>从column:write 读取key[0, Tx]的最大时间戳数据(获取到事务写入的commit_ts=T2)</li>
+<li>从T2中提取出start_ts为T1</li>
+<li>从column:data中读取 key:T1的数据</li>
+</ul>
+<p>所以读取到的数据是commit时间戳的数据。</p>
+<h3 id="清理锁"><a href="#清理锁" class="headerlink" title="清理锁"></a>清理锁</h3><p>若客户端在Commit一个事务时，出现了异常，Prepare时产生的锁会被留下。为避免将新事务挂住，Percolator必须清理这些锁。</p>
+<p>Percolator用lazy方式来处理未处理的锁：当事务在执行时，发现其他事务造成的锁未处理掉，事务将决定其他事务是否失败，以及清理其他事务的那些锁。</p>
+<p>当客户端在执行两阶段提交的commit阶段crash时，事务会留下一个提交点commit point(至少已经写入一条write记录)，但可能会留下一些lock未被处理掉</p>
+<ul>
+<li>如果priarmy lock 已被write所替代：意味着该事务已被提交，事务需要roll forword，也就是对所有涉及到的、未完成提交的数据，用write记录替代标准的锁standed lock。</li>
+<li>如果primary lock存在：事务将roll back(因为总是最先提交primary，所以primary未被提交时，可以安全地执行回滚)</li>
+</ul>
+<blockquote>
+<p>这些都是基于bigtable的事务中的。</p>
+</blockquote>
+<p>清理操作在primary锁上是同步的，所以清理alive客户端持有的锁是安全的；然而回滚会强迫事务取消，这会严重影响性能。所以，一个事务将不会清理一个锁除非它猜测这个锁属于一个僵死的worker。<br>Percolator使用简单的机制来确定另一个事务的活跃度。运行中的worker会写一个token到Chubby锁服务来指示他们属于本系统，token会被其他worker视为一个代表活跃度的信号（退出时token会被自动删除）。有些worker是活跃的，但不在运行中，为了处理这种情况，我们附加的写入一个wall time到锁中；一个锁的wall time如果太老，即使token有效也会被清理。有些操作运行很长时间才会提交，针对这种情况，在整个提交过程中worker会周期的更新wall time。</p>
+<h2 id="通知"><a href="#通知" class="headerlink" title="通知"></a>通知</h2><p>用户对感兴趣的列编写观察者function注册到percolator，当列发生改变时，percolator通知percolator的worker运行用户function。</p>
+<p><strong>通知与写操作不是原子的</strong><br>通知类似于数据库中的触发器，然而不同的是，通知在其他事务(worker)中执行，所以写操作与观察者执行不是原子的，且观察者的执行会有时效性问题。</p>
+<blockquote>
+<p>这和传统关系型数据库的ACID的C有一定的差别，我猜: 所以这里不叫trigger而是通知的原因</p>
+</blockquote>
+<p><strong>通知与观察者无限循环</strong><br>编写观察者时，用户要自己考虑通知与观察者进入无限循环的情况(通知-&gt;观察者-&gt;通知-&gt;观察者…..)。   </p>
+<p><strong>通知的”丢失”</strong><br>一个列的多次更改只会触发一次通知，所以通知和操作系统的中断一样会存在“丢失”的问题。</p>
+<p><strong>实现通知机制</strong>   </p>
+<p>为了实现通知机制，Percolator需要高效找到被观察的脏cell。<br>Percolator在Bigtable维护一个“notify”列(notify列为一个独立的Bigtable locality group)，表示此cell是否为脏。当事务修改被观察的cell时，则设置cell的notify。worker对notify列执行一个分布式扫描来找到脏cell。找到notify则触发观察者并且等到观察者事务提交成功后，会删除对应的notify cell。</p>
+<h1 id="tidb的实现"><a href="#tidb的实现" class="headerlink" title="tidb的实现"></a>tidb的实现</h1><p>percolator定义了5个列：data, write, lock, ack, notify。<br>tidb定义了其中3个：data, write, lock。所以tidb没有实现notify功能(tidb不需要增量处理能力)。   </p>
+<p>tidb定义了3个rocksdb的column family：</p>
+<ul>
+<li>CF_DEFAULT：对应percolator的data列</li>
+<li>CF_LOCK：对应percolator的lock列</li>
+<li>CF_WRITE：对应percolator的write列</li>
+</ul>
+<p><strong>CF_DEFAULT</strong>   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key, start_ts) ==&gt; value</span><br></pre></td></tr></table></figure>
+
+<p><strong>CF_LOCK</strong>   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">key ==&gt; lock_info</span><br></pre></td></tr></table></figure>
+
+<p>同一时刻一个key最多只有一个锁，所以，tidb的锁没有start_ts。</p>
+<p><strong>CF_WRITE</strong>   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key, commit_ts) ==&gt; write_info</span><br></pre></td></tr></table></figure>
+
+<h2 id="tidb"><a href="#tidb" class="headerlink" title="tidb"></a>tidb</h2><ul>
+<li>1 client 向 tidb 发起开启事务 begin</li>
+<li>2 tidb 向 pd 获取 tso 作为当前事务的 start_ts</li>
+<li>3 client 向 tidb 执行以下请求：<ul>
+<li>读操作，从 tikv 读取版本 start_ts 对应具体数据.</li>
+<li>写操作，写入 memory 中。</li>
+</ul>
+</li>
+<li>4 client 向 tidb 发起 commit 提交事务请求</li>
+<li>5 tidb 开始两阶段提交。</li>
+<li>6 tidb 按照 region 对需要写的数据进行分组。</li>
+<li>7 tidb 开始 prewrite 操作：向所有涉及改动的 region 并发执行 prewrite 请求。若其中某个prewrite 失败，根据错误类型决定处理方式：<ul>
+<li>KeyIsLock：尝试 Resolve Lock 后，若成功，则重试当前 region 的 prewrite[步骤7]。否则，重新获取 tso 作为 start_ts 启动 2pc 提交（步骤5）。</li>
+<li>WriteConfict 有其它事务在写当前 key, abort事务</li>
+<li>其它错误，向 client 返回失败。</li>
+</ul>
+</li>
+<li>8 commit : tidb 向 pd 获取 tso 作为当前事务的 commit_ts。</li>
+<li>9 tidb 开始 commit:tidb 向 primary 所在 region 发起 commit。 若 commit primary 失败，则先执行 rollback keys,然后根据错误判断是否重试:<ul>
+<li>LockNotExist abort事务</li>
+<li>其它错误，向 client 返回失败。</li>
+</ul>
+</li>
+<li>10 tidb 向 tikv 异步并发向剩余 region 发起 commit。</li>
+<li>11 tidb 向 client 返回事务提交成功信息。</li>
+</ul>
+<blockquote>
+<p>所有涉及重新获取 tso 重启事务的两阶段提交的地方，会先检查当前事务是否可以满足重试条件：只有单条语句组成的事务才可以重新获取tso作为start_ts。</p>
+</blockquote>
+<h2 id="tikv"><a href="#tikv" class="headerlink" title="tikv"></a>tikv</h2><h3 id="Prewrite"><a href="#Prewrite" class="headerlink" title="Prewrite"></a>Prewrite</h3><p>伪代码</p>
+<ul>
+<li><code>-&gt;</code> 代表rpc调用, 例如<code>tidb-&gt;tikv.Prewrite</code> tidb调用tikv的Prewrite接口</li>
+<li><code>.</code> 代表进程内调用, 例如<code>memory.Put</code>往内存模型写数据</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">start_ts = tidb-&gt;pd.GetTso() // get start_ts</span><br><span class="line"></span><br><span class="line">// tidb调用tikv prewrite接口 </span><br><span class="line">tidb-&gt;tikv.Prewrite(start_ts, data_list)</span><br><span class="line">&#123; // tikv prewrite实现</span><br><span class="line">    keyIsLockedArray = []</span><br><span class="line">    </span><br><span class="line">    // prewrite each key with start_ts in memory，中间出现失败，则整个prewrite失败</span><br><span class="line">    for key in data_list </span><br><span class="line">    &#123;</span><br><span class="line">        // check write conflict: 通过raft获取key的数据</span><br><span class="line">       record = raft.Get(WriteColumn, key, start_ts)</span><br><span class="line">       if record.commit_ts &gt;= start_ts</span><br><span class="line">       &#123;</span><br><span class="line">           return error(write conflict, END)</span><br><span class="line">       &#125;</span><br><span class="line">       </span><br><span class="line">       // check lock</span><br><span class="line">       lock = raft.Get(LockColumn, key)</span><br><span class="line">       if lock != null &amp;&amp; lock.ts != start_ts // lock已存在且为其他tx的锁</span><br><span class="line">       &#123;</span><br><span class="line">           keyIsLockedArray.append(key)</span><br><span class="line">           continue</span><br><span class="line">       &#125;</span><br><span class="line">       // 往内存中的 lock 列写入 lock(start_ts,key) 为当前key加锁,</span><br><span class="line">       //   若当前key被选为 primary, 则标记为 primary,</span><br><span class="line">       //   若为secondary,则标明指向primary的信息。</span><br><span class="line">       memory.Put(LockColumn, key, start_ts, (primary|secondary), ttl, short_value)</span><br><span class="line">       memory.Put(DataColumn, key, start_ts, long_value)</span><br><span class="line">    &#125;</span><br><span class="line">    if len(keyIsLockedArray) &gt; 0</span><br><span class="line">    &#123;</span><br><span class="line">        return error(keyIsLockedArray)</span><br><span class="line">    &#125;</span><br><span class="line">    // 将此事务在内存模型中写入的数据 持久化到raft中</span><br><span class="line">    raft.Commit(memory_data)</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Commit"><a href="#Commit" class="headerlink" title="Commit"></a>Commit</h3><p>伪代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用rikv的Commit接口，进行2PC的Commit阶段</span><br><span class="line">tidb-&gt;tikv.Commit(keys, start_ts, commit_ts)</span><br><span class="line">&#123;</span><br><span class="line">    for key in keys // do commit</span><br><span class="line">    &#123;</span><br><span class="line">        lock = raft.Get(LockColumn, key)</span><br><span class="line">        // lock存在且匹配，则提交</span><br><span class="line">        if lock != null &amp;&amp; lock.ts == start_ts </span><br><span class="line">        &#123;</span><br><span class="line">            memory.Put(WriteColumn, key, commit_ts, start_ts)</span><br><span class="line">            memory.Del(LockColumn, key, start_ts)    </span><br><span class="line">       &#125;</span><br><span class="line">       // lock does not exist or tx dismatch</span><br><span class="line">       else if lock == null || lock.ts != start_ts </span><br><span class="line">       &#123;</span><br><span class="line">           record = raft.Get(WriteColumn, key, start_ts, commit_ts)</span><br><span class="line">           if record != null &amp;&amp; record.write_type == (PUT|DELETE|Lock)</span><br><span class="line">           &#123;</span><br><span class="line">               continue; // already commited</span><br><span class="line">           &#125; else if record == null || record.write_type == RollBack</span><br><span class="line">           &#123;</span><br><span class="line">               return error(tx conflict, lock not exist)</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;       </span><br><span class="line">    &#125;</span><br><span class="line">    // commit to raft</span><br><span class="line">    raft.Save(memory.data)</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Rollback"><a href="#Rollback" class="headerlink" title="Rollback"></a>Rollback</h3><p>当事务在两阶段提交过程中失败时， tidb 会向当前事务涉及到的所有 tikv 发起回滚操作。</p>
+<p>伪代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的Rollback接口</span><br><span class="line">tidb-&gt;tikv.Rollback(keys)</span><br><span class="line">&#123;   // Rollback接口实现</span><br><span class="line"></span><br><span class="line">    // 检查合法性</span><br><span class="line">    for key in keys</span><br><span class="line">    &#123;</span><br><span class="line">        // 检查当前key的锁</span><br><span class="line">        lock=memory.GetLockColumn(start_ts, key)</span><br><span class="line">        if lock != null and lock.ts = start_ts</span><br><span class="line">        &#123;   // 如果锁还存在且是之前的锁，则删除锁，写入的数据</span><br><span class="line">            // 且在WriteColumn写入rollback记录防止后面commit请求的到来</span><br><span class="line">            memory.Del(DataColumn, key, start_ts)</span><br><span class="line">            memory.Put(WriteColumn, key, start_ts, rollback)</span><br><span class="line">            meomry.Del(LockColumn, key, start_ts)</span><br><span class="line">            continue</span><br><span class="line">        &#125;</span><br><span class="line">       </span><br><span class="line">        // 检查提交情况</span><br><span class="line">        record = raft.Get(WriteColumn, key, start_ts)</span><br><span class="line">        if record != null  </span><br><span class="line">        &#123;</span><br><span class="line">           if record.status == (PUT|DELETE)</span><br><span class="line">           &#123;</span><br><span class="line">               return error(transaction is already commited.)</span><br><span class="line">           &#125; else if record.status == RollBack</span><br><span class="line">           &#123;</span><br><span class="line">               continue;  // already rollbacked</span><br><span class="line">           &#125;</span><br><span class="line">        &#125; else &#123; // record is null</span><br><span class="line">           // 提交纪录不存在，说明当前 key 尚未被 prewrite 过，</span><br><span class="line">           // 为预防 prewrite 在rollback之后过来(可能网络原因)，</span><br><span class="line">           // 在这里留下 (key,start_ts,rollback)记录</span><br><span class="line">           memory.Put(WriteColumn, key, start_ts, rollback)</span><br><span class="line">           continue</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        // persist</span><br><span class="line">        raft-&gt;Save(memory.data)</span><br><span class="line">    &#125;</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Resolve-Lock"><a href="#Resolve-Lock" class="headerlink" title="Resolve Lock"></a>Resolve Lock</h3><p>若客户端在Commit一个事务时，出现了异常，Prepare 时产生的锁会被留下。为避免将新事务hang住，Percolator必须清理这些锁。  </p>
+<p>Percolator用lazy方式处理这些锁：当事务A在执行时，发现事务B造成的锁冲突，事务A将决定事务B是否失败，以及清理事务B的那些锁。</p>
+<p>tidb 在执行 prewrite, get 过程中，若遇到锁，在锁超时的情况下，会向 tikv 发起清锁操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的ResolveLock接口</span><br><span class="line">tidb-&gt;tikv.ResolveLock(start_ts, commit_ts)</span><br><span class="line">&#123;</span><br><span class="line">    // 找出所有 lock.ts==start_ts 的锁并执行清锁操作</span><br><span class="line">    locks = raft.Scan(LockColumn, lock.ts = start_ts)</span><br><span class="line">    for (lock in locks)</span><br><span class="line">    &#123;</span><br><span class="line">        // commit_ts存在，则说明已提交</span><br><span class="line">        if (commit_ts != null)</span><br><span class="line">        &#123;</span><br><span class="line">            // 对已上锁的key进行提交</span><br><span class="line">            memory.Commit(lock.key, commit_ts)</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            memory.Rollback(lock.key)</span><br><span class="line">        &#125;       </span><br><span class="line">    &#125;</span><br><span class="line">    raft-&gt;Save(memory.data)</span><br><span class="line">    </span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Get"><a href="#Get" class="headerlink" title="Get"></a>Get</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的Get接口</span><br><span class="line">tidb-&gt;tikv.Get(key, start_ts)</span><br><span class="line">&#123;</span><br><span class="line">    // check lock: 如果锁存在且在此之前加的锁，则返回锁冲突</span><br><span class="line">    lock = raft-&gt;Get(LockColumn, key)</span><br><span class="line">    if (lock != null &amp;&amp; lock.ts &lt;= start_ts)</span><br><span class="line">        return error(isLocked);</span><br><span class="line">    version = start_ts - 1;</span><br><span class="line">    </span><br><span class="line">RAFTGET:</span><br><span class="line">    // get writeColumn： 获取小于start_ts的最新提交记录</span><br><span class="line">    data = raft-&gt;Get(WriteColumn, key, version)</span><br><span class="line">    if (data != null)</span><br><span class="line">    &#123;</span><br><span class="line">        if (data.writeType == PUT)</span><br><span class="line">        &#123;</span><br><span class="line">            if (data.isShortValue)</span><br><span class="line">                return data.shortValue;</span><br><span class="line">            // long value</span><br><span class="line">            return raft-&gt;Get(DataColumn, key, start_ts)</span><br><span class="line">        &#125; else if (data.writeType == DELETE)</span><br><span class="line">        &#123;</span><br><span class="line">            // 没有出现过该值，或该值最近已被删除，返回tidb空</span><br><span class="line">            return ok(None)；</span><br><span class="line">        &#125; else if (data.writeType == &quot;LOCK | ROLLBACK&quot;)</span><br><span class="line">        &#123;</span><br><span class="line">            // version=commit_ts-1, 继续查找下一个最近版本</span><br><span class="line">            version=commit_ts-1</span><br><span class="line">            goto RAFTGET</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return ok(None)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="GC"><a href="#GC" class="headerlink" title="GC"></a>GC</h3><p>TiDB 的事务的实现采用了MVCC机制，当新写入的数据覆盖旧的数据时，旧的数据不会被替换掉，而是与新写入的数据同时保留，并以时间戳来区分版本。<br>GC 的任务便是清理不再需要的旧数据。 </p>
+<p>一个 TiDB 集群中会有一个 TiDB 实例被选举为 GC leader，GC 的运行由 GC leader 来控制。</p>
+<p>GC 会被定期触发。每次 GC 时，首先，TiDB 会计算一个称为 safe point 的时间戳，接下来 TiDB 会在保证 safe point  之后的快照全部拥有正确数据的前提下，删除更早的过期数据。  </p>
+<p>每一轮 GC 分为以下三个步骤：</p>
+<ul>
+<li>Resolve Locks：该阶段会对所有 Region 扫描 safe point 之前的锁，并清理这些锁</li>
+<li>Delete Ranges：该阶段快速地删除由于 DROP TABLE/DROP INDEX 等操作产生的整区间的废弃数据</li>
+<li>Do GC：该阶段每个 TiKV 节点将会各自扫描该节点上的数据，并对每一个 key 删除其不再需要的旧版本</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">// tidb 向 tikv 发起 GC操作，要求清理 safe-point 版本之前的所有无意义版本</span><br><span class="line"></span><br><span class="line">// tidb调用tikv的GC接口</span><br><span class="line">tidb-&gt;tikv.Gc(savePoint)</span><br><span class="line">&#123;</span><br><span class="line">    startKey=null;</span><br><span class="line">    for &#123;</span><br><span class="line">        // scan (startKey, maxKey]</span><br><span class="line">        keys = raft.Scan(WriteColumn, startKey, batchSize)</span><br><span class="line">        if (batch == null)</span><br><span class="line">            return ok;</span><br><span class="line">        </span><br><span class="line">        // 对每个key进行gc操作</span><br><span class="line">        for (key in keys)</span><br><span class="line">        &#123;</span><br><span class="line">            bool remove_older = false;</span><br><span class="line">            </span><br><span class="line">            // 清理write中commit_ts &lt;= startPoint的每个item</span><br><span class="line">            // item: 一个key的所有write记录</span><br><span class="line">            for (item in key)</span><br><span class="line">            &#123;</span><br><span class="line">                if (remove_older is true)</span><br><span class="line">                &#123;</span><br><span class="line">                    memory.Del(WriteColumn, item);</span><br><span class="line">                    memory.Del(DataColumn, item);</span><br><span class="line">                &#125;</span><br><span class="line">                    </span><br><span class="line">                // check if is ordest version to save</span><br><span class="line">                if (writeType == PUT)</span><br><span class="line">                &#123;   // 保留该提交，清理所有该提交之前的数据</span><br><span class="line">                    memory.Set(memoryOrder, true);</span><br><span class="line">                &#125; else if (writeType == DELETE)</span><br><span class="line">                &#123;   //  清理所有safe-point 之前的数据</span><br><span class="line">                    remove_older = true;</span><br><span class="line">                    memory.Del(WriteColumn, item);</span><br><span class="line">                &#125; else if (writeType == ROLLBACK | LOCK)</span><br><span class="line">                &#123;   // 清理所有小于 safe-point 的 Rollback 和 Lock</span><br><span class="line">                    memory.Del(WriteColumn, item);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        startKey = keys[keys.length() - 1];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><h3 id="Parallel-Prewrite"><a href="#Parallel-Prewrite" class="headerlink" title="Parallel Prewrite"></a>Parallel Prewrite</h3><p>tikv分批的并发进行prewrite，不会像percolator要先prewrite primary，再去prewrite secondary。<br>如果事务冲突，导致rollback，在tikv的rollback实现中，其会留下rollback记录，这样就会导致事务的prewrite失败，而不会产生副作用。</p>
+<h3 id="Short-Value"><a href="#Short-Value" class="headerlink" title="Short Value"></a>Short Value</h3><p>对于percolator，先读取column:write 列，提取到key的start_ts，再去column:data列读取key数据本身。<br>这样会造成两次读取，tidb的优化是，如果数据本身很小，那么就直接存储在colulmn:write中，只需读取一次即可。</p>
+<h3 id="Point-Read-Without-Timestamp"><a href="#Point-Read-Without-Timestamp" class="headerlink" title="Point Read Without Timestamp"></a>Point Read Without Timestamp</h3><p>为了减少一次RPC调用和减轻TSO压力，对于单点读，并不需要获取timestamp。</p>
+<p>因为单点读不存在跨行一致性问题(读取多行数据时，必须是同一个版本的数据)，所以直接可以读取最新的数据即可。    </p>
+<h3 id="Calculated-Commit-Timestamp"><a href="#Calculated-Commit-Timestamp" class="headerlink" title="Calculated Commit Timestamp"></a>Calculated Commit Timestamp</h3><p>如果不通过TSO获取commit_ts，则会减少一次RPC交互从而降低事务的时延。   </p>
+<p>然而，为了实现SI的RR特性(repeatable read)，所以commit_ts需要确保其他事务多次读取的值是一样的。那么commit_ts就和其他事务的读取有相关性。</p>
+<p>下面公式可以计算出一个commit_ts</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">max&#123;start_ts, max_read_ts_of_written_keys&#125; &lt; commit_ts &lt;= now</span><br></pre></td></tr></table></figure>
+
+<p>由于不可能记录每个key的最大的读取时间，但是可以记录每个region的最大读取时间，所以公式转换为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">commit_ts = max&#123;start_ts, region_1_max_read_ts, region_2_max_read_ts, ...&#125; + 1</span><br></pre></td></tr></table></figure>
+
+<p>region_x_max_read_ts : 事务涉及到的key的region。</p>
+<h3 id="Single-Region-1PC"><a href="#Single-Region-1PC" class="headerlink" title="Single Region 1PC"></a>Single Region 1PC</h3><p>对于事务只涉及到一个Region，那么其实是没有必要走2PC流程的。直接提交事务即可。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="Ken WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <footer class="post-footer"> 原有内容
+<div>    
+ 
+ 
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+      <strong>本文作者：</strong>Ken
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="/2019/02/17/percolator/" title="percolator的理解与开源实现分析">2019/02/17/percolator/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权： </strong>
+    本站文章均采用 <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0 CN</a> 许可协议，请勿用于商业，转载注明出处！
+  </li>
+</ul>
+
+</div>
+      </footer></div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/分布式事务/" rel="tag"><i class="fa fa-tag"></i> 分布式事务</a>
+          
+            <a href="/tags/percolator/" rel="tag"><i class="fa fa-tag"></i> percolator</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/19/ddd/" rel="next" title="对领域驱动设计的理解与实践">
+                <i class="fa fa-chevron-left"></i> 对领域驱动设计的理解与实践
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/04/01/TreadMarks/" rel="prev" title="[译文]TreadMarks: 基于工作站网络的共享内存计算">
+                [译文]TreadMarks: 基于工作站网络的共享内存计算 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Ken">
+            
+              <p class="site-author-name" itemprop="name">Ken</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ikenchina" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#论文"><span class="nav-number">1.</span> <span class="nav-text">论文</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.1.</span> <span class="nav-text">概述</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#设计"><span class="nav-number">2.</span> <span class="nav-text">设计</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离等级"><span class="nav-number">2.1.</span> <span class="nav-text">隔离等级</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁机制"><span class="nav-number">2.2.</span> <span class="nav-text">锁机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时间戳"><span class="nav-number">2.3.</span> <span class="nav-text">时间戳</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据存储"><span class="nav-number">2.4.</span> <span class="nav-text">数据存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#案例"><span class="nav-number">2.5.</span> <span class="nav-text">案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流程"><span class="nav-number">2.6.</span> <span class="nav-text">流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码"><span class="nav-number">2.6.1.</span> <span class="nav-text">伪代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#清理锁"><span class="nav-number">2.6.2.</span> <span class="nav-text">清理锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通知"><span class="nav-number">2.7.</span> <span class="nav-text">通知</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#tidb的实现"><span class="nav-number">3.</span> <span class="nav-text">tidb的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tidb"><span class="nav-number">3.1.</span> <span class="nav-text">tidb</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tikv"><span class="nav-number">3.2.</span> <span class="nav-text">tikv</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Prewrite"><span class="nav-number">3.2.1.</span> <span class="nav-text">Prewrite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Commit"><span class="nav-number">3.2.2.</span> <span class="nav-text">Commit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Rollback"><span class="nav-number">3.2.3.</span> <span class="nav-text">Rollback</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Resolve-Lock"><span class="nav-number">3.2.4.</span> <span class="nav-text">Resolve Lock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Get"><span class="nav-number">3.2.5.</span> <span class="nav-text">Get</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC"><span class="nav-number">3.2.6.</span> <span class="nav-text">GC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化"><span class="nav-number">3.3.</span> <span class="nav-text">优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-Prewrite"><span class="nav-number">3.3.1.</span> <span class="nav-text">Parallel Prewrite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Short-Value"><span class="nav-number">3.3.2.</span> <span class="nav-text">Short Value</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Point-Read-Without-Timestamp"><span class="nav-number">3.3.3.</span> <span class="nav-text">Point Read Without Timestamp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Calculated-Commit-Timestamp"><span class="nav-number">3.3.4.</span> <span class="nav-text">Calculated Commit Timestamp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Single-Region-1PC"><span class="nav-number">3.3.5.</span> <span class="nav-text">Single Region 1PC</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ken</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>访问
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'p5Hbkh5aS4MFndlbI9msQ0OF-gzGzoHsz',
+        appKey: 'gAYKVuvBLmJ2d8V0RrxlrYyF',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  
+
+
+  
+
+  
+
+</body>
+</html>

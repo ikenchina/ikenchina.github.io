@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="rpc,grpc,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="grpc 特性、原理、实践、生态">
+<meta name="keywords" content="rpc,grpc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="grpc">
+<meta property="og:url" content="http://yoursite.com/2018/06/02/grpc/index.html">
+<meta property="og:site_name" content="Ken&#39;s blog">
+<meta property="og:description" content="grpc 特性、原理、实践、生态">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://grpc.io/img/landing-2.svg">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlNHSE0zUkRXSTZIQUwyUDdZUTNVRlhHREdYM1ZISTA2IiwidyI6MTE4NywiaCI6NjU0LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MjI0NzAzMTI2MjM0MjIzNDA0N30">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlZNM0ZMNkRQT0FEQkUyUzRPM1hNNVQ1V05aNzM3RTA2IiwidyI6MTM1NCwiaCI6Njk0LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MzMzNjkwMTI2Nzk1NTg0NzA3MX0">
+<meta property="og:updated_time" content="2021-08-27T22:06:09.473Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="grpc">
+<meta name="twitter:description" content="grpc 特性、原理、实践、生态">
+<meta name="twitter:image" content="https://grpc.io/img/landing-2.svg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/06/02/grpc/">
+
+
+
+
+
+  <title>grpc | Ken's blog</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?46ee37f7c4a6bed681519fb13fb55b02";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ken's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description"></h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            Search
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="Searching..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/02/grpc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ken">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ken's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">grpc</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-02T00:00:00+08:00">
+                2018-06-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/2018/" itemprop="url" rel="index">
+                    <span itemprop="name">2018</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2018/06/02/grpc/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2018/06/02/grpc/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>grpc 特性、原理、实践、生态<a id="more"></a>  </p>
+</blockquote>
+<h1 id="gRPC"><a href="#gRPC" class="headerlink" title="gRPC"></a>gRPC</h1><h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>gRPC是一个由google设计开发基于HTTP/2协议和Protobuf序列化协议的的高性能、多语言、通用的开源 RPC 框架。  </p>
+<p>跨语言、跨平台<br>插件化 ： 负载均衡，tracing，健康检查，认证等等<br>编码压缩 ： 节省带宽<br>多路复用 ： 降低的 TCP 链接次数</p>
+<p><strong>使用场景</strong></p>
+<ul>
+<li>低延迟、高扩展的分布式系统</li>
+<li>与云服务通信</li>
+<li>设计一个需要准确，高效且与语言无关的新协议</li>
+<li>分层设计，以实现扩展，例如：身份验证，负载平衡，日志记录和监控等</li>
+</ul>
+<h1 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h1><p><strong>基于HTTP/2</strong></p>
+<p>HTTP/2 提供了 链接多路复用、双向流、服务器推送、请求优先级、首部压缩等机制。<br>gRPC 协议使用了HTTP2 现有的语义，请求和响应的数据使用HTTP Body 发送，其他的控制信息则用Header 表示。</p>
+<p><strong>IDL使用ProtoBuffer</strong></p>
+<p>gRPC使用ProtoBuf来定义服务，ProtoBuf是由Google开发的一种数据序列化协议（类似于XML、JSON）。<br>ProtoBuf能够将数据进行序列化，并广泛应用在数据存储、通信协议等方面。<br>压缩和传输效率高，向后兼容，语法简单，表达力强。</p>
+<p><strong>多语言支持</strong></p>
+<p>gRPC支持多种语言，并能够基于语言自动生成客户端和服务端。  </p>
+<p>目前支持： C#, C++, Dart, Go, Java, Node, Objective-C, PHP, Python, Ruby 等。 </p>
+<p><a href="https://grpc.io/docs/quickstart/" target="_blank" rel="noopener">详见官网</a></p>
+<h1 id="HTTP-2"><a href="#HTTP-2" class="headerlink" title="HTTP/2"></a>HTTP/2</h1><h2 id="HTTP-2-1"><a href="#HTTP-2-1" class="headerlink" title="HTTP/2"></a>HTTP/2</h2><p>HTTP/1.x 是超文本传输协议第1版，可读性好，但效率不高。<br>而HTTP/2 是超文本传输协议第2版，是一个二进制协议。</p>
+<p>HTTP/1 和 HTTP/2 的基本语义并没有改变，如方法语义（GET/PUST/PUT/DELETE），状态码（200/404/500等），Range Request，Cacheing，Authentication、URL路径。</p>
+<p><strong>HTTP/2通用术语：</strong></p>
+<ul>
+<li>Stream： 流，一个双向流，一条连接可以有多个 streams。</li>
+<li>Message： 逻辑上面的 request，response。</li>
+<li>Frame：帧，HTTP/2 数据传输的最小单位。每个 Frame 都属于一个特定的 stream。一个 message 可能由多个 frame 组成。</li>
+</ul>
+<p><strong>HTTP/2 流、帧</strong>   </p>
+<p>HTTP/2连接上传输的每个帧(frame)都关联到一个流，一个连接上可以同时有多个流，<br>同一个流的帧按序传输，不同流的帧交错混合传输，<br>客户端、服务端双方都可以建立流，流也可以被任意一方关闭。<br>客户端发起的流使用奇数流ID，服务端发起的使用偶数。</p>
+<p><a href="https://httpwg.org/specs/rfc7540.html#rfc.section.4.1" target="_blank" rel="noopener">Frame结构 : </a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+-----------------------------------------------+</span><br><span class="line">|                 Length (24)                   |</span><br><span class="line">+---------------+---------------+---------------+</span><br><span class="line">|   Type (8)    |   Flags (8)   |</span><br><span class="line">+-+-------------+---------------+-------------------------------+</span><br><span class="line">|R|                 Stream Identifier (31)                      |</span><br><span class="line">+=+=============================================================+</span><br><span class="line">|                   Frame Payload (0...)                      ...</span><br><span class="line">+---------------------------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Length ： 也就是 Frame 的长度</li>
+<li>Type ：Frame 的类型，有 DATA，HEADERS，SETTINGS 等</li>
+<li>Flags ：帧标志位，8个比特表示可以容纳8个不同的标志：stream是否结束(END_STREAM)，header是否结束(END_HEADERS)，priority等等</li>
+<li>R：保留位</li>
+<li>Stream Identifier：标识frame所属的 stream，如果为 0，则表示这个 frame 属于整条连接(如SETTINGS帧)</li>
+<li>Frame Payload：帧内容</li>
+</ul>
+<p><strong>帧类型</strong>  </p>
+<ul>
+<li>HEADERS 类似于HTTP/1的 Headers</li>
+<li>DATA 类似于HTTP/1的 Body</li>
+<li>CONTINUATION 头部太大，分多个帧传输（一个HEADERS+若干CONTINUATION）</li>
+<li>SETTINGS 连接设置</li>
+<li>WINDOW_UPDATE 流量控制</li>
+<li>PUSH_PROMISE 服务端推送</li>
+<li>PRIORITY 流优先级更改</li>
+<li>PING 心跳或计算RTT</li>
+<li>RST_STREAM 马上中止一个流</li>
+<li>GOAWAY 关闭连接并且发送错误信息</li>
+</ul>
+<h2 id="HTTP-2-特性"><a href="#HTTP-2-特性" class="headerlink" title="HTTP/2 特性"></a>HTTP/2 特性</h2><p><strong>新的二进制格式（Binary Format）</strong></p>
+<p>HTTP/1 的解析是基于文本。基于文本协议的格式解析存在天然缺陷，文本的表现形式有多样性，要做到健壮性考虑的场景必然很多，二进制则不同。<br>基于这种考虑HTTP/2的协议解析决定采用二进制格式，实现方便且健壮。</p>
+<p><strong>多路复用（MultiPlexing）</strong></p>
+<p>HTTP/1 的request是阻塞的，如果想并发发送多个request，必须使用多个 TCP connection。这样会消耗更多资源，且浏览器为了控制资源，会对单个域名有TCP connection请求限制。</p>
+<p>HTTP/2 一个TCP connection可以有多个streams(最大数量由参数SETTINGS_MAX_CONCURRENT_STREAMS控制)， 多个streams 并行发送不同的请求的frames。  </p>
+<p>可以在SETTINGS帧中设置<code>SETTINGS_MAX_CONCURRENT_STREAMS</code>。<br>而此值是针对一端而言的，客户端可以告知服务器最大的streams并发数，服务端也可以告知客户端。  </p>
+<blockquote>
+<p>如果一条链接上 ID 分配完了， server 则会给 client 发送一个 GOAWAY frame 强制让 client 新建一条连接。</p>
+</blockquote>
+<p><strong>header压缩</strong></p>
+<p>HTTP/1 是使用文本协议，而且header每次都要重复发送，浪费了带宽也导致资源加载过慢。</p>
+<p>HTTP/2 采取了压缩和缓存来避免重复发送和带宽问题：</p>
+<ul>
+<li>对消息头采用HPACK 进行压缩传输来节省消息头占用的网络的流量。</li>
+<li>对这些headers采取了压缩策略来减少重复headers的请求数<ul>
+<li>HTTP/2在客户端和服务器端使用 headlist 来存储之前发送过的 header，对于相同的header，不再通过每次请求和响应发送；</li>
+</ul>
+</li>
+</ul>
+<p><a href="http://http2.github.io/http2-spec/compression.html" target="_blank" rel="noopener">HPACK: Header Compression for HTTP/2</a></p>
+<p><strong>服务端推送</strong></p>
+<p>server push功能 : 在无需客户端请求资源的情况下，服务端会直接推送客户端可能需要的资源到客户端。  </p>
+<p>当服务器想用Server Push推送资源时，会先向客户端发送PUSH_PROMISE帧。<br>推送的响应必须与客户端的某个请求相关联，因此服务器会在客户端请求的流上发送PUSH_PROMISE帧。</p>
+<p><strong>优先级排序</strong></p>
+<p>设置优先级的目的是为了告诉对端在并发的多个流之间如何分配资源的行为，同时当发送容量有限时，可以使用优先级来选择用于发送帧的流。  </p>
+<p>客户端可以通过 HEADERS 帧的 PRIORITY 信息指定一个新建立流的优先级，也可以发送 PRIORITY 帧调整流优先级。</p>
+<p><a href="http://http2.github.io/http2-spec/#StreamPriority" target="_blank" rel="noopener">参考官网</a></p>
+<p><strong>Flow Control</strong></p>
+<p>HTTP/2 支持流控，receiver 端可以对某些stream进行流控也可以针对整个connection流控。<br>而TCP层只能针对整个connection进行流控。  </p>
+<p>特性 ：</p>
+<ul>
+<li>Flow control 是由方向的 : Receiver 可以选择给 stream 或者整个连接设置接收端的 window size。</li>
+<li>Flow control 是基于信任的 : Receiver 只是会给 sender 建议 连接和 stream 的 flow control window size。</li>
+<li>Flow control 无法禁止 </li>
+<li>Flow control 是基于WINDOW_UPDATE帧的</li>
+<li>Flow control 是 hop-by-hop的，而不是 end-to-end 的。例如，用nginx做proxy，则flow control作用于nginx到server和client到nginx这两个connection。</li>
+</ul>
+<blockquote>
+<p>Connection 和 stream 的初始 flow-control window 大小都是 65535。<br>Connection 的初始窗口大小不能改变，但 stream 的可以(所有stream)，通过发送 SETTINGS 帧，携带 <code>SETTINGS_INITIAL_WINDOW_SIZE</code>，这个值即为新的 stream flow-control window 初始大小。</p>
+</blockquote>
+<blockquote>
+<p>增加flow control window size能加快数据传输，但同时会消耗更多资源。</p>
+</blockquote>
+<p><strong>主动重置链接</strong></p>
+<p>HTTP/1 的body的length的被送给客户端后，服务端就无法中断请求了，只能断开整个TCP connection，但这样导致的代价就是需要重新通过三次握手建立一个新的TCP连接。</p>
+<p>HTTP/2 引入了一个 RST_STREAM frame 来让客户端在已有的连接中发送重置请求，从而中断或者放弃响应。当浏览器进行页面跳转或者用户取消下载时，它可以防止建立新连接，避免浪费所有带宽。</p>
+<h2 id="HTTP-2-站点demo"><a href="#HTTP-2-站点demo" class="headerlink" title="HTTP/2 站点demo"></a>HTTP/2 站点demo</h2><p>HTTP/1 和 HTTP/2 加载速度比较：<br><a href="https://http2.akamai.com/demo" target="_blank" rel="noopener">https://http2.akamai.com/demo</a></p>
+<p>访问http2站点 ：<br><a href="https://http2.golang.org/" target="_blank" rel="noopener">https://http2.golang.org/</a></p>
+<h1 id="ProtoBuf"><a href="#ProtoBuf" class="headerlink" title="ProtoBuf"></a>ProtoBuf</h1><h2 id="ProtoBuf-1"><a href="#ProtoBuf-1" class="headerlink" title="ProtoBuf"></a>ProtoBuf</h2><p><strong>Google Protocol Buffer</strong>  </p>
+<p>是一种轻便高效的结构化数据存储格式，可以用于结构化数据序列化。适合做数据存储或 RPC 数据交换格式。可用于通讯协议、数据存储等领域的语言无关、平台无关、可扩展的序列化结构数据格式。</p>
+<ul>
+<li>描述简单，对开发人员友好</li>
+<li>跨平台、跨语言，不依赖于具体运行平台和编程语言</li>
+<li>高效自动化解析和生成</li>
+<li>压缩比例高</li>
+<li>可扩展、兼容性好</li>
+</ul>
+<p><strong>gRPC与protobuf</strong></p>
+<p>gRPC使用 protobuf 作为IDL来定义数据结构和服务。 可以定义数据结构，也可以定义rpc 接口。<br>然后用proto编译器生成对应语言的框架代码。</p>
+<ul>
+<li>定义数据结构 ： 生成对象的 序列化 代码</li>
+<li>定义rpc接口 ： 生成 gRPC服务端、客户端响应的代码</li>
+</ul>
+<h2 id="protobuf-基本数据类型"><a href="#protobuf-基本数据类型" class="headerlink" title="protobuf 基本数据类型"></a>protobuf 基本数据类型</h2><p><a href="https://developers.google.com/protocol-buffers/docs/proto#scalar" target="_blank" rel="noopener">https://developers.google.com/protocol-buffers/docs/proto#scalar</a></p>
+<h2 id="数据结构定义"><a href="#数据结构定义" class="headerlink" title="数据结构定义"></a>数据结构定义</h2><p>user.proto</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;google/protobuf/any.proto&quot;;</span><br><span class="line"></span><br><span class="line">//package user;</span><br><span class="line">option go_package = &quot;protos_golang/user&quot;;</span><br><span class="line"></span><br><span class="line">message User &#123;</span><br><span class="line">  int32 id = 1;</span><br><span class="line">  string name = 2;</span><br><span class="line">  uint32 age = 3;</span><br><span class="line">  enum Flag &#123;</span><br><span class="line">    NORMAL = 0;</span><br><span class="line">    VIP = 1;</span><br><span class="line">    SVIP = 2;</span><br><span class="line">  &#125;</span><br><span class="line">  repeated int32 friends_ids = 5;</span><br><span class="line">  reserved 6, 7, 8;</span><br><span class="line">  message Command &#123;</span><br><span class="line">      int32 id = 1;</span><br><span class="line">      oneof cmd_value &#123;</span><br><span class="line">         string name = 2;</span><br><span class="line">         int32 age = 3;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  Command cmd = 9;</span><br><span class="line">  map&lt;int32, string&gt; tags = 10;</span><br><span class="line">  google.protobuf.Any details = 11;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>package</strong></p>
+<p>package声明符，用来防止不同的消息类型有命名冲突。<br>生成的代码将会包含再package(go等语言)或者命名空间(c++, java等)中。</p>
+<p><code>option go_package = &quot;protos_golang/user&quot;;</code><br><code>$LANGUAGE_package</code> 是指定生成的代码的import path和package。</p>
+<p><strong>import</strong></p>
+<p>要导入其他.proto文件的定义，在文件中添加一个导入声明。<br>使用导入proto的类型 <code>package名字.结构名</code> 来使用导入proto的类型。<br>如上面<code>common.Flag</code> </p>
+<p><strong>分配字段编号</strong></p>
+<p>每个字段都有唯一的一个数字标识符。这些标识符是用来在消息的二进制格式中识别各个字段的。<br>为了保证向后兼容，一旦开始使用就不要再改变。 </p>
+<p><strong>文件版本申明</strong></p>
+<p><code>syntax = &quot;proto2&quot;;</code> 指定使用proto2语法<br><code>syntax = &quot;proto3&quot;;</code> 指定为proto3语法  </p>
+<p><strong>标识符修饰符</strong></p>
+<p>required 和 optional 是proto2的语法，proto3已经不支持。<br>proto3中所有的字段都是optional的。<a href="https://github.com/protocolbuffers/protobuf/issues/2497" target="_blank" rel="noopener">具体原因见</a> </p>
+<ul>
+<li>required : 必须字段。</li>
+<li>optional ：可选字段。</li>
+<li>repeated ：数组类型字段。</li>
+<li>reserved ：保留字段。指出这些字段编号已经删除，不要再重用这些编号了。因为如果这些编号被重新定义成其他类型，那么对于旧版本的protobuf数据，会导致解码错误。</li>
+</ul>
+<p><strong>枚举</strong></p>
+<p>与数据结构中 enum 类似。字段编号从0开始。</p>
+<p>对于protobuf兼容性问题，第一个枚举值应该考虑用<code>unknown</code>这种字段：因为如果在<code>.proto</code>枚举中增加了一个值，而protobuf解析的一方如果没有升级新版本的<code>.proto</code>，则无法解析出此枚举值，而直接使用第一个枚举值，为了避免这种情况，所以最好一般将第一个枚举值设置为<code>unknown</code>。</p>
+<p><strong>oneof</strong></p>
+<p>oneof与数据结构联合体(UNION)类似，一次最多只有一个字段有效。</p>
+<p><strong>map</strong></p>
+<p>map 类型则可以用来表示键值对。<br>key_type 可以是任何 int 或者 string 类型，float、double 和 bytes除外</p>
+<p><strong>any</strong></p>
+<p>Any类型包括:</p>
+<ul>
+<li>bytes : 被序列化为bytes类型的任意消息</li>
+<li>URL : 全局标识符</li>
+</ul>
+<p>使用<code>import google/protobuf/any.proto</code>来导入any类型</p>
+<p>any可以用来替换proto2中的extension</p>
+<p><strong>嵌套类型</strong></p>
+<p>可以在消息类型中定义其他消息类型</p>
+<h2 id="服务定义"><a href="#服务定义" class="headerlink" title="服务定义"></a>服务定义</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto2&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;user.proto&quot;;</span><br><span class="line"></span><br><span class="line">service UserService &#123;</span><br><span class="line">// rpc interface</span><br><span class="line">    rpc GetUserInfo(UserRequest) returns (UserResponse) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message UserRequest &#123;</span><br><span class="line">    uint32 id = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message UserResponse &#123;</span><br><span class="line">    user.User user = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果在 .proto 文件中定义了 RPC 服务接口， 编译器将使用生成服务接口代码和 stubs。</p>
+<p><code>import &quot;user.proto&quot;;</code> 导入user结构定义的proto文件。</p>
+<h2 id="插件"><a href="#插件" class="headerlink" title="插件"></a>插件</h2><p>protoc编译器通过插件机制实现对不同语言的支持。<br>protoc会先查找是否有内置的语言插件，如果没有，则会去查找系统中是否存在<code>protoc-gen-$LANGUAGE</code> 的插件。<br>例如：<br>如果指定<code>--go_out</code>参数，那么protoc会查询是否有内置的<code>go</code>插件，如果没有则继续查询系统中是否存在<code>protoc-gen-go</code>的可执行程序，再通过插件来生成相关的语言代码。</p>
+<p><strong>插件运行流程：</strong></p>
+<ul>
+<li>protoc 启动 protoc-gen-xx</li>
+<li>将<code>CodeGeneratorRequest</code>的protobuf二进制传入到 protoc-gen-xx的标准输入<ul>
+<li>protoc-gen-xx读取标准输入再反序列化成<code>CodeGeneratorRequest</code></li>
+<li>遍历<code>CodeGeneratorRequest</code>的<code>FileDescriptorProto</code>数组，其描述了proto文件的语法树</li>
+<li>将<code>FileDescriptorProto</code>编译成语言源码</li>
+<li>生成<code>CodeGeneratorResponse</code>对象输出到标准输出</li>
+</ul>
+</li>
+<li>protoc根据protoc-gen-xx的标准输出再生成源码文件</li>
+</ul>
+<p><a href="https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/compiler/plugin.proto" target="_blank" rel="noopener">plugin.proto</a>定义了<code>CodeGeneratorRequest</code> 和 <code>CodeGeneratorResponse</code>，是protoc与插件交互的对象。  </p>
+<p><a href="https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/descriptor.proto" target="_blank" rel="noopener">descriptor.proto</a>描述的是一个<code>.proto</code>文件的语法树</p>
+<p><strong>插件的plugins</strong></p>
+<p>插件本身的也是支持以内部plugins形式进行扩展的。</p>
+<p>例如：生成go grpc的命令中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc --go_out=plugins=grpc:. pb/user.proto</span><br></pre></td></tr></table></figure>
+
+<p>grpc就是 proto-gen-go的plugin。  </p>
+<p><a href="https://github.com/golang/protobuf/blob/master/protoc-gen-go/grpc/grpc.go#L72" target="_blank" rel="noopener">代码</a> </p>
+<p><code>Name()</code>返回grpc命名就是plugin的名字，就是上面<code>plugins=grpc</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// Name returns the name of this plugin, &quot;grpc&quot;.</span><br><span class="line">func (g *grpc) Name() string &#123;</span><br><span class="line">	return &quot;grpc&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="gRPC-原理"><a href="#gRPC-原理" class="headerlink" title="gRPC 原理"></a>gRPC 原理</h1><h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p><img src="https://grpc.io/img/landing-2.svg" alt="image"></p>
+<p>gRPC 定义服务，服务包含远程调用的方法。<br>在服务器端，服务器实现rpc接口并运行一个gRPC服务器来处理客户端请求。<br>在客户端，客户端有一个”存根stub”，提供与服务器相同签名的方法，来处理客户端请求的编码、解码等，再将请求转发到服务器端，这样客户端调用rpc方法就像调用本地函数一样。  </p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>gRPC把HTTP2的steam identifier当作请求ID，每一次请求都发起一个新的stream。</p>
+<p>请求的方法、响应的状态码等都放在HEADER frame中。<br>而请求内容和响应内容由protobuf序列化后使用DATA frame中。</p>
+<h3 id="请求"><a href="#请求" class="headerlink" title="请求"></a>请求</h3><p>Request主要由 Request-Headers 和 Data 以及 EOS (END_STREAM)组成。  </p>
+<p>如下图：</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlNHSE0zUkRXSTZIQUwyUDdZUTNVRlhHREdYM1ZISTA2IiwidyI6MTE4NywiaCI6NjU0LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MjI0NzAzMTI2MjM0MjIzNDA0N30" alt="grpc_request_stream_decoded_wireshark.png"></p>
+<p><strong>Request-Headers</strong>  </p>
+<p>Request-Headers 由 HEADERS 和 CONTINUATION frames 组成。<br>如果Flags有设置标志位<code>END_HEADERS</code>则代表Request-Headers结束。  </p>
+<p>Request-Headers 主要有 <code>Call-Definition</code> 以及 <code>Custom-Metadata</code> :</p>
+<ul>
+<li>Call-Definition : 包括 Method, Scheme, Path, TE, Authority, Timeout, Content-Type ,Message-Type, Message-Encoding, Message-Accept-Encoding, User-Agent</li>
+<li>Custom-Metadata : 应用层自定义的任意 key-value，key 不要使用gRPC保留的key前缀字符 <code>grpc-</code> 。</li>
+</ul>
+<p><strong>Data</strong></p>
+<p>请求体，由一个或多个 Data frame组成。<br>如果Flags有设置标志位<code>END_STREAM</code>则代表Data结束，请求结束。 </p>
+<p><strong>request格式大致如下</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"># request-headers </span><br><span class="line"></span><br><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:method = POST</span><br><span class="line">:scheme = http</span><br><span class="line">:path = /user.UserService/GetUserInfo</span><br><span class="line">:authority = localhost:50000</span><br><span class="line">grpc-timeout = 999127u</span><br><span class="line">content-type = grpc-go/1.20.0-dev</span><br><span class="line"></span><br><span class="line">## 自定义metadata</span><br><span class="line">service : test_client</span><br><span class="line">traceid : xxxx</span><br><span class="line"></span><br><span class="line"># data</span><br><span class="line">DATA (flags = END_STREAM)</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="响应"><a href="#响应" class="headerlink" title="响应"></a>响应</h3><p>Response 主要由 Response-Headers 和 Data 以及 Trailers 组成。<br>如果遇到了错误，也可以直接返回 Trailers-Only。</p>
+<p>如下图：</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlZNM0ZMNkRQT0FEQkUyUzRPM1hNNVQ1V05aNzM3RTA2IiwidyI6MTM1NCwiaCI6Njk0LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MzMzNjkwMTI2Nzk1NTg0NzA3MX0" alt="grpc_response_stream_decoded_wireshark.png"></p>
+<p><strong>Response-Headers</strong></p>
+<p>Response-Headers 包含 : HTTP-Status, Message-Encoding, Message-Accept-Encoding, Content-Type, Custom-Metadata等。</p>
+<p><strong>Data</strong></p>
+<p>响应体，由一个或多个 Data frame组成。<br>如果Flags有设置标志位<code>END_STREAM</code>则代表Data结束。 </p>
+<p><strong>Trailers</strong></p>
+<p>Trailers-Only 包含 HTTP-Status, Content-Type, Trailers等。</p>
+<p>Trailers 包含 Status, Status-Message, Custom-Metadata等。</p>
+<p>Trailers作用主要是给响应包含一些额外的动态生成的信息。<br>如：消息body发送后，再发送一些信息 如数字签名，后处理状态等</p>
+<p>格式大致如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"># response-headers</span><br><span class="line"></span><br><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:status = status: 200 </span><br><span class="line">content-type = application/grpc</span><br><span class="line"></span><br><span class="line">## 自定义metadata</span><br><span class="line">service: server_test</span><br><span class="line">spanid: xxxx</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># data</span><br><span class="line">DATA</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br><span class="line"></span><br><span class="line"># headers</span><br><span class="line">HEADERS (flags = END_STREAM, END_HEADERS)</span><br><span class="line">grpc-status: 0</span><br><span class="line"></span><br><span class="line">## trailers 自定义metadata</span><br><span class="line">timestamp: 1560656283730441829</span><br></pre></td></tr></table></figure>
+
+<p><strong>Status code</strong></p>
+<p><a href="https://github.com/grpc/grpc/blob/master/doc/statuscodes.md" target="_blank" rel="noopener">HTTP状态码对应的gRPC状态码</a></p>
+<h2 id="gRPC通信方式"><a href="#gRPC通信方式" class="headerlink" title="gRPC通信方式"></a>gRPC通信方式</h2><p>gRPC有四种通信方式: </p>
+<p>1、 unary RPC </p>
+<p>一般的rpc调用，客户端发送一个请求对象，然后等待服务端返回一个响应对象 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 获取用户信息</span><br><span class="line"># proto</span><br><span class="line">rpc GetUserInfo (UserRequest) returns (UserResponse) &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>2、 Server-side streaming RPC </p>
+<p>服务端流式rpc </p>
+<p>客户端发起一个请求到服务端，服务端返回一段连续的数据流响应。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 获取一个用户的所有地理位置历史记录</span><br><span class="line"># proto</span><br><span class="line">rpc UserLocationsStream(UserRequest) returns (stream LocationsResponse) &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3、 Client-side streaming RPC </p>
+<p>客户端流式rpc </p>
+<p>客户端将一段连续的数据流发送到服务端，服务端返回一个响应。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 客户端将所有数据备份到服务端</span><br><span class="line"># proto</span><br><span class="line">rpc BackupStream(stream BackupRequest) returns (BackupResponse) &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>4、 Bidirectional streaming RPC </p>
+<p>双向流式rpc </p>
+<p>客户端将连续的数据流发送到服务端，服务端返回交互的数据流。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 在线聊天</span><br><span class="line"># proto</span><br><span class="line">rpc LiveChat(stream Message) returns (stream Message) &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p><strong>waitForReady</strong></p>
+<p>发送请求时，如果connection没有ready，则会一直等待connection ready 或直到超时(达到deadline)。<br>也常称为<code>fail fast</code>。</p>
+<p><strong>timeout</strong></p>
+<p>请求超时时间。<br>如果超时，则会中止请求且返回DEADLINE_EXCEEDED 错误。</p>
+<p><strong>maxRequestMessageBytes</strong></p>
+<p>请求体的最大payload size(没有压缩的)。<br>如果客户端请求大于此值的请求会返回RESOURCE_EXHAUSTED错误。 </p>
+<p><strong>maxResponseMessageBytes</strong></p>
+<p>响应体的最大payload size(没有压缩的)。<br>如果服务端响应大于此值，响应将发送失败。且客户端会得到RESOURCE_EXHAUSTED错误。 </p>
+<hr>
+<h1 id="gRPC-实践"><a href="#gRPC-实践" class="headerlink" title="gRPC 实践"></a>gRPC 实践</h1><p>实践部分以go语言进行demo</p>
+<h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p><strong>安装protoc</strong></p>
+<p>mac</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install protobuf</span><br></pre></td></tr></table></figure>
+
+<p>linux</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PROTOC_ZIP=protoc-3.5.1-linux-x86_64.zip</span><br><span class="line">curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/$PROTOC_ZIP</span><br><span class="line"></span><br><span class="line">sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc</span><br><span class="line">sudo unzip -o $PROTOC_ZIP -d /usr/local include/*</span><br><span class="line">rm -f $PROTOC_ZIP</span><br></pre></td></tr></table></figure>
+
+<p><strong>golang的protobuffers插件</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get -u github.com/golang/protobuf/&#123;protoc-gen-go,proto&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Coding"><a href="#Coding" class="headerlink" title="Coding"></a>Coding</h2><h3 id="定义proto文件"><a href="#定义proto文件" class="headerlink" title="定义proto文件"></a>定义proto文件</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">import &quot;google/protobuf/any.proto&quot;;</span><br><span class="line"></span><br><span class="line">//package user;</span><br><span class="line">option go_package = &quot;protos_golang/user&quot;;</span><br><span class="line"></span><br><span class="line">message User &#123;</span><br><span class="line">  int32 id = 1;</span><br><span class="line">  string name = 2;</span><br><span class="line">  uint32 age = 3;</span><br><span class="line">  enum Flag &#123;</span><br><span class="line">    NORMAL = 0;</span><br><span class="line">    VIP = 1;</span><br><span class="line">    SVIP = 2;</span><br><span class="line">  &#125;</span><br><span class="line">  repeated int32 friends_ids = 5;</span><br><span class="line">  reserved 6, 7, 8;</span><br><span class="line">  message Command &#123;</span><br><span class="line">      int32 id = 1;</span><br><span class="line">      oneof cmd_value &#123;</span><br><span class="line">         string name = 2;</span><br><span class="line">         int32 age = 3;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  Command cmd = 9;</span><br><span class="line">  map&lt;int32, string&gt; tags = 10;</span><br><span class="line">  google.protobuf.Any details = 11;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">service UserService &#123;</span><br><span class="line">// rpc interface</span><br><span class="line">    rpc GetUserInfo(UserRequest) returns (UserResponse) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message UserRequest &#123;</span><br><span class="line">    uint32 id = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">message UserResponse &#123;</span><br><span class="line">    User user = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="生成代码"><a href="#生成代码" class="headerlink" title="生成代码"></a>生成代码</h3><p><strong>生成代码的导入路径和包名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">## protos_golang ： 生成代码的路径</span><br><span class="line">## user : golang package 名</span><br><span class="line">option go_package = &quot;protos_golang/user&quot;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>目标代码</strong></p>
+<ul>
+<li>如果包含rpc接口：则需要指定插件<code>plugins=grpc</code></li>
+<li><code>--go_out=.</code> ： 生成的代码在<code>当前目录</code>; 也可以指定其他目录，如:<code>--go_out=/tmp</code></li>
+<li>代码路径 ： <ul>
+<li>如果.pb中指定了<code>go_package</code> : 代码路径是 <code>./$go_package/user.pb.go</code></li>
+<li>如果.pb中没有指定<code>go_package</code> : 则代码路径是 <code>./pb/user.pb.go</code></li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">protoc --go_out=plugins=grpc:. pb/user.proto</span><br><span class="line"></span><br><span class="line"># 如果没有rpc定义</span><br><span class="line">protoc --go_out=. pb/user.proto</span><br></pre></td></tr></table></figure>
+
+<h3 id="服务端"><a href="#服务端" class="headerlink" title="服务端"></a>服务端</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;net&quot;</span><br><span class="line"></span><br><span class="line">    &quot;google.golang.org/grpc&quot;</span><br><span class="line">    &quot;google.golang.org/grpc/reflection&quot;</span><br><span class="line">    </span><br><span class="line">	pb &quot;testgrpc/protos_golang/user&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">const (</span><br><span class="line">	port = &quot;:50000&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">// grpc server</span><br><span class="line">type server struct&#123;&#125;</span><br><span class="line"></span><br><span class="line">// 实现gRPC接口</span><br><span class="line">func (s *server) GetUserInfo(ctx context.Context, in *pb.UserRequest) (*pb.UserResponse, error) &#123;</span><br><span class="line"></span><br><span class="line">	return &amp;pb.UserResponse&#123;</span><br><span class="line">		User: &amp;pb.User&#123;</span><br><span class="line">			Name: &quot;test_user&quot;,</span><br><span class="line">		&#125;,</span><br><span class="line">	&#125;, nil</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 拦截器，简单打印下日志</span><br><span class="line">func LogUnaryInterceptorMiddleware() grpc.UnaryServerInterceptor &#123;</span><br><span class="line">	return func(ctx context.Context, req interface&#123;&#125;, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (r interface&#123;&#125;, err error) &#123;</span><br><span class="line">		r, err = handler(ctx, req)</span><br><span class="line"></span><br><span class="line">		fmt.Printf(&quot;fullMethod(%s), errCode(%v)\n&quot;, info.FullMethod, err)</span><br><span class="line">		return r, err</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	lis, err := net.Listen(&quot;tcp&quot;, port)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;failed to listen: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    // 拦截器</span><br><span class="line">    options := grpc.UnaryInterceptor(LogUnaryInterceptorMiddleware())</span><br><span class="line">	s := grpc.NewServer(options)</span><br><span class="line">	</span><br><span class="line">	// 注册服务器实现</span><br><span class="line">	pb.RegisterUserServiceServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	</span><br><span class="line">	// 注册服务端反射</span><br><span class="line">	reflection.Register(s)</span><br><span class="line">	</span><br><span class="line">	// 启动服务器</span><br><span class="line">	if err := s.Serve(lis); err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;failed to serve: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;time&quot;</span><br><span class="line"></span><br><span class="line">	&quot;google.golang.org/grpc&quot;</span><br><span class="line"></span><br><span class="line">	pb &quot;testgrpc/protos_golang/user&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">const (</span><br><span class="line">	address = &quot;localhost:50000&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line"></span><br><span class="line">	conn, err := grpc.Dial(address, grpc.WithInsecure())</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;did not connect: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">	defer conn.Close()</span><br><span class="line">	c := pb.NewUserServiceClient(conn)</span><br><span class="line"></span><br><span class="line">	ctx, cancel := context.WithTimeout(context.Background(), time.Second)</span><br><span class="line">	defer cancel()</span><br><span class="line"></span><br><span class="line">	r, err := c.GetUserInfo(ctx, &amp;pb.UserRequest&#123;&#125;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;fatal: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Printf(&quot;response: %s&quot;, r)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h3><p>为了方便调试服务端，所以服务端需要支持reflection功能。  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">reflection.Register(grpcServer)</span><br></pre></td></tr></table></figure>
+
+<p>两款比较著名的调试工具：</p>
+<ul>
+<li>[grpc_cli](<a href="https://github.com/grpc/grpc/blob/master/doc/command_line_tool.md" target="_blank" rel="noopener">https://github.com/grpc/grpc/blob/master/doc/command_line_tool.md</a> : 官方的</li>
+<li><a href="https://github.com/fullstorydev/grpcurl" target="_blank" rel="noopener">grpcurl</a> : go的，安装简单</li>
+</ul>
+<p><strong>列出服务端注册的service</strong></p>
+<p>如果没有配置好公钥和私钥文件，也没有忽略证书的验证过程，则需要加<code>-plaintext</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ grpcurl -plaintext localhost:50000 list </span><br><span class="line">grpc.reflection.v1alpha.ServerReflection</span><br><span class="line">user.UserService</span><br></pre></td></tr></table></figure>
+
+<p><strong>列出服务的接口</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ grpcurl -plaintext localhost:50000 list  user.UserService</span><br><span class="line">user.UserService.GetUserInfo</span><br></pre></td></tr></table></figure>
+
+<p><strong>获取接口的签名</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ grpcurl -plaintext localhost:50000 describe user.UserService.GetUserInfo</span><br><span class="line">user.UserService.GetUserInfo is a method:</span><br><span class="line">rpc GetUserInfo ( .user.UserRequest ) returns ( .user.UserResponse );</span><br></pre></td></tr></table></figure>
+
+<p><strong>获取类型信息</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ grpcurl -plaintext localhost:50000 describe .user.UserRequest</span><br><span class="line">user.UserRequest is a message:</span><br><span class="line">message UserRequest &#123;</span><br><span class="line">  uint32 id = 1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>调试接口</strong></p>
+<p>请求体以json的形式描述类型。 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ grpcurl -plaintext -d &apos;&#123;&quot;id&quot;:1&#125;&apos;   localhost:50000  user.UserService.GetUserInfo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;user&quot;: &#123;</span><br><span class="line">    &quot;name&quot;: &quot;test_user&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="go-gRPC-生态"><a href="#go-gRPC-生态" class="headerlink" title="go gRPC 生态"></a>go gRPC 生态</h2><h3 id="服务组件"><a href="#服务组件" class="headerlink" title="服务组件"></a>服务组件</h3><p><strong>上下文信息传递</strong></p>
+<p>rpc客户端将上下文信息传递给服务端。<br>链路调用信息，服务信息，认证信息等等。</p>
+<p><a href="https://godoc.org/google.golang.org/grpc/metadata" target="_blank" rel="noopener">官方实现</a></p>
+<p><strong>服务器反射</strong></p>
+<p>服务端反射协议， 可以用途于:</p>
+<ul>
+<li>服务端调试 : grpcurl 工具就是用reflection协议来进行服务端调试的。可以list出服务端的接口定义，以及命令行构造请求进行调试。</li>
+<li>运行时构造gRPC请求 ：客户端可以运行时根据反射的接口定义构造请求。</li>
+</ul>
+<p><a href="https://godoc.org/google.golang.org/grpc/reflection" target="_blank" rel="noopener">官方实现</a></p>
+<p><strong>负载均衡</strong></p>
+<p>客户端负载均衡器</p>
+<p><a href="https://godoc.org/google.golang.org/grpc/balancer" target="_blank" rel="noopener">官方实现</a></p>
+<p><strong>认证</strong>  </p>
+<p>gRPC主要的两种认证方式：</p>
+<ul>
+<li>基于SSL/TLS认证方式</li>
+<li>Token认证方式</li>
+</ul>
+<p>两种方式可以同时应用</p>
+<p><a href="https://godoc.org/google.golang.org/grpc/credentials" target="_blank" rel="noopener">官方实现</a>  实现了几种认证方式：</p>
+<ul>
+<li>alts  </li>
+<li>google </li>
+<li>oauth</li>
+<li>自定义认证方式</li>
+</ul>
+<p><a href="https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/auth" target="_blank" rel="noopener">go-grpc-middleware的实现</a></p>
+<p><strong>健康检查</strong></p>
+<p>服务端提供一个<code>Check</code>接口返回其状态信息。<br>客户端调用此接口获取到服务健康状态，是否可以继续提供服务。</p>
+<p><a href="https://godoc.org/google.golang.org/grpc/health" target="_blank" rel="noopener">官方实现</a></p>
+<p><strong>keepalive</strong></p>
+<p>定期发送HTTP/2.0 pings帧来检测 connection 是否存活，如果断开则进行重新连接。<br>与健康检查区别在于keepalive是检查connection而健康检查是检查服务是否可用。</p>
+<p><a href="https://godoc.org/google.golang.org/grpc/keepalive" target="_blank" rel="noopener">官方实现</a></p>
+<p><strong>naming</strong></p>
+<p>命名解析。<br>通过服务命名来获取服务相关的信息来达到服务发现目的。  </p>
+<p>与balancer结合使用来实现进程内负载均衡与服务发现。  </p>
+<p><a href="https://godoc.org/google.golang.org/grpc/naming" target="_blank" rel="noopener">官方实现</a></p>
+<p><strong>限流</strong></p>
+<p>限制流量来保护服务端以防止服务过载。  </p>
+<p>可以在客户端，balancer，服务端 进行限流。</p>
+<p><a href="https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/ratelimit" target="_blank" rel="noopener">go-grpc-middleware实现服务端限流</a></p>
+<p><strong>recovery</strong></p>
+<p>将服务内部的错误转换成gRPC错误码。  </p>
+<p><a href="https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/recovery" target="_blank" rel="noopener">go-grpc-middleware实现</a> ： recover go的panic， 并转换成gRPC错误。</p>
+<p><strong>重试</strong></p>
+<p>客户端对于返回某些gRPC错误码的请求进行重试。</p>
+<p><a href="https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/retry" target="_blank" rel="noopener">go-grpc-middleware</a></p>
+<p><strong>tracing</strong></p>
+<p>在链路上下文携带tracing信息，以及将信息以opentracing的规范发送给<code>分布式链路分析服务</code>。</p>
+<p>tracing信息包含traceid,spanid,请求时间,错误信息,日志等等。<br>如：通过设置客户端spanid为服务端spanid的parent_spanid，这样就能知道是客户端调用了服务端rpc请求。</p>
+<p><a href="https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing" target="_blank" rel="noopener">go-grpc-middleware实现opentracing的middleware</a></p>
+<p><a href="https://opentracing.io/docs/" target="_blank" rel="noopener">open-tracing</a></p>
+<h3 id="微服务框架、组件"><a href="#微服务框架、组件" class="headerlink" title="微服务框架、组件"></a>微服务框架、组件</h3><p><a href="https://github.com/go-kit" target="_blank" rel="noopener">go-kit</a> : 微服务组件<br><a href="https://github.com/micro" target="_blank" rel="noopener">micro</a> : 微服务框架<br><a href="https://github.com/go-chassis/go-chassis" target="_blank" rel="noopener">go-chassis</a> : 华为开发的go微服务框架<br><a href="https://github.com/grpc-ecosystem/go-grpc-middleware" target="_blank" rel="noopener">go-grpc-middleware</a> : 服务端和客户端的一些中间件，认证、日志、分布式追踪跟重试等<br><a href="https://github.com/grpc-ecosystem/grpc-gateway" target="_blank" rel="noopener">grpc-gateway</a> ：一个 protoc 的插件，可以将 gRPC 接口转换为对外暴露 RESTful API 的工具，同时还能生成 swagger 文档  </p>
+<h3 id="gRPC-与-负载均衡"><a href="#gRPC-与-负载均衡" class="headerlink" title="gRPC 与 负载均衡"></a>gRPC 与 负载均衡</h3><p><strong>进程内LB(Balancing-aware Client)</strong></p>
+<p>需要实现：</p>
+<ul>
+<li>服务注册</li>
+<li>健康检查</li>
+<li>服务发现</li>
+<li>负载均衡</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>开发成本：要实现上述功能</li>
+<li>维护成本：不同语言栈的sdk维护与升级</li>
+</ul>
+<p><a href="https://godoc.org/google.golang.org/grpc/balancer" target="_blank" rel="noopener">官方</a>已经提供接口来实现进程内的负载均衡。同时结合服务发现，健康检查一起使用。</p>
+<p><strong>集中式LB(Proxy Model)</strong></p>
+<p>proxy 实现服务发现，健康检查，负载均衡等等。<br>还方便做限流等控制和其他统一控制策略。</p>
+<p>缺点：</p>
+<ul>
+<li>单点问题</li>
+<li>多一层性能开销</li>
+<li>不方便调试</li>
+</ul>
+<p><strong><em>Nginx</em></strong></p>
+<blockquote>
+<p>Nginx(1.13.10已经支持gRPC) </p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">upstream grpcservers &#123;</span><br><span class="line">    server localhost:50000;</span><br><span class="line">    server localhost:50001;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">server &#123;</span><br><span class="line">    listen 9000 http2;</span><br><span class="line"></span><br><span class="line">    # router</span><br><span class="line">    location /user.UserService &#123;</span><br><span class="line">        grpc_pass grpc://grpcservers;</span><br><span class="line">        error_page 502 = /error502grpc;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    # 将默认错误页面更改成gRPC状态码</span><br><span class="line">    location = /error502grpc &#123;</span><br><span class="line">        internal;</span><br><span class="line">        default_type application/grpc;</span><br><span class="line">        add_header grpc-status 14;</span><br><span class="line">        add_header grpc-message &quot;unavailable&quot;;</span><br><span class="line">        return 204;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://nginx.org/en/docs/http/ngx_http_grpc_module.html" target="_blank" rel="noopener">nginx gRPC module</a></p>
+<p><strong>独立LB进程(External Load Balancing Service)</strong></p>
+<p>在主机上部署独立的LB进程，来实现服务发现，健康检查，负载均衡等功能。<br>不用对于不同语言维护不同sdk版本；<br>常常用于微服务service mesh。</p>
+<p>缺点：</p>
+<ul>
+<li>单点问题：但是只影响本机</li>
+<li>不方便调试</li>
+</ul>
+<p>常用的组件：  </p>
+<ul>
+<li><a href="https://istio.io/" target="_blank" rel="noopener">Istio</a>  </li>
+<li><a href="https://github.com/lyft/envoy" target="_blank" rel="noopener">Envoy</a></li>
+</ul>
+<hr>
+<h1 id="gRPC-生态环境"><a href="#gRPC-生态环境" class="headerlink" title="gRPC 生态环境"></a>gRPC 生态环境</h1><h2 id="组件"><a href="#组件" class="headerlink" title="组件"></a>组件</h2><p> grpc 只是实现了 RPC 核心功能，缺少很多微服务的特性（服务注册发现、监控、治理、管理等），而基于 HTTP/2 相对来说比较容易进行扩展。</p>
+<p><a href="https://github.com/grpc-ecosystem" target="_blank" rel="noopener">grpc-ecosystem</a> 上有一些比较优秀的外围组件来完善gRPC的生态体系  </p>
+<p><a href="https://github.com/grpc-ecosystem/awesome-grpc" target="_blank" rel="noopener">awesome-grpc</a> 收集了一些优秀的gRPC项目   </p>
+<h2 id="grpc-文档与交流"><a href="#grpc-文档与交流" class="headerlink" title="grpc 文档与交流"></a>grpc 文档与交流</h2><p><strong>文档</strong></p>
+<ul>
+<li>官网文档 : <a href="https://grpc.io/docs/" target="_blank" rel="noopener">https://grpc.io/docs/</a> </li>
+<li>github 上 grpc 仓库下的 doc ： <a href="https://github.com/grpc/grpc/tree/master/doc" target="_blank" rel="noopener">https://github.com/grpc/grpc/tree/master/doc</a></li>
+<li>博客 : <a href="https://grpc.io/blog/" target="_blank" rel="noopener">https://grpc.io/blog/</a></li>
+</ul>
+<p><strong>交流</strong></p>
+<p><a href="https://grpc.io/community/" target="_blank" rel="noopener">https://grpc.io/community/</a> 交流的方式有：</p>
+<ul>
+<li>邮件列表</li>
+<li>Gitter</li>
+<li>Reddit</li>
+<li>Meetup Group </li>
+</ul>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://grpc.io/docs/guides" target="_blank" rel="noopener">grpc.io</a></p>
+<p><a href="https://developers.google.com/protocol-buffers/docs" target="_blank" rel="noopener">developers.google.com</a></p>
+<p><a href="https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#Requests" target="_blank" rel="noopener">gRPC github doc</a></p>
+<p><a href="https://tools.ietf.org/html/rfc7540" target="_blank" rel="noopener">http2 specs</a><br>or<br><a href="http://http2.github.io/http2-spec/#StreamPriority" target="_blank" rel="noopener">github http2 spec</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="Ken WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <footer class="post-footer"> 原有内容
+<div>    
+ 
+ 
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+      <strong>本文作者：</strong>Ken
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="/2018/06/02/grpc/" title="grpc">2018/06/02/grpc/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权： </strong>
+    本站文章均采用 <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0 CN</a> 许可协议，请勿用于商业，转载注明出处！
+  </li>
+</ul>
+
+</div>
+      </footer></div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/rpc/" rel="tag"><i class="fa fa-tag"></i> rpc</a>
+          
+            <a href="/tags/grpc/" rel="tag"><i class="fa fa-tag"></i> grpc</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/18/rate_limit/" rel="next" title="高可用之限流">
+                <i class="fa fa-chevron-left"></i> 高可用之限流
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/08/19/ddd/" rel="prev" title="对领域驱动设计的理解与实践">
+                对领域驱动设计的理解与实践 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.png" alt="Ken">
+            
+              <p class="site-author-name" itemprop="name">Ken</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/ikenchina" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC"><span class="nav-number">1.</span> <span class="nav-text">gRPC</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#概述"><span class="nav-number">2.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#特性"><span class="nav-number">3.</span> <span class="nav-text">特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HTTP-2"><span class="nav-number">4.</span> <span class="nav-text">HTTP/2</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-1"><span class="nav-number">4.1.</span> <span class="nav-text">HTTP/2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-特性"><span class="nav-number">4.2.</span> <span class="nav-text">HTTP/2 特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP-2-站点demo"><span class="nav-number">4.3.</span> <span class="nav-text">HTTP/2 站点demo</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ProtoBuf"><span class="nav-number">5.</span> <span class="nav-text">ProtoBuf</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ProtoBuf-1"><span class="nav-number">5.1.</span> <span class="nav-text">ProtoBuf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#protobuf-基本数据类型"><span class="nav-number">5.2.</span> <span class="nav-text">protobuf 基本数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据结构定义"><span class="nav-number">5.3.</span> <span class="nav-text">数据结构定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务定义"><span class="nav-number">5.4.</span> <span class="nav-text">服务定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#插件"><span class="nav-number">5.5.</span> <span class="nav-text">插件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-原理"><span class="nav-number">6.</span> <span class="nav-text">gRPC 原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概念"><span class="nav-number">6.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">6.2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#请求"><span class="nav-number">6.2.1.</span> <span class="nav-text">请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应"><span class="nav-number">6.2.2.</span> <span class="nav-text">响应</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gRPC通信方式"><span class="nav-number">6.3.</span> <span class="nav-text">gRPC通信方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">6.4.</span> <span class="nav-text">配置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-实践"><span class="nav-number">7.</span> <span class="nav-text">gRPC 实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#环境"><span class="nav-number">7.1.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Coding"><span class="nav-number">7.2.</span> <span class="nav-text">Coding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#定义proto文件"><span class="nav-number">7.2.1.</span> <span class="nav-text">定义proto文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#生成代码"><span class="nav-number">7.2.2.</span> <span class="nav-text">生成代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务端"><span class="nav-number">7.2.3.</span> <span class="nav-text">服务端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端"><span class="nav-number">7.2.4.</span> <span class="nav-text">客户端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调试"><span class="nav-number">7.2.5.</span> <span class="nav-text">调试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#go-gRPC-生态"><span class="nav-number">7.3.</span> <span class="nav-text">go gRPC 生态</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务组件"><span class="nav-number">7.3.1.</span> <span class="nav-text">服务组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#微服务框架、组件"><span class="nav-number">7.3.2.</span> <span class="nav-text">微服务框架、组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gRPC-与-负载均衡"><span class="nav-number">7.3.3.</span> <span class="nav-text">gRPC 与 负载均衡</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#gRPC-生态环境"><span class="nav-number">8.</span> <span class="nav-text">gRPC 生态环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#组件"><span class="nav-number">8.1.</span> <span class="nav-text">组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#grpc-文档与交流"><span class="nav-number">8.2.</span> <span class="nav-text">grpc 文档与交流</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">9.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ken</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>访问
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'p5Hbkh5aS4MFndlbI9msQ0OF-gzGzoHsz',
+        appKey: 'gAYKVuvBLmJ2d8V0RrxlrYyF',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  
+
+
+  
+
+  
+
+</body>
+</html>

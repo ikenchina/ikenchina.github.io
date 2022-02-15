@@ -416,45 +416,22 @@
 
       
         <blockquote>
-<p>顺序、时钟与分布式系统<a id="more"></a>  </p>
+<p>顺序、时钟与分布式系统<a id="more"></a></p>
 </blockquote>
-<h1 id="Ordering"><a href="#Ordering" class="headerlink" title="Ordering"></a>Ordering</h1><p>现实生活中时间可以记录事情发生的时刻、比较事情发生的先后顺序。<br>分布式系统的一些场景也需要记录和比较不同节点间事件发生的顺序。<br>如数据写入先后顺序，事件发生的先后顺序等等。</p>
-<h2 id="关系"><a href="#关系" class="headerlink" title="关系"></a>关系</h2><p>复习下离散数学中关系：</p>
-<p>假设A是一个集合 {1,2,3,4} ；R是集合A上的关系，例如{&lt;1,1&gt;,&lt;2,2&gt;,&lt;3,3&gt;,&lt;4,4&gt;,&lt;1,2&gt;,&lt;1,4&gt;,&lt;2,4&gt;,&lt;3,4&gt;}</p>
-<ul>
-<li>自反性：任取一个A中的元素x，如果都有&lt;x,x&gt;在R中，那么R是自反的。 <ul>
-<li>&lt;1,1&gt;,&lt;2,2&gt;,&lt;3,3&gt;,&lt;4,4&gt;</li>
-</ul>
-</li>
-<li>对称性：任取一个A中的元素x,y，如果&lt;x,y&gt; 在关系R上,那么&lt;y,x&gt; 也在关系R上，那么R是对称的。</li>
-<li>反对称性：任取一个A中的元素x,y(x!=y)，如果&lt;x,y&gt; 在关系R上,那么&lt;y,x&gt; 不在关系R上，那么R是反对称的。<ul>
-<li>对于 &lt;1,2&gt;，有 &lt;2,1&gt; 不在R中；对于&lt;2,4&gt; 有&lt;4,2&gt;不在R中；对于&lt;3,4&gt; 有&lt;4,3&gt; 不在 R中，满足。</li>
-</ul>
-</li>
-<li>传递性：任取一个A中的元素x,y,z，如果&lt;x,y&gt;,&lt;y,z&gt; 在关系R上，那么 &lt;x,z&gt; 也在关系R上，那么R是对称的。<ul>
-<li>&lt;1,1&gt;&lt;1,2&gt;在R中，并且&lt;1,2&gt;在R中；&lt;1,1&gt;&lt;1,4&gt;在R中，并且&lt;1,4&gt;在R中；&lt;2,2&gt;&lt;2,4&gt;在R中，并且&lt;2,4&gt;在R中；&lt;3,3&gt;&lt;3,4&gt;在R中，并且&lt;3,4&gt;在R中；等等其他，满足。</li>
-</ul>
-</li>
-<li>完全性（全关系）：包含了自反性；对集合A中所有&lt;x,y&gt;，都有关系x到y或y到x；<ul>
-<li>R中并没有&lt;1, 3&gt;，所以不满足完全性</li>
-</ul>
-</li>
-</ul>
-<h2 id="偏序The-Partial-Ordering"><a href="#偏序The-Partial-Ordering" class="headerlink" title="偏序The Partial Ordering"></a>偏序The Partial Ordering</h2><p>集合内只有部分元素之间是可以比较的。   </p>
-<p>偏序关系的定义（R为A上的偏序关系）：<br>设R是集合A上的一个二元关系，若R满足：</p>
-<ul>
-<li>反对称性：对任意x,y∈A，若xRy，且yRx，则x=y；</li>
-<li>传递性：对任意x, y,z∈A，若xRy，且yRz，则xRz</li>
-<li>自反性：对任意x∈A，有xRx；</li>
-</ul>
+<h1 id="ordering">Ordering</h1>
+<p>现实生活中时间可以记录事情发生的时刻、比较事情发生的先后顺序。<br>
+分布式系统的一些场景也需要记录和比较不同节点间事件发生的顺序。 如数据写入先后顺序，事件发生的先后顺序等等。</p>
+<h2 id="关系">关系</h2>
+<p>复习下离散数学中关系：</p>
+<p>假设A是一个集合 {1,2,3,4} ；R是集合A上的关系，例如{&lt;1,1&gt;,&lt;2,2&gt;,&lt;3,3&gt;,&lt;4,4&gt;,&lt;1,2&gt;,&lt;1,4&gt;,&lt;2,4&gt;,&lt;3,4&gt;} - 自反性：任取一个A中的元素x，如果都有&lt;x,x&gt;在R中，那么R是自反的。 - &lt;1,1&gt;,&lt;2,2&gt;,&lt;3,3&gt;,&lt;4,4&gt; - 对称性：任取一个A中的元素x,y，如果&lt;x,y&gt; 在关系R上,那么&lt;y,x&gt; 也在关系R上，那么R是对称的。 - 反对称性：任取一个A中的元素x,y(x!=y)，如果&lt;x,y&gt; 在关系R上,那么&lt;y,x&gt; 不在关系R上，那么R是反对称的。 - 对于 &lt;1,2&gt;，有 &lt;2,1&gt; 不在R中；对于&lt;2,4&gt; 有&lt;4,2&gt;不在R中；对于&lt;3,4&gt; 有&lt;4,3&gt; 不在 R中，满足。 - 传递性：任取一个A中的元素x,y,z，如果&lt;x,y&gt;,&lt;y,z&gt; 在关系R上，那么 &lt;x,z&gt; 也在关系R上，那么R是对称的。 - &lt;1,1&gt;&lt;1,2&gt;在R中，并且&lt;1,2&gt;在R中；&lt;1,1&gt;&lt;1,4&gt;在R中，并且&lt;1,4&gt;在R中；&lt;2,2&gt;&lt;2,4&gt;在R中，并且&lt;2,4&gt;在R中；&lt;3,3&gt;&lt;3,4&gt;在R中，并且&lt;3,4&gt;在R中；等等其他，满足。 - 完全性（全关系）：包含了自反性；对集合A中所有&lt;x,y&gt;，都有关系x到y或y到x； - R中并没有&lt;1, 3&gt;，所以不满足完全性</p>
+<h2 id="偏序the-partial-ordering">偏序The Partial Ordering</h2>
+<p>集合内只有部分元素之间是可以比较的。</p>
+<p>偏序关系的定义（R为A上的偏序关系）： 设R是集合A上的一个二元关系，若R满足： - 反对称性：对任意x,y∈A，若xRy，且yRx，则x=y； - 传递性：对任意x, y,z∈A，若xRy，且yRz，则xRz - 自反性：对任意x∈A，有xRx；</p>
 <p>一个partitial ordering关系满足的条件是自反的，反对称的和可传递的，因此在partitial ordering中，可能有两个元素之间是不相关的。</p>
-<h2 id="全序The-Total-Ordering"><a href="#全序The-Total-Ordering" class="headerlink" title="全序The Total Ordering"></a>全序The Total Ordering</h2><p>集合内只有部分元素之间是可以比较的。<br>比如：比如复数集中并不是所有的数都可以比较大小，那么“大小”就是复数集的一个偏序关系。</p>
-<p>全序关系的定义：</p>
-<ul>
-<li>反对称性：对任意x,y∈A，若xRy，且yRx，则x=y；</li>
-<li>传递性：对任意x, y,z∈A，若xRy，且yRz，则xRz</li>
-<li>完全性(total relation全关系)：对任意x,y∈A，由xRy或yRx （包括了自反性）</li>
-</ul>
+<h2 id="全序the-total-ordering">全序The Total Ordering</h2>
+<p>集合内只有部分元素之间是可以比较的。<br>
+比如：比如复数集中并不是所有的数都可以比较大小，那么“大小”就是复数集的一个偏序关系。</p>
+<p>全序关系的定义： - 反对称性：对任意x,y∈A，若xRy，且yRx，则x=y； - 传递性：对任意x, y,z∈A，若xRy，且yRz，则xRz - 完全性(total relation全关系)：对任意x,y∈A，由xRy或yRx （包括了自反性）</p>
 <blockquote>
 <p>完全性本身也包括了自反性，所以全序关系是偏序关系。</p>
 </blockquote>
@@ -462,179 +439,120 @@
 <p>所以偏序中满足完全性就是全序了。</p>
 </blockquote>
 <p>一个total ordering关系满足的条件是反对称的，可传递的和完全性，因此在total ordering中，两个元素一定是有关系的，要么是a&lt;&gt;b或b&lt;&gt;a。</p>
-<h2 id="happens-before"><a href="#happens-before" class="headerlink" title="happens before"></a>happens before</h2><p>在分布式系统中，一个进程包含一系列的事件，对于同一进程内的事件，如果a happens before b，那么a发生在b之前。并且，假定收或发消息都是一个事件。</p>
-<p>happens before的定义如下(用-&gt;表示)</p>
-<ul>
-<li>如果a和b在同一进程中，并且a发生在b之前，那么a-&gt;b</li>
-<li>如果a是一个进程发消息的事件，b是另一个进程接收这条消息的事件，则a-&gt;b</li>
-<li>如果a-&gt;b且b-&gt;c，那么a-&gt;c。</li>
-<li>如果同时不满足a-&gt;b，且b-&gt;a，那么说a和b是并发的concurrent</li>
-</ul>
-<p><img src="http://auto.tancdn.com/v1/images/eyJpZCI6IkdEWlFGT0JHTVlIQTQ2UktIUjVJTU1IV1EyQjNTTjA3IiwidyI6OTEwLCJoIjo4NTIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNjg5MjA3Mzg1ODE0NDM4NjY3fQ?format=originalOFGHLERTH" alt="img1/1/clock/happens_before_lock_ordering.jpeg"><br>[图来自Time, Clocks, and the Ordering of Events in a Distributed System]</p>
+<h2 id="happens-before">happens before</h2>
+<p>在分布式系统中，一个进程包含一系列的事件，对于同一进程内的事件，如果a happens before b，那么a发生在b之前。并且，假定收或发消息都是一个事件。</p>
+<p>happens before的定义如下(用-&gt;表示) - 如果a和b在同一进程中，并且a发生在b之前，那么a-&gt;b - 如果a是一个进程发消息的事件，b是另一个进程接收这条消息的事件，则a-&gt;b - 如果a-&gt;b且b-&gt;c，那么a-&gt;c。 - 如果同时不满足a-&gt;b，且b-&gt;a，那么说a和b是并发的concurrent</p>
+<p><img src="http://auto.tancdn.com/v1/images/eyJpZCI6IkdEWlFGT0JHTVlIQTQ2UktIUjVJTU1IV1EyQjNTTjA3IiwidyI6OTEwLCJoIjo4NTIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNjg5MjA3Mzg1ODE0NDM4NjY3fQ?format=originalOFGHLERTH" alt="img1/1/clock/happens_before_lock_ordering.jpeg"> [图来自Time, Clocks, and the Ordering of Events in a Distributed System]</p>
 <p>以一个例子来说明happens before关系，如上图，垂直线上代表一个进程，从下往上，时间依次增加，水平的距离代表空间的隔离。原点代表一个事件，而曲线代表一条消息。</p>
 <p>从图中很容易地看出，如果一个事件a，能通过进程的线和消息线，到达b，那么a-&gt;b。</p>
 <p>在图中，p3和q4是并行的事件，因为，只有到了p4才能确定q4的发生，而q3也只能确定p1发生。</p>
-<h1 id="clock时钟"><a href="#clock时钟" class="headerlink" title="clock时钟"></a>clock时钟</h1><h2 id="物理时钟"><a href="#物理时钟" class="headerlink" title="物理时钟"></a>物理时钟</h2><h3 id="晶振和时钟偏移"><a href="#晶振和时钟偏移" class="headerlink" title="晶振和时钟偏移"></a>晶振和时钟偏移</h3><p>计算机有固定频率晶体的震荡次数，晶体的振荡周期决定了单机的时钟精度。   </p>
-<p>时钟频率也可能因为温度等外部因素导致时钟偏移，普通的石英晶体的漂移大约$10^{-6}$</p>
-<p>原子钟的漂移约为 $10^{-13}$<br>所以原子钟精度远远高于石英晶体。</p>
-<h3 id="分布式下带来的问题"><a href="#分布式下带来的问题" class="headerlink" title="分布式下带来的问题"></a>分布式下带来的问题</h3><p>不同机器上的物理时钟难以同步，导致无法区分在分布式系统中多个节点的事件时序。即使设置了 NTP 时间同步节点间也存在毫秒级别的偏差，因而分布式系统需要有另外的方法记录事件顺序关系。</p>
+<h1 id="clock时钟">clock时钟</h1>
+<h2 id="物理时钟">物理时钟</h2>
+<h3 id="晶振和时钟偏移">晶振和时钟偏移</h3>
+<p>计算机有固定频率晶体的震荡次数，晶体的振荡周期决定了单机的时钟精度。</p>
+<p>时钟频率也可能因为温度等外部因素导致时钟偏移，普通的石英晶体的漂移大约<span class="math inline">\(10^{-6}\)</span></p>
+<p>原子钟的漂移约为 <span class="math inline">\(10^{-13}\)</span> 所以原子钟精度远远高于石英晶体。</p>
+<h3 id="分布式下带来的问题">分布式下带来的问题</h3>
+<p>不同机器上的物理时钟难以同步，导致无法区分在分布式系统中多个节点的事件时序。即使设置了 NTP 时间同步节点间也存在毫秒级别的偏差，因而分布式系统需要有另外的方法记录事件顺序关系。</p>
 <p>1978年Lamport在《Time, Clocks and the Ordering of Events in a Distributed System》中提出了逻辑时钟的概念，来解决分布式系统中区分事件发生的时序问题。</p>
-<h2 id="逻辑时钟Logical-clocks"><a href="#逻辑时钟Logical-clocks" class="headerlink" title="逻辑时钟Logical clocks"></a>逻辑时钟Logical clocks</h2><p>逻辑时钟指的是分布式系统中用于区分事件的发生顺序的时间机制。                                                         从某种意义上讲，现实世界中的物理时间其实是逻辑时钟的特例。</p>
+<h2 id="逻辑时钟logical-clocks">逻辑时钟Logical clocks</h2>
+<p>逻辑时钟指的是分布式系统中用于区分事件的发生顺序的时间机制。 从某种意义上讲，现实世界中的物理时间其实是逻辑时钟的特例。</p>
 <p>Logical Clock解决的问题是找到一种方法，给分布式系统中所有时间定一个序，这个序能够正确地排列出具有因果关系的事件（注意，是不能保证并发事件的真实顺序的），使得分布式系统在逻辑上不会发生因果倒置的错误。因果一致性</p>
-<h3 id="Lamport-timestamps"><a href="#Lamport-timestamps" class="headerlink" title="Lamport timestamps"></a>Lamport timestamps</h3><h4 id="论文"><a href="#论文" class="headerlink" title="论文"></a>论文</h4><p><a href="https://amturing.acm.org/p558-lamport.pdf" target="_blank" rel="noopener">Time, Clocks, and the Ordering of Events in a Distributed System</a></p>
-<h4 id="Lamport-timestamps-1"><a href="#Lamport-timestamps-1" class="headerlink" title="Lamport timestamps"></a>Lamport timestamps</h4><p>Leslie Lamport 在1978年提出逻辑时钟的概念，并描述了一种逻辑时钟的表示方法，这个方法被称为Lamport时间戳(Lamport timestamps)。</p>
-<p>分布式系统中按是否存在节点交互可分为三类事件:</p>
-<ul>
-<li>发生在节点内部</li>
-<li>发送事件</li>
-<li>接收事件</li>
-</ul>
-<p>时钟的定义如下</p>
-<ul>
-<li>对于一个进程i，Ci(a)表示进程i中事件a的发生时间</li>
-<li>对于整个系统来讲，对于任意的事件b，其发生时间为C(b)，当b为进程j的事件时，则C(b) = Cj(b)<br>为了使得事件按照正确的排序，需要使得如果事件a发生在事件b之前，那么a发生的时间要小于b，如下</li>
-</ul>
+<h3 id="lamport-timestamps">Lamport timestamps</h3>
+<h4 id="论文">论文</h4>
+<p><a href="https://amturing.acm.org/p558-lamport.pdf" target="_blank" rel="noopener">Time, Clocks, and the Ordering of Events in a Distributed System</a></p>
+<h4 id="lamport-timestamps-1">Lamport timestamps</h4>
+<p>Leslie Lamport 在1978年提出逻辑时钟的概念，并描述了一种逻辑时钟的表示方法，这个方法被称为Lamport时间戳(Lamport timestamps)。</p>
+<p>分布式系统中按是否存在节点交互可分为三类事件: - 发生在节点内部 - 发送事件 - 接收事件</p>
+<p>时钟的定义如下 - 对于一个进程i，Ci(a)表示进程i中事件a的发生时间 - 对于整个系统来讲，对于任意的事件b，其发生时间为C(b)，当b为进程j的事件时，则C(b) = Cj(b) 为了使得事件按照正确的排序，需要使得如果事件a发生在事件b之前，那么a发生的时间要小于b，如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">for any events a, b</span><br><span class="line">if a-&gt;b then C(a) &lt; C(b)</span><br></pre></td></tr></table></figure>
-
-<p>根据关系-&gt;的定义，我们可以得出</p>
-<ul>
-<li>如果a和b都是进程i中的事件，且a发生在b之前，那么Ci(a) &lt; Ci(b)</li>
-<li>如果事件a发送消息给事件b，a属于进程i，b属于进程j，那么Ci(a) &lt; Cj(b)</li>
-</ul>
-<p><img src="http://auto.tancdn.com/v1/images/eyJpZCI6IjNISUo0WlRIUlVCTVIyQVhQSDRTQlFSU0hVSDZQRDA2IiwidyI6ODkyLCJoIjo5MjgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozOTc3NTc5ODgwMjAyNTgwODkxfQ" alt="img1/1/clock/happens_before.png"></p>
-<p>为了让系统满足上述条件，在实现中，需要满足以下原则</p>
-<ul>
-<li>对于每个进程，相邻的事件的时钟要增加1</li>
-<li>(a) 如果事件a是进程i发送消息m的事件，发送时带时间戳Tm = Ci(a)，(b)事件b是进程j接受消息m的事件，那么事件b的取值为max(进程b的当前时钟，Tm+1)</li>
-</ul>
+<p>根据关系-&gt;的定义，我们可以得出 - 如果a和b都是进程i中的事件，且a发生在b之前，那么Ci(a) &lt; Ci(b) - 如果事件a发送消息给事件b，a属于进程i，b属于进程j，那么Ci(a) &lt; Cj(b)</p>
+<figure>
+<img src="http://auto.tancdn.com/v1/images/eyJpZCI6IjNISUo0WlRIUlVCTVIyQVhQSDRTQlFSU0hVSDZQRDA2IiwidyI6ODkyLCJoIjo5MjgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozOTc3NTc5ODgwMjAyNTgwODkxfQ" alt="img1/1/clock/happens_before.png"><figcaption aria-hidden="true">img1/1/clock/happens_before.png</figcaption>
+</figure>
+<p>为了让系统满足上述条件，在实现中，需要满足以下原则 - 对于每个进程，相邻的事件的时钟要增加1 - (a) 如果事件a是进程i发送消息m的事件，发送时带时间戳Tm = Ci(a)，(b)事件b是进程j接受消息m的事件，那么事件b的取值为max(进程b的当前时钟，Tm+1)</p>
 <p>假设有事件a、b，C(a)、C(b)分别表示事件a、b对应的Lamport时间戳，如果a-&gt;b,则C(a) &lt; C(b)，a发生在b之前(happened before)。</p>
-<p>所以Lamport timestamps原理如下：</p>
-<ul>
-<li>每个事件对应一个Lamport时间戳，初始值为0</li>
-<li>如果事件在节点内发生，时间戳加1</li>
-<li>如果事件属于发送事件，时间戳加1并在消息中带上该时间戳</li>
-<li>如果事件属于接收事件，时间戳 = Max(本地时间戳，消息中的时间戳) + 1</li>
-</ul>
+<p>所以Lamport timestamps原理如下： - 每个事件对应一个Lamport时间戳，初始值为0 - 如果事件在节点内发生，时间戳加1 - 如果事件属于发送事件，时间戳加1并在消息中带上该时间戳 - 如果事件属于接收事件，时间戳 = Max(本地时间戳，消息中的时间戳) + 1</p>
 <blockquote>
 <p>通过该定义，事件集中Lamport时间戳不等的事件可进行比较，我们获得事件的偏序关系(partial order)。</p>
 </blockquote>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkdJQzdPQkFZVzVWRTJLRjM3UDNOUjZXVUgyVFhVRzA3IiwidyI6MTA1OCwiaCI6NTg2LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MTQxMTE2OTM2ODg1MDYxNTg3NDN9?format=originalOFGHLERTH" alt="img1/1/clock/logical_time.png"></p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkdJQzdPQkFZVzVWRTJLRjM3UDNOUjZXVUgyVFhVRzA3IiwidyI6MTA1OCwiaCI6NTg2LCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MTQxMTE2OTM2ODg1MDYxNTg3NDN9?format=originalOFGHLERTH" alt="img1/1/clock/logical_time.png"><figcaption aria-hidden="true">img1/1/clock/logical_time.png</figcaption>
+</figure>
 <p>上图更形象的解释了事件之间的关系。</p>
-<p>以B4事件为基准：</p>
-<ul>
-<li>B4左边深灰色的区域的事件，都发生在B4前，和B4具有因果关系，这些事件属于与B4因果关系中的因(cause)</li>
-<li>B4右边的深红色区域的事件，都发生在B4后，和B4具有因果关系，这些事件属于与B4因果关系中的果(effect)</li>
-<li>B4上下的白色区域是跟B4无关的事件，可以认为是并发关系(concurrent)</li>
-<li>在浅灰色和浅红色区域中的事件，C2、A3两个事件与B4是并行关系，根据Lamport timestamps的定义，将他们判定为与B4具前后关系。（所以Lamport timestamps并不能严格的表示并行关系）</li>
-</ul>
-<h4 id="Lamport-timestamps与偏序关系"><a href="#Lamport-timestamps与偏序关系" class="headerlink" title="Lamport timestamps与偏序关系"></a>Lamport timestamps与偏序关系</h4><p>Lamport timestamps只保证因果关系（偏序）的正确性，不保证绝对时序的正确性。</p>
-<h4 id="Lamport-logical-clock"><a href="#Lamport-logical-clock" class="headerlink" title="Lamport logical clock"></a>Lamport logical clock</h4><p>由于Lamport timestamps只能得到偏序关系，如果要得到全序关系，就需要给Ci(a) = Cj(b)的事件定一个先后顺序。</p>
-<p>total order的事件关系=&gt;定义如下：<br>如果事件a发生在进程Pi，事件b发生在进程Pj，那么当满足下列两者条件之一时，a=&gt;b</p>
-<ul>
-<li>Ci(a) &lt; Cj(b)</li>
-<li>Ci(a) = Cj(b) 且 Pi &lt; Pj</li>
-</ul>
+<p>以B4事件为基准： - B4左边深灰色的区域的事件，都发生在B4前，和B4具有因果关系，这些事件属于与B4因果关系中的因(cause) - B4右边的深红色区域的事件，都发生在B4后，和B4具有因果关系，这些事件属于与B4因果关系中的果(effect) - B4上下的白色区域是跟B4无关的事件，可以认为是并发关系(concurrent) - 在浅灰色和浅红色区域中的事件，C2、A3两个事件与B4是并行关系，根据Lamport timestamps的定义，将他们判定为与B4具前后关系。（所以Lamport timestamps并不能严格的表示并行关系）</p>
+<h4 id="lamport-timestamps与偏序关系">Lamport timestamps与偏序关系</h4>
+<p>Lamport timestamps只保证因果关系（偏序）的正确性，不保证绝对时序的正确性。</p>
+<h4 id="lamport-logical-clock">Lamport logical clock</h4>
+<p>由于Lamport timestamps只能得到偏序关系，如果要得到全序关系，就需要给Ci(a) = Cj(b)的事件定一个先后顺序。</p>
+<p>total order的事件关系=&gt;定义如下：<br>
+如果事件a发生在进程Pi，事件b发生在进程Pj，那么当满足下列两者条件之一时，a=&gt;b - Ci(a) &lt; Cj(b) - Ci(a) = Cj(b) 且 Pi &lt; Pj</p>
 <p>根据以上条件，对于任意的两个事件，都能判断出它们之间的关系，因此是total ordering的。</p>
 <p>当Lamport timestamp一致时，通过义Pi &lt; Pj来定义顺序，确保分布式场景下各个进程间发生的事件的全序定义。至于Pj &lt; Pj：可采用不同的方式，Lamport Logical Clock提到的 arbitrary total ordering。</p>
-<h3 id="vector-clock"><a href="#vector-clock" class="headerlink" title="vector clock"></a>vector clock</h3><p>Lamport timestamp得到的是全序关系，但无法严格表示对于没有因果关系、存在同时发生关系(concurrent)的事件。</p>
+<h3 id="vector-clock">vector clock</h3>
+<p>Lamport timestamp得到的是全序关系，但无法严格表示对于没有因果关系、存在同时发生关系(concurrent)的事件。</p>
 <p>Vector clock是在Lamport timestamp基础上改进的一种逻辑时钟方法，它构不但记录本节点的Lamport timestamp，同时也记录了其他节点的Lamport timestamp。</p>
-<p>原理如下:</p>
-<ul>
-<li>本地vector clock的clock数组中每一个逻辑时间(clock)对应一个进程的clock</li>
-<li>初始化vector clock中每一个逻辑时间为0；</li>
-<li>每一次处理内完内部事件，将vector clock中自己的逻辑时间戳+1；</li>
-<li>每发送一个消息的时候，将vector clock中自己的逻辑时间+1，且将其和消息一起发送出去</li>
-<li>每接收到一个消息的时候，需要将本地的vector clock中自己的逻辑时间戳+1，且将自己vector clock中的逻辑时间和消息中携带的进行比较，取最大的更新本地vector clock中的逻辑时间。</li>
-</ul>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllEM0pEVVNXVUlNTENJQ0lNSEU3S1ZTNVdIR0c3UjA2IiwidyI6MTU1OCwiaCI6MTAxMiwiZCI6MCwibXQiOiJpbWFnZS9qcGVnIiwiZGgiOjEwMTQzNzQ2MzEwOTk2MTAxMjIzfQ?format=originalOFGHLERTH" alt="img1/1/clock/1000px-Vector_Clock.svg.png"><br><a href="https://en.wikipedia.org/wiki/Vector_clock" target="_blank" rel="noopener">图来源于wikipedia</a></p>
-<p>vector clock判定并发关系：</p>
-<ul>
-<li>事件i、事件j对应的vector clock中，每一个进程Pk的逻辑时间戳都满足Vi[Pk]&lt;Vj[Pk]时，我们称事件i happen before事件j；</li>
-<li>vector clock中，存在P1、P2，使得Vi[P1]&lt;Vj[P1]，Vi[P2]&gt;Vj[P2]，我们称事件i和事件j是并发关系(没有因果关系)；</li>
-</ul>
-<p>和之前lamport timestamp的一样，以B4事件为基准(vector clock为[A:2,B:4,C:1])，根据vector clock的判定，可以判断出</p>
-<ul>
-<li>灰色区域的事件happens before B4事件，B4事件happens before红色区域的事件</li>
-<li>白色区域与B4事件没有因果关系。</li>
-</ul>
-<p>特性：</p>
-<ul>
-<li>vector clock不需要在节点之间同步时钟，不需要在所有节点上维护一段数据的版本数；</li>
-<li>缺点是时钟值的大小随着节点增多和时间不断增长</li>
-</ul>
-<h3 id="version-vector"><a href="#version-vector" class="headerlink" title="version vector"></a>version vector</h3><p>分布式系统多个副本被同时更新时，会导致副本之间数据的不一致。version vector用于来发现这些不一致的冲突。</p>
+<p>原理如下: - 本地vector clock的clock数组中每一个逻辑时间(clock)对应一个进程的clock - 初始化vector clock中每一个逻辑时间为0； - 每一次处理内完内部事件，将vector clock中自己的逻辑时间戳+1； - 每发送一个消息的时候，将vector clock中自己的逻辑时间+1，且将其和消息一起发送出去 - 每接收到一个消息的时候，需要将本地的vector clock中自己的逻辑时间戳+1，且将自己vector clock中的逻辑时间和消息中携带的进行比较，取最大的更新本地vector clock中的逻辑时间。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllEM0pEVVNXVUlNTENJQ0lNSEU3S1ZTNVdIR0c3UjA2IiwidyI6MTU1OCwiaCI6MTAxMiwiZCI6MCwibXQiOiJpbWFnZS9qcGVnIiwiZGgiOjEwMTQzNzQ2MzEwOTk2MTAxMjIzfQ?format=originalOFGHLERTH" alt="img1/1/clock/1000px-Vector_Clock.svg.png"> <a href="https://en.wikipedia.org/wiki/Vector_clock" target="_blank" rel="noopener">图来源于wikipedia</a></p>
+<p>vector clock判定并发关系： - 事件i、事件j对应的vector clock中，每一个进程Pk的逻辑时间戳都满足Vi[Pk]&lt;Vj[Pk]时，我们称事件i happen before事件j； - vector clock中，存在P1、P2，使得Vi[P1]&lt;Vj[P1]，Vi[P2]&gt;Vj[P2]，我们称事件i和事件j是并发关系(没有因果关系)；</p>
+<p>和之前lamport timestamp的一样，以B4事件为基准(vector clock为[A:2,B:4,C:1])，根据vector clock的判定，可以判断出 - 灰色区域的事件happens before B4事件，B4事件happens before红色区域的事件 - 白色区域与B4事件没有因果关系。</p>
+<p>特性： - vector clock不需要在节点之间同步时钟，不需要在所有节点上维护一段数据的版本数； - 缺点是时钟值的大小随着节点增多和时间不断增长</p>
+<h3 id="version-vector">version vector</h3>
+<p>分布式系统多个副本被同时更新时，会导致副本之间数据的不一致。version vector用于来发现这些不一致的冲突。</p>
 <p>version vector只能发现冲突，无法解决冲突；当然也可以通过再添加一个维度信息timestamp，发生冲突时进行比较，但是又回到了物理时钟不同步的问题。</p>
-<p>下图展示了数据由不同副本处理后导致的不同版本冲突。<br>D5时发现了数据的冲突，这时会将不同版本数据都存储下来，一般由客户端来解决冲突。</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllRUlhXR1JWR09SWDJFVFVFTDZGR0hWSllVSUs2SDA2IiwidyI6NzIwLCJoIjo3NjAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo4MTI0NzE0NTA4MjAyNTY5ODI0fQ?format=originalOFGHLERTH" alt="image"></p>
-<p><strong>version vector与vector clock的差异</strong></p>
-<ul>
-<li>vector clocks 使用 receive和send 方法来更新clock,而version vector使用sync方法来更新。</li>
-<li>vector clocks是给事件定序的，确定事件的因果关系；而version vector是确定同一个数据不同版本的因果关系。</li>
-</ul>
-<h1 id="分布式与时钟"><a href="#分布式与时钟" class="headerlink" title="分布式与时钟"></a>分布式与时钟</h1><p>分布式系统中，每个节点的物理时钟是不同步的，都有一定的差异。    </p>
+<p>下图展示了数据由不同副本处理后导致的不同版本冲突。<br>
+D5时发现了数据的冲突，这时会将不同版本数据都存储下来，一般由客户端来解决冲突。</p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllRUlhXR1JWR09SWDJFVFVFTDZGR0hWSllVSUs2SDA2IiwidyI6NzIwLCJoIjo3NjAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo4MTI0NzE0NTA4MjAyNTY5ODI0fQ?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
+<p><strong>version vector与vector clock的差异</strong> - vector clocks 使用 receive和send 方法来更新clock,而version vector使用sync方法来更新。 - vector clocks是给事件定序的，确定事件的因果关系；而version vector是确定同一个数据不同版本的因果关系。</p>
+<h1 id="分布式与时钟">分布式与时钟</h1>
+<p>分布式系统中，每个节点的物理时钟是不同步的，都有一定的差异。</p>
 <p>这样就带来了一些分布式系统实现的难题，如基于MVCC实现的事务，基于MVCC实现事务会要求版本之间能判断先后顺序，只有确定先后才知道应该用哪一个版本的数据，确定先后顺序就涉及到时间，而不同机器之间的本地时钟是无法保证一致的，所以这就需要确保时钟的同步。</p>
-<p>而通常解决方案有两种：</p>
-<ul>
-<li>中心化的时钟方案，如Timestamp oracle(TSO)</li>
-<li>无中心化的时钟方案，如google True Time，Hybrid Logic Time</li>
-</ul>
-<h2 id="Timestamp-oracle"><a href="#Timestamp-oracle" class="headerlink" title="Timestamp oracle"></a>Timestamp oracle</h2><p>如果我们整个系统不复杂，而且没有跨全球的需求，这时用一台中心授时服务就可以了。   </p>
+<p>而通常解决方案有两种： - 中心化的时钟方案，如Timestamp oracle(TSO) - 无中心化的时钟方案，如google True Time，Hybrid Logic Time</p>
+<h2 id="timestamp-oracle">Timestamp oracle</h2>
+<p>如果我们整个系统不复杂，而且没有跨全球的需求，这时用一台中心授时服务就可以了。</p>
 <p>如TiDB使用的就是TSO方案，tipb作为一个TSO集群，来提供授时服务。</p>
-<p>使用TSO的好处在于因为只有一个中心授时，所以我们一定能确定所有时间的时间，但TSO需要关注几个问题：</p>
+<p>使用TSO的好处在于因为只有一个中心授时，所以我们一定能确定所有时间的时间，但TSO需要关注几个问题： - 网络延时：因为所有的事件都需要从TSO获取时间，所以TSO只适合小集群部署，不能是那种全球级别的数据库 - 性能：每个事件都需要从TSO获取时间，所以TSO需要非常高的性能 - 容错：TSO是一个单点，需要考虑节点的failover</p>
+<h2 id="true-time">True Time</h2>
+<p>由于节点间NTP是有偏差的，且可能出现时间回退的情况，所以NTP无法准确的判定事件的全序关系。在Google Spanner里面，通过引入True Time来解决了分布式时间问题。</p>
+<h3 id="true-time实现">True Time实现</h3>
+<p>Spanner通过使用GPS + 原子钟atomic clock来对集群的机器时间进行校对，保证了集群机器的时间戳差距不会超过一个上限值(ε)。</p>
+<p>用两种技术来处理，是因为导致这两种技术的失败的原因是不同的。 - GPS会有一个天线，电波干扰会导致其失灵。原子钟很稳定。 - 当GPS失灵的时候，原子钟仍然能保证在相当长的时间内，不会出现偏差。</p>
+<h3 id="api">API</h3>
 <ul>
-<li>网络延时：因为所有的事件都需要从TSO获取时间，所以TSO只适合小集群部署，不能是那种全球级别的数据库</li>
-<li>性能：每个事件都需要从TSO获取时间，所以TSO需要非常高的性能</li>
-<li>容错：TSO是一个单点，需要考虑节点的failover</li>
-</ul>
-<h2 id="True-Time"><a href="#True-Time" class="headerlink" title="True Time"></a>True Time</h2><p>由于节点间NTP是有偏差的，且可能出现时间回退的情况，所以NTP无法准确的判定事件的全序关系。在Google Spanner里面，通过引入True Time来解决了分布式时间问题。</p>
-<h3 id="True-Time实现"><a href="#True-Time实现" class="headerlink" title="True Time实现"></a>True Time实现</h3><p>Spanner通过使用GPS + 原子钟atomic clock来对集群的机器时间进行校对，保证了集群机器的时间戳差距不会超过一个上限值(ε)。</p>
-<p>用两种技术来处理，是因为导致这两种技术的失败的原因是不同的。</p>
-<ul>
-<li>GPS会有一个天线，电波干扰会导致其失灵。原子钟很稳定。</li>
-<li>当GPS失灵的时候，原子钟仍然能保证在相当长的时间内，不会出现偏差。</li>
-</ul>
-<h3 id="API"><a href="#API" class="headerlink" title="API"></a>API</h3><ul>
 <li>TT.now() : 返回一个当前时间，其位于范围区间[earliest,latest]</li>
 <li>TT.after(t) : 当前时间是否在t之后</li>
 <li>TT.before(t) : 当前时间是否在t之前</li>
 </ul>
-<p>虽然spanner引入了TrueTime可以得到全球范围的时序一致性，但由于TrueTime返回的时间仍然有一定的偏差，如果要给两个事件定序，就需要等待2个偏差的时间间隔，来确保其先后顺序。   </p>
-<ul>
-<li>事件a：[Tai, Taj], Taj-Tai=ε</li>
-<li>事件b：[Tbi, Tbj], Tbj-Tbi=ε</li>
-<li>所以要确定b&gt;a, 那么就要确保Tbi &gt; Taj, 就需要在事件b进行等待，以确保：<code>事件b时间 - 事件a时间 &gt; 2ε</code></li>
-</ul>
-<h2 id="Hybrid-logical-clock"><a href="#Hybrid-logical-clock" class="headerlink" title="Hybrid logical clock"></a>Hybrid logical clock</h2><h3 id="HLC"><a href="#HLC" class="headerlink" title="HLC"></a>HLC</h3><p><a href="https://cse.buffalo.edu/tech-reports/2014-04.pdf" target="_blank" rel="noopener">Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases</a></p>
+<p>虽然spanner引入了TrueTime可以得到全球范围的时序一致性，但由于TrueTime返回的时间仍然有一定的偏差，如果要给两个事件定序，就需要等待2个偏差的时间间隔，来确保其先后顺序。<br>
+- 事件a：[Tai, Taj], Taj-Tai=ε - 事件b：[Tbi, Tbj], Tbj-Tbi=ε - 所以要确定b&gt;a, 那么就要确保Tbi &gt; Taj, 就需要在事件b进行等待，以确保：<code>事件b时间 - 事件a时间 &gt; 2ε</code></p>
+<h2 id="hybrid-logical-clock">Hybrid logical clock</h2>
+<h3 id="hlc">HLC</h3>
+<p><a href="https://cse.buffalo.edu/tech-reports/2014-04.pdf" target="_blank" rel="noopener">Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases</a></p>
 <p>TrueTime 需要硬件的支持，所以有一定的成本，而HLC无需硬件支持也能解决分布式下时间问题。</p>
 <p>HLC同时使用了物理时钟和逻辑时钟（physical clock + logical clock），能够保证单点的时间发生器是单调递增的，同时能够尽量控制不同节点之间的时钟偏差在规定的偏差范围内。</p>
 <p>判断两个事件的先后顺序：先判断物理时间，再判断逻辑时间。</p>
-<h4 id="HLC的算法"><a href="#HLC的算法" class="headerlink" title="HLC的算法"></a>HLC的算法</h4><p>l.j维护的是节点j当前已知的最大的物理时间(wall time)，c.j则是当前的逻辑时间。 </p>
+<h4 id="hlc的算法">HLC的算法</h4>
+<p>l.j维护的是节点j当前已知的最大的物理时间(wall time)，c.j则是当前的逻辑时间。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">// 在节点j上面：初始化: l.j = 0，c.j = 0。</span><br><span class="line">initially l.j :=0; c.j := 0</span><br><span class="line"></span><br><span class="line">// 本地事件或者发送消息时，</span><br><span class="line">// 如果本地时钟pt大于当前的混合逻辑时钟的l，</span><br><span class="line">// 则将l更新成本地时钟，将c清零。</span><br><span class="line">// 否则，l保持不变，将c加1。</span><br><span class="line">Send or local event</span><br><span class="line">&#123;</span><br><span class="line">    l&apos;.j := l.j;</span><br><span class="line">    l.j := max(l&apos;.j, pt.j);    // 本地物理时间pt</span><br><span class="line">    if (l.j = l&apos;.j) then </span><br><span class="line">        c.j := c.j+1</span><br><span class="line">    else </span><br><span class="line">        c.j := 0;</span><br><span class="line">    Timestamp with l.j, c.j</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 收到消息时</span><br><span class="line">// l在 当前的逻辑时钟的l、机器的本地时钟pt、收到消息里面带的l，三者中取最大的。</span><br><span class="line">// 如果l部分是更新为本地时钟了，则将c清零。否则，c取较大的那个l对应到的c加1。</span><br><span class="line">Receive event of message m</span><br><span class="line">&#123;</span><br><span class="line">    l&apos;.j := l.j;</span><br><span class="line">    l.j := max(l&apos;.j, l.m, pt.j);</span><br><span class="line">    if (l.j = l&apos;.j = l.m) then </span><br><span class="line">        c.j := max(c.j, c.m) + 1</span><br><span class="line">    elseif (l.j=l&apos;.j) then </span><br><span class="line">        c.j := c.j + 1</span><br><span class="line">    elseif (l.j=l.m) then </span><br><span class="line">        c.j := c.m + 1</span><br><span class="line">    else </span><br><span class="line">        c.j := 0</span><br><span class="line">    Timestamp with l.j, c.j</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h4><p>HLC算法保证了HLC时间有如下特性：</p>
-<ul>
-<li>事件e发生在事件f之前，那么事件e的HLC时间一定小于事件f的HLC时间：(l.e, c.e) &lt; (l.f, c.f)</li>
-<li>本地WallTime大于等于本地物理时间(l.e ≥ pt.e)：HLC时间总是不断递增，不会随着物理时间发生回退。</li>
-<li>对事件e，l.e是事件e能感知的到的最大物理时间值：如果l.e &gt; pt.e，那么一定存在着一个发生在e之前的事件g，有pt.g=l.e。简单来说是如果出现l.e &gt; pt.e肯定是因为有一个HLC时间更大的的节点把当前节点的HLC时间往后推了。</li>
-<li>WallTime和物理时钟的偏差是有界的(ε ≥ |pt.e - l.e| )：因为节点之间通过NTP服务校时，那么节点之间的物理时钟偏差一定小于某个值ε。那么对于任一事件b和e，如果b hb e，那么事件b的物理时间pt.b一定满足pt.e + ε ≥ pt.b。结合特性3存在一个事件g满足，l.e = pt.g。那么 pt.e + ε ≥ l.e=pt.g &gt; pt.e。</li>
-</ul>
-<h3 id="开源实现"><a href="#开源实现" class="headerlink" title="开源实现"></a>开源实现</h3><p>CockroachDB采用基于NTP时钟同步的HLC去中心化方案。</p>
-<h4 id="时钟同步"><a href="#时钟同步" class="headerlink" title="时钟同步"></a>时钟同步</h4><p>所有节点间的RPC消息都会把时间戳带入到消息中，接收到消息的节点会通过消息中的时间戳更新自己的时间, 从而达到节点间时间同步的效果。</p>
-<h4 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h4><p>参考：<a href="https://github.com/cockroachdb/cockroach/blob/v1.1.3/pkg/util/hlc/hlc.go" target="_blank" rel="noopener">https://github.com/cockroachdb/cockroach/blob/v1.1.3/pkg/util/hlc/hlc.go</a></p>
-<p><strong>HLC定义</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// Timestamp represents a state of the hybrid logical clock.</span><br><span class="line">type Timestamp struct &#123;</span><br><span class="line">	// Holds a wall time, typically a unix epoch time</span><br><span class="line">	// expressed in nanoseconds.</span><br><span class="line">	WallTime int64 `protobuf:&quot;varint,1,opt,name=wall_time,json=wallTime&quot; json:&quot;wall_time&quot;`</span><br><span class="line">	// The logical component captures causality for events whose wall</span><br><span class="line">	// times are equal. It is effectively bounded by (maximum clock</span><br><span class="line">	// skew)/(minimal ns between events) and nearly impossible to</span><br><span class="line">	// overflow.</span><br><span class="line">	Logical int32 `protobuf:&quot;varint,2,opt,name=logical&quot; json:&quot;logical&quot;`</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<h4 id="特性">特性</h4>
+<p>HLC算法保证了HLC时间有如下特性： - 事件e发生在事件f之前，那么事件e的HLC时间一定小于事件f的HLC时间：(l.e, c.e) &lt; (l.f, c.f) - 本地WallTime大于等于本地物理时间(l.e ≥ pt.e)：HLC时间总是不断递增，不会随着物理时间发生回退。 - 对事件e，l.e是事件e能感知的到的最大物理时间值：如果l.e &gt; pt.e，那么一定存在着一个发生在e之前的事件g，有pt.g=l.e。简单来说是如果出现l.e &gt; pt.e肯定是因为有一个HLC时间更大的的节点把当前节点的HLC时间往后推了。 - WallTime和物理时钟的偏差是有界的(ε ≥ |pt.e - l.e| )：因为节点之间通过NTP服务校时，那么节点之间的物理时钟偏差一定小于某个值ε。那么对于任一事件b和e，如果b hb e，那么事件b的物理时间pt.b一定满足pt.e + ε ≥ pt.b。结合特性3存在一个事件g满足，l.e = pt.g。那么 pt.e + ε ≥ l.e=pt.g &gt; pt.e。</p>
+<h3 id="开源实现">开源实现</h3>
+<p>CockroachDB采用基于NTP时钟同步的HLC去中心化方案。</p>
+<h4 id="时钟同步">时钟同步</h4>
+<p>所有节点间的RPC消息都会把时间戳带入到消息中，接收到消息的节点会通过消息中的时间戳更新自己的时间, 从而达到节点间时间同步的效果。</p>
+<h4 id="代码分析">代码分析</h4>
+<p>参考：https://github.com/cockroachdb/cockroach/blob/v1.1.3/pkg/util/hlc/hlc.go</p>
+<p><strong>HLC定义</strong> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// Timestamp represents a state of the hybrid logical clock.</span><br><span class="line">type Timestamp struct &#123;</span><br><span class="line">	// Holds a wall time, typically a unix epoch time</span><br><span class="line">	// expressed in nanoseconds.</span><br><span class="line">	WallTime int64 `protobuf:&quot;varint,1,opt,name=wall_time,json=wallTime&quot; json:&quot;wall_time&quot;`</span><br><span class="line">	// The logical component captures causality for events whose wall</span><br><span class="line">	// times are equal. It is effectively bounded by (maximum clock</span><br><span class="line">	// skew)/(minimal ns between events) and nearly impossible to</span><br><span class="line">	// overflow.</span><br><span class="line">	Logical int32 `protobuf:&quot;varint,2,opt,name=logical&quot; json:&quot;logical&quot;`</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <ul>
 <li>WallTime：本地已知物理时钟</li>
 <li>Logical：逻辑时钟</li>
 <li>Timestamp：HLC，单调递增</li>
 </ul>
-<p><strong>获取物理时钟</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">// PhysicalNow returns the local wall time. It corresponds to the physicalClock</span><br><span class="line">// provided at instantiation. For a timestamp value, use Now() instead.</span><br><span class="line">func (c *Clock) PhysicalNow() int64 &#123;</span><br><span class="line">	c.mu.Lock()</span><br><span class="line">	defer c.mu.Unlock()</span><br><span class="line">	return c.getPhysicalClockLocked()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// getPhysicalClockLocked returns the current physical clock and checks for</span><br><span class="line">// time jumps.</span><br><span class="line">func (c *Clock) getPhysicalClockLocked() int64 &#123;</span><br><span class="line">	// physicalClock 就是 UnixNano</span><br><span class="line">	newTime := c.physicalClock()</span><br><span class="line"></span><br><span class="line">	if c.mu.lastPhysicalTime != 0 &#123;</span><br><span class="line">		interval := c.mu.lastPhysicalTime - newTime</span><br><span class="line">		// 检查时钟是否回退</span><br><span class="line">		if interval &gt; int64(c.maxOffset/10) &#123;</span><br><span class="line">			c.mu.monotonicityErrorsCount++</span><br><span class="line">			log.Warningf(context.TODO(), &quot;backward time jump detected (%f seconds)&quot;, float64(-interval)/1e9)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.mu.lastPhysicalTime = newTime</span><br><span class="line">	return newTime</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// UnixNano returns the local machine&apos;s physical nanosecond</span><br><span class="line">// unix epoch timestamp as a convenience to create a HLC via</span><br><span class="line">// c := hlc.NewClock(hlc.UnixNano, ...).</span><br><span class="line">func UnixNano() int64 &#123;</span><br><span class="line">	return timeutil.Now().UnixNano()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<p><strong>获取物理时钟</strong> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">// PhysicalNow returns the local wall time. It corresponds to the physicalClock</span><br><span class="line">// provided at instantiation. For a timestamp value, use Now() instead.</span><br><span class="line">func (c *Clock) PhysicalNow() int64 &#123;</span><br><span class="line">	c.mu.Lock()</span><br><span class="line">	defer c.mu.Unlock()</span><br><span class="line">	return c.getPhysicalClockLocked()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// getPhysicalClockLocked returns the current physical clock and checks for</span><br><span class="line">// time jumps.</span><br><span class="line">func (c *Clock) getPhysicalClockLocked() int64 &#123;</span><br><span class="line">	// physicalClock 就是 UnixNano</span><br><span class="line">	newTime := c.physicalClock()</span><br><span class="line"></span><br><span class="line">	if c.mu.lastPhysicalTime != 0 &#123;</span><br><span class="line">		interval := c.mu.lastPhysicalTime - newTime</span><br><span class="line">		// 检查时钟是否回退</span><br><span class="line">		if interval &gt; int64(c.maxOffset/10) &#123;</span><br><span class="line">			c.mu.monotonicityErrorsCount++</span><br><span class="line">			log.Warningf(context.TODO(), &quot;backward time jump detected (%f seconds)&quot;, float64(-interval)/1e9)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.mu.lastPhysicalTime = newTime</span><br><span class="line">	return newTime</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// UnixNano returns the local machine&apos;s physical nanosecond</span><br><span class="line">// unix epoch timestamp as a convenience to create a HLC via</span><br><span class="line">// c := hlc.NewClock(hlc.UnixNano, ...).</span><br><span class="line">func UnixNano() int64 &#123;</span><br><span class="line">	return timeutil.Now().UnixNano()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p><strong>获取当前HLC时钟</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// Now returns a timestamp associated with an event from</span><br><span class="line">// the local machine that may be sent to other members</span><br><span class="line">// of the distributed network. This is the counterpart</span><br><span class="line">// of Update, which is passed a timestamp received from</span><br><span class="line">// another member of the distributed network.</span><br><span class="line">func (c *Clock) Now() Timestamp &#123;</span><br><span class="line">	c.mu.Lock()</span><br><span class="line">	defer c.mu.Unlock()</span><br><span class="line">	if physicalClock := c.getPhysicalClockLocked(); c.mu.timestamp.WallTime &gt;= physicalClock &#123;</span><br><span class="line">		// The wall time is ahead, so the logical clock ticks.</span><br><span class="line">		c.mu.timestamp.Logical++</span><br><span class="line">	&#125; else &#123;</span><br><span class="line">		// Use the physical clock, and reset the logical one.</span><br><span class="line">		c.mu.timestamp.WallTime = physicalClock</span><br><span class="line">		c.mu.timestamp.Logical = 0</span><br><span class="line">	&#125;</span><br><span class="line">	return c.mu.timestamp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <ul>
 <li>如果当前物理时钟小于WallTime，则将逻辑时钟+1</li>
 <li>如果当前物理时钟大于WallTime，则更新WallTime为当前物理时钟，且将逻辑时钟设置为0</li>
@@ -642,8 +560,8 @@
 <p><strong>节点时钟同步</strong></p>
 <p>节点之间通过在RPC请求中携带HLC时间来进行时钟同步。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">// sendSingleRange gathers and rearranges the replicas, and makes an RPC call.</span><br><span class="line">func (ds *DistSender) sendSingleRange(</span><br><span class="line">	ctx context.Context, ba roachpb.BatchRequest, desc *roachpb.RangeDescriptor,</span><br><span class="line">) (*roachpb.BatchResponse, *roachpb.Error) &#123;</span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">	br, err := ds.sendRPC(ctx, desc.RangeID, replicas, ba)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.ErrEvent(ctx, err.Error())</span><br><span class="line">		return nil, roachpb.NewError(err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// If the reply contains a timestamp, update the local HLC with it.</span><br><span class="line">	if br.Error != nil &amp;&amp; br.Error.Now != (hlc.Timestamp&#123;&#125;) &#123;</span><br><span class="line">		ds.clock.Update(br.Error.Now)</span><br><span class="line">	&#125; else if br.Now != (hlc.Timestamp&#123;&#125;) &#123;</span><br><span class="line">		ds.clock.Update(br.Now)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	......</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// Update takes a hybrid timestamp, usually originating from</span><br><span class="line">// an event received from another member of a distributed</span><br><span class="line">// system. The clock is updated and the hybrid timestamp</span><br><span class="line">// associated to the receipt of the event returned.</span><br><span class="line">// An error may only occur if offset checking is active and</span><br><span class="line">// the remote timestamp was rejected due to clock offset,</span><br><span class="line">// in which case the timestamp of the clock will not have been</span><br><span class="line">// altered.</span><br><span class="line">// To timestamp events of local origin, use Now instead.</span><br><span class="line">func (c *Clock) Update(rt Timestamp) Timestamp &#123;</span><br><span class="line">	c.mu.Lock()</span><br><span class="line">	defer c.mu.Unlock()</span><br><span class="line">	</span><br><span class="line">	// 如果本地物理时间pt</span><br><span class="line">	physicalClock := c.getPhysicalClockLocked()</span><br><span class="line"></span><br><span class="line">    // 大于本地WallTime且大于rt.WallTime：</span><br><span class="line">    //      更新本地WallTime=pt，且logical=0</span><br><span class="line">	if physicalClock &gt; c.mu.timestamp.WallTime &amp;&amp; physicalClock &gt; rt.WallTime &#123;</span><br><span class="line">		// Our physical clock is ahead of both wall times. It is used</span><br><span class="line">		// as the new wall time and the logical clock is reset.</span><br><span class="line">		c.mu.timestamp.WallTime = physicalClock</span><br><span class="line">		c.mu.timestamp.Logical = 0</span><br><span class="line">		return c.mu.timestamp</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// In the remaining cases, our physical clock plays no role</span><br><span class="line">	// as it is behind the local or remote wall times. Instead,</span><br><span class="line">	// the logical clock comes into play.</span><br><span class="line">	</span><br><span class="line">	// 如果rt.WallTime &gt; 本地WallTime：</span><br><span class="line">	//   检查rt.WallTime与pt是否大于时钟偏差；</span><br><span class="line">	//   本地WallTime=rt.WallTime，logical++</span><br><span class="line">	if rt.WallTime &gt; c.mu.timestamp.WallTime &#123;</span><br><span class="line">		offset := time.Duration(rt.WallTime-physicalClock) * time.Nanosecond</span><br><span class="line">		if c.maxOffset &gt; 0 &amp;&amp; offset &gt; c.maxOffset &#123;</span><br><span class="line">			log.Warningf(context.TODO(), &quot;remote wall time is too far ahead (%s) to be trustworthy - updating anyway&quot;, offset)</span><br><span class="line">		&#125;</span><br><span class="line">		// The remote clock is ahead of ours, and we update</span><br><span class="line">		// our own logical clock with theirs.</span><br><span class="line">		c.mu.timestamp.WallTime = rt.WallTime</span><br><span class="line">		c.mu.timestamp.Logical = rt.Logical + 1</span><br><span class="line">	&#125; else if c.mu.timestamp.WallTime &gt; rt.WallTime &#123;</span><br><span class="line">	   // 如果本地WallTime&gt;rt.WallTime：logical++</span><br><span class="line">		// Our wall time is larger, so it remains but we tick</span><br><span class="line">		// the logical clock.</span><br><span class="line">		c.mu.timestamp.Logical++</span><br><span class="line">	&#125; else &#123;</span><br><span class="line">		// Both wall times are equal, and the larger logical</span><br><span class="line">		// clock is used for the update.</span><br><span class="line">		if rt.Logical &gt; c.mu.timestamp.Logical &#123;</span><br><span class="line">			c.mu.timestamp.Logical = rt.Logical</span><br><span class="line">		&#125;</span><br><span class="line">		c.mu.timestamp.Logical++</span><br><span class="line">	&#125;</span><br><span class="line">	return c.mu.timestamp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<h1 id="参考">参考</h1>
+<ul>
 <li><a href="https://en.wikipedia.org/wiki/Lamport_timestamp" target="_blank" rel="noopener">Lamport timestamp</a></li>
 <li><a href="https://amturing.acm.org/p558-lamport.pdf" target="_blank" rel="noopener">Time, Clocks, and the Ordering of Events in a Distributed System</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Vector_clock" target="_blank" rel="noopener">Vector clock</a></li>
@@ -887,7 +805,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Ordering"><span class="nav-number">1.</span> <span class="nav-text">Ordering</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#关系"><span class="nav-number">1.1.</span> <span class="nav-text">关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偏序The-Partial-Ordering"><span class="nav-number">1.2.</span> <span class="nav-text">偏序The Partial Ordering</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#全序The-Total-Ordering"><span class="nav-number">1.3.</span> <span class="nav-text">全序The Total Ordering</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#happens-before"><span class="nav-number">1.4.</span> <span class="nav-text">happens before</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#clock时钟"><span class="nav-number">2.</span> <span class="nav-text">clock时钟</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#物理时钟"><span class="nav-number">2.1.</span> <span class="nav-text">物理时钟</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#晶振和时钟偏移"><span class="nav-number">2.1.1.</span> <span class="nav-text">晶振和时钟偏移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式下带来的问题"><span class="nav-number">2.1.2.</span> <span class="nav-text">分布式下带来的问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#逻辑时钟Logical-clocks"><span class="nav-number">2.2.</span> <span class="nav-text">逻辑时钟Logical clocks</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lamport-timestamps"><span class="nav-number">2.2.1.</span> <span class="nav-text">Lamport timestamps</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#论文"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">论文</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Lamport-timestamps-1"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">Lamport timestamps</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Lamport-timestamps与偏序关系"><span class="nav-number">2.2.1.3.</span> <span class="nav-text">Lamport timestamps与偏序关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Lamport-logical-clock"><span class="nav-number">2.2.1.4.</span> <span class="nav-text">Lamport logical clock</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#vector-clock"><span class="nav-number">2.2.2.</span> <span class="nav-text">vector clock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#version-vector"><span class="nav-number">2.2.3.</span> <span class="nav-text">version vector</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分布式与时钟"><span class="nav-number">3.</span> <span class="nav-text">分布式与时钟</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Timestamp-oracle"><span class="nav-number">3.1.</span> <span class="nav-text">Timestamp oracle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#True-Time"><span class="nav-number">3.2.</span> <span class="nav-text">True Time</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#True-Time实现"><span class="nav-number">3.2.1.</span> <span class="nav-text">True Time实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API"><span class="nav-number">3.2.2.</span> <span class="nav-text">API</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hybrid-logical-clock"><span class="nav-number">3.3.</span> <span class="nav-text">Hybrid logical clock</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HLC"><span class="nav-number">3.3.1.</span> <span class="nav-text">HLC</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HLC的算法"><span class="nav-number">3.3.1.1.</span> <span class="nav-text">HLC的算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#特性"><span class="nav-number">3.3.1.2.</span> <span class="nav-text">特性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开源实现"><span class="nav-number">3.3.2.</span> <span class="nav-text">开源实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#时钟同步"><span class="nav-number">3.3.2.1.</span> <span class="nav-text">时钟同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码分析"><span class="nav-number">3.3.2.2.</span> <span class="nav-text">代码分析</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ordering"><span class="nav-number">1.</span> <span class="nav-text">Ordering</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#关系"><span class="nav-number">1.1.</span> <span class="nav-text">关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偏序the-partial-ordering"><span class="nav-number">1.2.</span> <span class="nav-text">偏序The Partial Ordering</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#全序the-total-ordering"><span class="nav-number">1.3.</span> <span class="nav-text">全序The Total Ordering</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#happens-before"><span class="nav-number">1.4.</span> <span class="nav-text">happens before</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#clock时钟"><span class="nav-number">2.</span> <span class="nav-text">clock时钟</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#物理时钟"><span class="nav-number">2.1.</span> <span class="nav-text">物理时钟</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#晶振和时钟偏移"><span class="nav-number">2.1.1.</span> <span class="nav-text">晶振和时钟偏移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式下带来的问题"><span class="nav-number">2.1.2.</span> <span class="nav-text">分布式下带来的问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#逻辑时钟logical-clocks"><span class="nav-number">2.2.</span> <span class="nav-text">逻辑时钟Logical clocks</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#lamport-timestamps"><span class="nav-number">2.2.1.</span> <span class="nav-text">Lamport timestamps</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#论文"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">论文</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lamport-timestamps-1"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">Lamport timestamps</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lamport-timestamps与偏序关系"><span class="nav-number">2.2.1.3.</span> <span class="nav-text">Lamport timestamps与偏序关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#lamport-logical-clock"><span class="nav-number">2.2.1.4.</span> <span class="nav-text">Lamport logical clock</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#vector-clock"><span class="nav-number">2.2.2.</span> <span class="nav-text">vector clock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#version-vector"><span class="nav-number">2.2.3.</span> <span class="nav-text">version vector</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分布式与时钟"><span class="nav-number">3.</span> <span class="nav-text">分布式与时钟</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#timestamp-oracle"><span class="nav-number">3.1.</span> <span class="nav-text">Timestamp oracle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#true-time"><span class="nav-number">3.2.</span> <span class="nav-text">True Time</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#true-time实现"><span class="nav-number">3.2.1.</span> <span class="nav-text">True Time实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#api"><span class="nav-number">3.2.2.</span> <span class="nav-text">API</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hybrid-logical-clock"><span class="nav-number">3.3.</span> <span class="nav-text">Hybrid logical clock</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#hlc"><span class="nav-number">3.3.1.</span> <span class="nav-text">HLC</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#hlc的算法"><span class="nav-number">3.3.1.1.</span> <span class="nav-text">HLC的算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#特性"><span class="nav-number">3.3.1.2.</span> <span class="nav-text">特性</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开源实现"><span class="nav-number">3.3.2.</span> <span class="nav-text">开源实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#时钟同步"><span class="nav-number">3.3.2.1.</span> <span class="nav-text">时钟同步</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码分析"><span class="nav-number">3.3.2.2.</span> <span class="nav-text">代码分析</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
             
 
           </div>

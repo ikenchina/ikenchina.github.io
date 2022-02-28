@@ -302,6 +302,163 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/02/20/database-postgresql-path/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Ken">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ken's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2022/02/20/database-postgresql-path/" itemprop="url">数据库路径选择理论与postgreSQL实现</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2022-02-20T00:00:00+08:00">
+                2022-02-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/2022/" itemprop="url" rel="index">
+                    <span itemprop="name">2022</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2022/02/20/database-postgresql-path/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2022/02/20/database-postgresql-path/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <blockquote>
+<p>对要枚举出查询树上所有路径，从中找出一个代价最小的路径，是个NP问题，计算成本是非常高昂的。而当查询树的关系(表、子查询等)较少时，可以使用动态规划算法枚举出所有的路径找出最优解，但是当关系较多时，枚举的计算成本是我们无法接收的，这时就需要使用一些折中方案，如贪心算法、遗传算法。遗传算法借鉴自然界“优胜劣汰”的法则对路径进化，从而能找出相对较优的查询路径......
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2022/02/20/database-postgresql-path/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </p></blockquote></div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/10/26/kubernetes_case/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -513,8 +670,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2021/" itemprop="url" rel="index">
-                    <span itemprop="name">2021</span>
+                  <a href="/categories/2019/" itemprop="url" rel="index">
+                    <span itemprop="name">2019</span>
                   </a>
                 </span>
 
@@ -561,192 +718,18 @@
 
       
         
-          
-            <p>有时候写的SQL有性能问题时往往束手无策，而求助于DBA。 今天，我们从使用者、DBA、内核开发三个不同的角度来分析一个有趣的SQL性能问题的案例， 从浅入深了解postgreSQL的优化器。</p>
-<h1 id="问题描述">问题描述</h1>
-<p>同事A来问我这个假DBA一条SQL的性能问题：</p>
-<ul>
-<li>A：两条SQL语句只有limit不一样，而<code>limit 1</code>的执行比<code>limit 10</code>的慢N倍</li>
-<li>我：是不是缓存问题，先执行<code>limit 10</code>再执行<code>limit 1</code>试试</li>
-<li>A：......，执行了，<code>limit</code>还是很慢</li>
-</ul>
-<p><strong>两条SQL生产环境执行情况</strong></p>
-<p>limit 10 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 10;</span><br></pre></td></tr></table></figure></p>
-<p>Execution Time: 1.307 ms</p>
-<p>limit 1 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 1;</span><br></pre></td></tr></table></figure></p>
-<p>Execution Time: 144.098 ms</p>
-<h1 id="分析">分析</h1>
-<h2 id="执行计划">执行计划</h2>
-<p>既然不是缓存问题，那我们先看看执行计划有什么不一样的</p>
-<p>limit 1 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># explain analyze verbose select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 1;</span><br><span class="line">                                                                                QUERY PLAN</span><br><span class="line">---------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line"> Limit  (cost=0.43..416.25 rows=1 width=73) (actual time=135.213..135.214 rows=1 loops=1)</span><br><span class="line">   Output: xxx</span><br><span class="line">   -&gt;  Index Scan Backward using user_gift_pkey on yay.user_gift  (cost=0.43..368000.44 rows=885 width=73) (actual time=135.212..135.212 rows=1 loops=1)</span><br><span class="line">         Output: xxx</span><br><span class="line">         Filter: ((user_gift.user_id = 11695667) AND (user_gift.user_type = &apos;default&apos;::user_type))</span><br><span class="line">         Rows Removed by Filter: 330192</span><br><span class="line"> Planning Time: 0.102 ms</span><br><span class="line"> Execution Time: 135.235 ms</span><br><span class="line">(8 rows)</span><br><span class="line"></span><br><span class="line">Time: 135.691 ms</span><br></pre></td></tr></table></figure></p>
-<p>limit 10 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># explain analyze verbose select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 10;</span><br><span class="line">                                                                        QUERY PLAN</span><br><span class="line">----------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line"> Limit  (cost=868.20..868.22 rows=10 width=73) (actual time=1.543..1.545 rows=10 loops=1)</span><br><span class="line">   Output: xxx</span><br><span class="line">   -&gt;  Sort  (cost=868.20..870.41 rows=885 width=73) (actual time=1.543..1.543 rows=10 loops=1)</span><br><span class="line">         Output: xxx</span><br><span class="line">         Sort Key: user_gift.id DESC</span><br><span class="line">         Sort Method: top-N heapsort  Memory: 27kB</span><br><span class="line">         -&gt;  Index Scan using idx_user_type on yay.user_gift  (cost=0.56..849.07 rows=885 width=73) (actual time=0.020..1.366 rows=775 loops=1)</span><br><span class="line">               Output: xxx</span><br><span class="line">               Index Cond: (user_gift.user_id = 11695667)</span><br><span class="line">               Filter: (user_gift.user_type = &apos;default&apos;::user_type)</span><br><span class="line"> Planning Time: 0.079 ms</span><br><span class="line"> Execution Time: 1.564 ms</span><br><span class="line">(12 rows)</span><br><span class="line"></span><br><span class="line">Time: 1.871 ms</span><br></pre></td></tr></table></figure></p>
-<p>可以看到，两个SQL执行计划不一样：</p>
-<ul>
-<li><code>limit 1</code>语句 ：使用主键进行倒序扫描， <code>Index Scan Backward using user_gift_pkey on yay.user_gift</code></li>
-<li><code>limit 10</code>语句 ：使用(user_id, user_type)复合索引直接查找用户数据，<code>Index Scan using idx_user_type on yay.user_gift</code></li>
-</ul>
-<p>为什么执行计划不一样？</p>
-<p><strong>total cost</strong></p>
-<p>其实postgreSQL的执行计划并没有“问题”，因为<code>limit 1</code>的total cost <code>Limit  (cost=0.43..416.25 rows=1 width=73)</code> 是416，run cost是416-0.43=415.57。而<code>limit 10</code>的total cost <code>Limit  (cost=868.20..868.22 rows=10 width=73)</code>是868.22。</p>
-<p>如果使用<code>Index Scan Backward using user_gift_pkey</code>的方式估算，那么<code>limit 1</code>成本是415, <code>limit 2</code>是415*2=830, <code>limit 3</code> 是 1245，大于868，所以当<code>limit 3</code>的时候会使用<code>Index Scan using idx_user_type</code>扫索引的计划。</p>
-<p><strong>验证</strong> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"># explain  select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 2;</span><br><span class="line">                                                       QUERY PLAN</span><br><span class="line">-------------------------------------------------------------------------------------------------------------------------</span><br><span class="line"> Limit  (cost=0.43..831.95 rows=2 width=73)</span><br><span class="line">   -&gt;  Index Scan Backward using user_gift_pkey on user_gift  (cost=0.43..367528.67 rows=884 width=73)</span><br><span class="line">         Filter: ((user_id = 11695667) AND (user_type = &apos;default&apos;::user_type))</span><br><span class="line">(3 rows)</span><br><span class="line"> </span><br><span class="line">Time: 0.341 ms</span><br><span class="line"># explain  select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 3;</span><br><span class="line">                                                QUERY PLAN</span><br><span class="line">----------------------------------------------------------------------------------------------------------</span><br><span class="line"> Limit  (cost=866.19..866.20 rows=3 width=73)</span><br><span class="line">   -&gt;  Sort  (cost=866.19..868.40 rows=884 width=73)</span><br><span class="line">         Sort Key: id DESC</span><br><span class="line">         -&gt;  Index Scan using idx_user_type on user_gift  (cost=0.56..854.76 rows=884 width=73)</span><br><span class="line">               Index Cond: (user_id = 11695667)</span><br><span class="line">               Filter: (user_type = &apos;default&apos;::user_type)</span><br><span class="line">(6 rows)</span><br><span class="line"> </span><br><span class="line">Time: 0.352 ms</span><br></pre></td></tr></table></figure></p>
-<p>结果显示：</p>
-<ul>
-<li>当<code>limit 2</code>时，执行计划是<code>Index Scan Backward using user_gift_pkey</code></li>
-<li>当<code>limit 3</code>时，就改变计划了，<code>Index Scan using idx_user_type on user_gift</code></li>
-</ul>
-<h2 id="实际执行时间">实际执行时间</h2>
-<p><code>limit 1</code>时成本估算的是416.25，比<code>limit 10</code>的<code>868.22</code>还是要快的。<br>
-但是实际<code>limit 1</code>执行cost是135.691 ms，而<code>limit 10</code>执行cost是1.871 ms，比<code>limit 10</code>慢了70倍！！！</p>
-<p>我们重新执行下explain，加上buffers选项 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># explain (analyze, buffers, verbose)  select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 1;</span><br><span class="line">                                                                                QUERY PLAN</span><br><span class="line">---------------------------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line"> Limit  (cost=0.43..416.29 rows=1 width=73) (actual time=451.542..451.544 rows=1 loops=1)</span><br><span class="line">   Output: xxx</span><br><span class="line">   Buffers: shared hit=214402 read=5280 dirtied=2302</span><br><span class="line">   I/O Timings: read=205.027</span><br><span class="line">   -&gt;  Index Scan Backward using user_gift_pkey on yay.user_gift  (cost=0.43..368032.94 rows=885 width=73) (actual time=451.540..451.540 rows=1 loops=1)</span><br><span class="line">         Output: xxx</span><br><span class="line">         Filter: ((user_gift.user_id = 11695667) AND (user_gift.user_type = &apos;default&apos;::user_type))</span><br><span class="line">         Rows Removed by Filter: 333462</span><br><span class="line">         Buffers: shared hit=214402 read=5280 dirtied=2302</span><br><span class="line">         I/O Timings: read=205.027</span><br><span class="line"> Planning Time: 1.106 ms</span><br><span class="line"> Execution Time: 451.594 ms</span><br><span class="line">(12 rows)</span><br></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"># explain (analyze, buffers, verbose)  select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id desc limit 3;</span><br><span class="line">                                                                        QUERY PLAN</span><br><span class="line">-----------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line"> Limit  (cost=860.51..860.52 rows=3 width=73) (actual time=14.633..14.634 rows=3 loops=1)</span><br><span class="line">   Output: xxx</span><br><span class="line">   Buffers: shared hit=467 read=321</span><br><span class="line">   I/O Timings: read=10.112</span><br><span class="line">   -&gt;  Sort  (cost=860.51..862.72 rows=885 width=73) (actual time=14.632..14.632 rows=3 loops=1)</span><br><span class="line">         Output: xxx</span><br><span class="line">         Sort Key: user_gift.id DESC</span><br><span class="line">         Sort Method: top-N heapsort  Memory: 25kB</span><br><span class="line">         Buffers: shared hit=467 read=321</span><br><span class="line">         I/O Timings: read=10.112</span><br><span class="line">         -&gt;  Index Scan using idx_user_type on yay.user_gift  (cost=0.56..849.07 rows=885 width=73) (actual time=0.192..14.424 rows=775 loops=1)</span><br><span class="line">               Output: xxx</span><br><span class="line">               Index Cond: (user_gift.user_id = 11695667)</span><br><span class="line">               Filter: (user_gift.user_type = &apos;default&apos;::user_type)</span><br><span class="line">               Buffers: shared hit=464 read=321</span><br><span class="line">               I/O Timings: read=10.112</span><br><span class="line"> Planning Time: 0.111 ms</span><br><span class="line"> Execution Time: 14.658 ms</span><br><span class="line">(18 rows)</span><br></pre></td></tr></table></figure>
-<p>可以看出：</p>
-<ul>
-<li><code>limit 1</code>时的IO成本<code>I/O Timings: read=205.027</code>，<code>Rows Removed by Filter: 333462</code>显示过滤了333462行记录</li>
-<li><code>limit 3</code>时IO成本<code>I/O Timings: read=10.112</code>，</li>
-</ul>
-<p>从上面输出<code>Buffers: shared hit=214402 read=5280 dirtied=2302</code>可以看出<code>limit 1</code>的计划从磁盘读取了5280个blocks(pages)才找到符合where条件的记录。</p>
-<p>为什么要读取这么多数据呢？我们来看看统计信息： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">schemaname             | yay</span><br><span class="line">tablename              | user_gift</span><br><span class="line">attname                | id</span><br><span class="line">inherited              | f</span><br><span class="line">null_frac              | 0</span><br><span class="line">avg_width              | 8</span><br><span class="line">n_distinct             | -1</span><br><span class="line">most_common_vals       | </span><br><span class="line">most_common_freqs      | </span><br><span class="line">histogram_bounds       | &#123;93,9817,19893,28177,.......&#125;</span><br><span class="line">correlation            | 0.788011</span><br><span class="line">most_common_elems      | </span><br><span class="line">most_common_elem_freqs | </span><br><span class="line">elem_count_histogram   | </span><br><span class="line"></span><br><span class="line">schemaname             | yay</span><br><span class="line">tablename              | user_gift</span><br><span class="line">attname                | user_id</span><br><span class="line">inherited              | f</span><br><span class="line">null_frac              | 0</span><br><span class="line">avg_width              | 4</span><br><span class="line">n_distinct             | -0.175761</span><br><span class="line">most_common_vals       | &#123;11576819,10299480,14020501,.......,11695667,......&#125;</span><br><span class="line">most_common_freqs      | &#123;0.000353333,0.000326667,0.000246667,......,9.33333e-05,......&#125;</span><br><span class="line">histogram_bounds       | &#123;3,10002181,10005599,10009672,......,11693300,11698290,......&#125;</span><br><span class="line">correlation            | 0.53375</span><br><span class="line">most_common_elems      | </span><br><span class="line">most_common_elem_freqs | </span><br><span class="line">elem_count_histogram   | </span><br><span class="line"></span><br><span class="line">schemaname             | yay</span><br><span class="line">tablename              | user_gift</span><br><span class="line">attname                | user_type</span><br><span class="line">inherited              | f</span><br><span class="line">null_frac              | 0</span><br><span class="line">avg_width              | 4</span><br><span class="line">n_distinct             | 3</span><br><span class="line">most_common_vals       | &#123;default, invalid, deleted&#125;</span><br><span class="line">most_common_freqs      | &#123;0.997923,0.00194,0.000136667&#125;</span><br><span class="line">histogram_bounds       | </span><br><span class="line">correlation            | 0.99763</span><br><span class="line">most_common_elems      | </span><br><span class="line">most_common_elem_freqs | </span><br><span class="line">elem_count_histogram   |</span><br></pre></td></tr></table></figure></p>
-<p>从统计信息里可以看出：</p>
-<ul>
-<li><code>user_id</code>字段的<code>most_common_vals</code>中有11695667(user_id)的值，则可以直接通过其对应的<code>most_common_freqs</code>来得到其selectivity是9.33333e-05；</li>
-<li><code>user_type</code>字段为<code>default</code>对应的selectivity是0.997923。<br>
-</li>
-<li>所以<code>where user_id=11695667 and user_type='default'</code>的selectivity是0.0000933333*0.997923 = 0.0000931394467359。</li>
-</ul>
-<p>那么可以估算出满足where条件的用户数是0.0000931394467359 * 9499740(总用户数) = 884.8，和执行计划<code>(cost=0.43..367528.67 rows=884 width=73)</code>的884行一样。</p>
-<p>而优化器的估算是基于数据分布均匀这个假设的：</p>
-<ul>
-<li>从user_gift_pkey(主键id)扫描的话：只要扫描9499740/884=10746行就能找到满足条件的记录，且无须进行排序(<code>order by id desc</code>)</li>
-<li>从idx_user_type索引扫描的话：虽然能很快找到此用户的数据，但是需要给884行进行排序，扫描+排序的cost比从主键扫描要高。</li>
-</ul>
-<p>那么数据分布真的均匀吗？继续查看数据的实际分布：</p>
-<ul>
-<li><p>表最大的page=128709 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># select max(ctid) from user_gift;</span><br><span class="line">     max</span><br><span class="line">-------------</span><br><span class="line"> (128709,29)</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></p></li>
-<li><p>user id=11695667的最大page=124329</p></li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># select max(ctid), min(ctid) from user_gift where user_id=11695667;</span><br><span class="line">     max     |    min</span><br><span class="line">-------------+-----------</span><br><span class="line"> (124329,22) | (3951,64)</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure>
-<ul>
-<li>表本身的pages和tuples数量 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># SELECT relpages, reltuples FROM pg_class WHERE relname = &apos;user_gift&apos;;</span><br><span class="line"> relpages |  reltuples</span><br><span class="line">----------+-------------</span><br><span class="line">   128875 | 9.49974e+06</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></li>
-</ul>
-<p>每个page存储的记录数：9.49974e+06 tuples / 128875 pages = 73.713 tuples/page。</p>
-<p>计算：表(main table)的B+tree的最大page是128709，而实际用户11695667的最大page是124329，128709 - 124329 = 4380，需要扫描4380个page才能找到符合where条件的记录所在的page，所以过滤的rows是4380 pages * 73.713 tuples/page ≈ 322862。</p>
-<p>实际<code>limit 1</code>时扫描了5280个pages(包含了主键索引的pages)，过滤了333462万行记录，和估算的基本一样： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Rows Removed by Filter: 333462</span><br><span class="line">         Buffers: shared hit=214402 read=5280 dirtied=2302</span><br><span class="line">         I/O Timings: read=205.027</span><br></pre></td></tr></table></figure></p>
-<p>所以，此用户数据分布倾斜了：</p>
-<ul>
-<li>优化器假设数据分布均匀，只需要扫描10746个记录</li>
-<li>而实际需要扫描322862个记录</li>
-</ul>
-<p><strong>那么扫描5280个pages要多久？</strong></p>
-<p>需要读取的数据量：5280pages * 8KB/page = 41.2MB的数据。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root]$ fio -name iops -rw=randread -bs=8k -runtime=10 -iodepth=1 -filename /dev/sdb -ioengine mmap -buffered=1</span><br><span class="line">...</span><br><span class="line">Run status group 0 (all jobs):</span><br><span class="line">		READ: bw=965KiB/s (988kB/s), 965KiB/s-965KiB/s (988kB/s-988kB/s), io=9656KiB (9888kB), run=10005-10005msec</span><br><span class="line"></span><br><span class="line">[root]$ fio -name iops -rw=read -bs=8k -runtime=10 -iodepth=1 -filename /dev/sdb -ioengine mmap -direct=1</span><br><span class="line">...</span><br><span class="line">Run status group 0 (all jobs):</span><br><span class="line">   READ: bw=513MiB/s (538MB/s), 513MiB/s-513MiB/s (538MB/s-538MB/s), io=5132MiB (5381MB), run=10001-10001msec</span><br></pre></td></tr></table></figure>
-<p>从<code>fio</code>结果可以看出，此数据库机器磁盘的顺序读取速度约为 500MB/s，如果数据都是顺序的，那么扫描40MB数据需要约80ms，</p>
-<p>如果数据都是随机的，那么需要40秒。不是所有的数据都是顺序访问的，而且测试的是非线上机器，没有其他IO进程在运行。</p>
-<p>到这里问题基本定位清楚了： &gt; postgreSQL的优化器认为数据分布是均匀的，只需要倒序扫描很快就找到符合条件的记录，而实际上此用户的数据分布在表的前端，就导致了实际执行start-up time如此慢了。</p>
-<h2 id="从内核视角来分析">从内核视角来分析</h2>
-<p>我们从postgreSQL内核的角度来继续分析几个问题：</p>
-<ul>
-<li>优化器如何估算cost</li>
-<li>优化器如何统计actual time</li>
-</ul>
-<h3 id="表的信息">表的信息</h3>
-<ul>
-<li><p>表结构 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"># \d user_gift;</span><br><span class="line">                                         Table &quot;yay.user_gift&quot;</span><br><span class="line">    Column    |           Type           | Collation | Nullable |                    Default</span><br><span class="line">--------------+--------------------------+-----------+----------+------------------------------------------------</span><br><span class="line"> id           | bigint                   |           | not null | nextval(&apos;user_gift_id_seq&apos;::regclass)</span><br><span class="line"> user_id      | integer                  |           | not null |</span><br><span class="line"> ug_name | character varying(100)   |           | not null |</span><br><span class="line"> expired_time | timestamp with time zone |           |          | now()</span><br><span class="line"> created_time | timestamp with time zone |           | not null | now()</span><br><span class="line"> updated_time | timestamp with time zone |           | not null | now()</span><br><span class="line"> user_type   | user_type               |           | not null | &apos;default&apos;::user_type</span><br><span class="line">Indexes:</span><br><span class="line">    &quot;user_gift_pkey&quot; PRIMARY KEY, btree (id)</span><br><span class="line">    &quot;idx_user_type&quot; btree (user_id, ug_name)</span><br><span class="line">    &quot;user_gift_ug_name_idx&quot; btree (ug_name)</span><br></pre></td></tr></table></figure></p></li>
-<li><p>主键索引 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># SELECT relpages, reltuples FROM pg_class WHERE relname = &apos;user_gift_pkey&apos;;</span><br><span class="line"> relpages |  reltuples</span><br><span class="line">----------+-------------</span><br><span class="line">    40035 | 9.49974e+06</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></p></li>
-<li><p>user_id 索引 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># SELECT relpages, reltuples FROM pg_class WHERE relname = &apos;idx_user_type&apos;;</span><br><span class="line"> relpages |  reltuples</span><br><span class="line">----------+-------------</span><br><span class="line">   113572 | 9.49974e+06</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></p></li>
-<li><p>表本身的pages是128875 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># SELECT relpages, reltuples FROM pg_class WHERE relname = &apos;user_gift&apos;;</span><br><span class="line"> relpages |  reltuples</span><br><span class="line">----------+-------------</span><br><span class="line">   128875 | 9.49974e+06</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></p></li>
-<li><p>user id=11695667的数据775行 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">=# select count(1) from user_gift where user_id=11695667;</span><br><span class="line"> count</span><br><span class="line">-------</span><br><span class="line">   775</span><br><span class="line">(1 row)</span><br><span class="line"></span><br><span class="line">=#  select count(1)  from user_gift where user_id=11695667 and user_type = &apos;default&apos; ;</span><br><span class="line"> count</span><br><span class="line">-------</span><br><span class="line">   775</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></p></li>
-<li><p>树高度 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># 主键高度</span><br><span class="line"># select * from  bt_metap(&apos;user_gift_pkey&apos;);</span><br><span class="line"> magic  | version | root | level | fastroot | fastlevel | oldest_xact | last_cleanup_num_tuples</span><br><span class="line">--------+---------+------+-------+----------+-----------+-------------+-------------------------</span><br><span class="line"> 340322 |       3 |  412 |     2 |      412 |         2 |           0 |             9.31928e+06</span><br><span class="line">(1 row)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// idx_user_type 高度</span><br><span class="line"># select * from  bt_metap(&apos;idx_user_type&apos;);</span><br><span class="line"> magic  | version | root  | level | fastroot | fastlevel | oldest_xact | last_cleanup_num_tuples</span><br><span class="line">--------+---------+-------+-------+----------+-----------+-------------+-------------------------</span><br><span class="line"> 340322 |       3 | 15094 |     3 |    15094 |         3 |           0 |             9.49974e+06</span><br><span class="line">(1 row)</span><br></pre></td></tr></table></figure></p></li>
-</ul>
-<h3 id="估算cost">估算cost</h3>
-<h4 id="start-up-cost">start-up cost</h4>
-<p>postgreSQL对于每种索引的成本估算是不一样的，我们看看B+tree的start-up成本是如何估算的： <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// selfuncs.c</span></span><br><span class="line"><span class="keyword">void</span></span><br><span class="line">btcostestimate(PlannerInfo *root, IndexPath *path, <span class="keyword">double</span> loop_count,</span><br><span class="line">			   Cost *indexStartupCost, Cost *indexTotalCost,</span><br><span class="line">			   Selectivity *indexSelectivity, <span class="keyword">double</span> *indexCorrelation,</span><br><span class="line">			   <span class="keyword">double</span> *indexPages)</span><br><span class="line">&#123;</span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">	descentCost = <span class="built_in">ceil</span>(<span class="built_in">log</span>(index-&gt;tuples) / <span class="built_in">log</span>(<span class="number">2.0</span>)) * cpu_operator_cost;</span><br><span class="line">	costs.indexStartupCost += descentCost;</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">// This cost is somewhat arbitrarily set at 50x cpu_operator_cost per page touched</span></span><br><span class="line">    descentCost = (index-&gt;tree_height + <span class="number">1</span>) * <span class="number">50.0</span> * cpu_operator_cost;</span><br><span class="line">	costs.indexStartupCost += descentCost;</span><br><span class="line">	</span><br><span class="line">	......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>其实start-up cost估算很简单，只考虑从B+tree的root page遍历到leaf page，且将这个page读入第一个tuple(记录)的cost。</p>
-<p>start-up估算公式如下： <span class="math display">\[
-\left \{ ceil({\log_2 (N_{index,tuple})}) + (Height_{index} + 1) \times  50 \right \}\ \times cpu\_operator\_cost
-\]</span></p>
-<ul>
-<li>N(index,tuple) ：索引tuples(记录)数量<br>
-</li>
-<li>Height(index) ： 索引B+tree的高度</li>
-<li>cpu_operator_cost : 默认值0.0025</li>
-</ul>
-<p><strong>使用user_gift_pkey计划的start-up cost</strong></p>
-<p>从上面表信息中可以看出：</p>
-<ul>
-<li>N(index,tuple) ：9.49974e+06，<br>
-</li>
-<li>Height(index) ： 2</li>
-</ul>
-<p>所以 <span class="math display">\[
-\left \{ ceil({\log_2 (9499740)}) + (2 + 1) \times  50 \right \}\ \times cpu\_operator\_cost = 173 \times 0.0025 = 0.435
-\]</span> 和postgreSQL估算的start-up cost=0.43 一样。</p>
-<p><strong>使用idx_user_type计划的start-up cost</strong></p>
-<ul>
-<li>N(index,tuple) ：9.49974e+06，<br>
-</li>
-<li>Height(index) ： 3 <span class="math display">\[
-\left \{ ceil({\log_2 (9499740)}) + (3 + 1) \times  50 \right \}\ \times cpu\_operator\_cost = 223 \times 0.0025 = 0.5575
-\]</span> 和postgreSQL估算的start-up cost=0.56 一样。</li>
-</ul>
-<h4 id="run-cost">run cost</h4>
-<p>run cost的估算是比较复杂的，判断的条件非常多，无法用一个固定的公式计算出来，所以这里只是简单描述下，有兴趣的可以看postgreSQL源码<code>src/backend/optimizer/path/costsize.c</code>的<code>cost_index</code>函数，针对这个案例，一般情况下可以根据<a href="https://github.com/ikenchina/db_cases/tree/master/sql_pg_opt_case110" target="_blank" rel="noopener">此链接</a>的脚本进行来模拟计算cost。</p>
-<p><strong>run cost</strong> <span class="math display">\[
-run\_cost = 索引成本 + 主表成本
-\]</span></p>
-<p><strong>索引成本</strong> <span class="math display">\[
-索引成本 = 随机读取索引相关pages的成本 + 操作相关tuples的成本
-\]</span></p>
-<p><strong>主表成本</strong> <span class="math display">\[
-主表成本 = max\_io\_cost + index\_correlation ^ 2 \times (min\_io\_cost - max\_io\_cost)
-\]</span></p>
-<ul>
-<li>ndex_correlation : 索引相关性。索引的顺序与主表数据排列顺序的关联性，用来描述通过索引扫描数据时，回表的顺序读的概率</li>
-</ul>
-<p><strong>max io cost（最坏情况下IO成本）</strong></p>
-<p>所有pages都是随机读取 <span class="math display">\[
-max\_io\_cost = pages\_fetched \times random\_page\_cost
-\]</span></p>
-<p><strong>min_io_cost（最优情况下IO成本）</strong></p>
-<p>第一个page是随机读取，后面pages都是顺序读取 <span class="math display">\[
-min\_io\_cost = 1 \times random\_page\_cost + (pages\_fetched - 1) \times seq\_page\_cost
-\]</span></p>
-<h4 id="actual-start-up-time-vs-estimated-start-up-cost">actual start-up time vs estimated start-up cost</h4>
-<p>刚刚的分析中有一个疑问被忽略了：estimated start-up cost是开始执行计划到从表中读到的第一个tuple的cost(cost is an arbitrary unit)；而actual start-up time则是开始执行计划到从表中读取到第一个符合where条件的tuple的时间。这是为什么呢？</p>
-<p>SQL处理流程：postgreSQL将SQL转化成AST，然后进行优化，再将AST转成执行器(executor)来实现具体的操作。不进行优化的执行器是这样的： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">┌──────────────┐</span><br><span class="line">│  projection  │</span><br><span class="line">└──────┬───────┘</span><br><span class="line">       │</span><br><span class="line">       │</span><br><span class="line">┌──────▼──────┐</span><br><span class="line">│    limit    │</span><br><span class="line">└──────┬──────┘</span><br><span class="line">       │</span><br><span class="line">       │</span><br><span class="line">┌──────▼──────┐</span><br><span class="line">│  selection  │</span><br><span class="line">└──────┬──────┘</span><br><span class="line">       │</span><br><span class="line">       │</span><br><span class="line">┌──────▼──────┐</span><br><span class="line">│ index scan  │</span><br><span class="line">└─────────────┘</span><br></pre></td></tr></table></figure></p>
-<p>简化的执行流程如下：</p>
-<ul>
-<li>index scan executor：扫描到一个tuple，就返回给selection executor</li>
-<li>selection executor：对tuple进行过滤，如果符合条件则返回给limit executor，如果不符合则继续调用index scan executor</li>
-<li>limit executor：当达到limit限制则将数据返回给projection executor</li>
-<li>projection executor：过滤掉非<code>select</code>列的数据</li>
-</ul>
-<p>那么如果进行优化，一般会将<code>selection executor</code>和<code>projection executor</code>合并到<code>index scan executor</code>中执行，以减少数据在executor之间的传递。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────┐</span><br><span class="line">│    limit    │</span><br><span class="line">└──────┬──────┘</span><br><span class="line">       │</span><br><span class="line">       │</span><br><span class="line">┌──────▼──────┐</span><br><span class="line">│ index scan  │</span><br><span class="line">│             │</span><br><span class="line">│ + selection │</span><br><span class="line">│ + projection│</span><br><span class="line">└─────────────┘</span><br></pre></td></tr></table></figure>
-<p>优化后的执行流程：</p>
-<ul>
-<li>index scan executor：扫描到tuple，然后进行selection过滤，如果符合条件就进行projection再返回给limit，如果不符合条件，则继续扫描</li>
-<li>limit executor：当达到limit限制则将数据返回</li>
-</ul>
-<p>而通过下面代码可以看出，postgreSQL对于执行时间的统计是基于executor的， <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// src/backend/executor/execProcnode.c</span><br><span class="line">static TupleTableSlot *</span><br><span class="line">ExecProcNodeInstr(PlanState *node)</span><br><span class="line">&#123;</span><br><span class="line">	TupleTableSlot *result;</span><br><span class="line">	InstrStartNode(node-&gt;instrument);</span><br><span class="line">	result = node-&gt;ExecProcNodeReal(node);</span><br><span class="line">	</span><br><span class="line">	// 统计执行指标</span><br><span class="line">	InstrStopNode(node-&gt;instrument, TupIsNull(result) ? 0.0 : 1.0);</span><br><span class="line">	return result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>所以actual time的start-up是从启动executor直到扫描到符合<code>where</code>语句的第一条结果为止。</p>
-<p>再看看实际的函数调用栈，<code>user_id=xxx</code>的过滤已经下沉到<code>index scan executor</code>里面了。 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">---&gt;    int4eq(FunctionCallInfo fcinfo) (/home/ken/cpp/postgres/src/backend/utils/adt/int.c:379)</span><br><span class="line">        ExecInterpExpr(ExprState * state, ExprContext * econtext, _Bool * isnull) (/home/ken/cpp/postgres/src/backend/executor/execExprInterp.c:704)</span><br><span class="line">        ExecInterpExprStillValid(ExprState * state, ExprContext * econtext, _Bool * isNull) (/home/ken/cpp/postgres/src/backend/executor/execExprInterp.c:1807)</span><br><span class="line">        ExecEvalExprSwitchContext(ExprState * state, ExprContext * econtext, _Bool * isNull) (/home/ken/cpp/postgres/src/include/executor/executor.h:322)</span><br><span class="line">---&gt;    ExecQual(ExprState * state, ExprContext * econtext) (/home/ken/cpp/postgres/src/include/executor/executor.h:391)</span><br><span class="line">        ExecScan(ScanState * node, ExecScanAccessMtd accessMtd, ExecScanRecheckMtd recheckMtd) (/home/ken/cpp/postgres/src/backend/executor/execScan.c:227)</span><br><span class="line">---&gt;    ExecIndexScan(PlanState * pstate) (/home/ken/cpp/postgres/src/backend/executor/nodeIndexscan.c:537)</span><br><span class="line">        ExecProcNodeInstr(PlanState * node) (/home/ken/cpp/postgres/src/backend/executor/execProcnode.c:466)</span><br><span class="line">        ExecProcNodeFirst(PlanState * node) (/home/ken/cpp/postgres/src/backend/executor/execProcnode.c:450)</span><br><span class="line">        ExecProcNode(PlanState * node) (/home/ken/cpp/postgres/src/include/executor/executor.h:248)</span><br><span class="line">---&gt;    ExecLimit(PlanState * pstate) (/home/ken/cpp/postgres/src/backend/executor/nodeLimit.c:96)</span><br><span class="line">        ExecProcNodeInstr(PlanState * node) (/home/ken/cpp/postgres/src/backend/executor/execProcnode.c:466)</span><br><span class="line">        ExecProcNodeFirst(PlanState * node) (/home/ken/cpp/postgres/src/backend/executor/execProcnode.c:450)</span><br><span class="line">        ExecProcNode(PlanState * node) (/home/ken/cpp/postgres/src/include/executor/executor.h:248)</span><br><span class="line">        ExecutePlan(EState * estate, PlanState * planstate, _Bool use_parallel_mode, CmdType operation, _Bool sendTuples, uint64 numberTuples, ScanDirection direction, DestReceiver * dest, _Bool execute_once) (/home/ken/cpp/postgres/src/backend/executor/execMain.c:1632)</span><br><span class="line">        standard_ExecutorRun(QueryDesc * queryDesc, ScanDirection direction, uint64 count, _Bool execute_once) (/home/ken/cpp/postgres/src/backend/executor/execMain.c:350)</span><br><span class="line">        ExecutorRun(QueryDesc * queryDesc, ScanDirection direction, uint64 count, _Bool execute_once) (/home/ken/cpp/postgres/src/backend/executor/execMain.c:294)</span><br><span class="line">        ExplainOnePlan(PlannedStmt * plannedstmt, IntoClause * into, ExplainState * es, const char * queryString, ParamListInfo params, QueryEnvironment * queryEnv, const instr_time * planduration, const BufferUsage * bufusage) (/home/ken/cpp/postgres/src/backend/commands/explain.c:571)</span><br><span class="line">        ExplainOneQuery(Query * query, int cursorOptions, IntoClause * into, ExplainState * es, const char * queryString, ParamListInfo params, QueryEnvironment * queryEnv) (/home/ken/cpp/postgres/src/backend/commands/explain.c:404)</span><br><span class="line">        ExplainQuery(ParseState * pstate, ExplainStmt * stmt, ParamListInfo params, DestReceiver * dest) (/home/ken/cpp/postgres/src/backend/commands/explain.c:275)</span><br></pre></td></tr></table></figure></p>
-<p>下面代码是scan的实现，其中的<code>ExecQual(qual, econtext)</code>是对tuple进行过滤，因为selection已经合并到scan中了。 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">TupleTableSlot *</span><br><span class="line">ExecScan(ScanState *node, ExecScanAccessMtd accessMtd, ExecScanRecheckMtd recheckMtd)</span><br><span class="line">&#123;</span><br><span class="line">    ......</span><br><span class="line">	for (;;)</span><br><span class="line">	&#123;</span><br><span class="line">		TupleTableSlot *slot;</span><br><span class="line">		slot = ExecScanFetch(node, accessMtd, recheckMtd);</span><br><span class="line">        ......</span><br><span class="line">		econtext-&gt;ecxt_scantuple = slot;</span><br><span class="line">		</span><br><span class="line">        // Note : selection判断</span><br><span class="line">		if (qual == NULL || ExecQual(qual, econtext))</span><br><span class="line">		&#123;</span><br><span class="line">			if (projInfo)</span><br><span class="line">			&#123;</span><br><span class="line">				return ExecProject(projInfo);</span><br><span class="line">			&#125;</span><br><span class="line">			else</span><br><span class="line">			&#123;</span><br><span class="line">				return slot;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		else</span><br><span class="line">			InstrCountFiltered1(node, 1);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h1 id="解决方案">解决方案</h1>
-<h2 id="禁用走主键扫描">禁用走主键扫描</h2>
-<p>既然计划走的是user_gift_pkey倒序扫描，那么我们可以手动避免优化器使用这个索引。 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># explain analyze verbose select xxx from user_gift where user_id=11695667 and user_type = &apos;default&apos; order by id+0 desc limit 1;</span><br></pre></td></tr></table></figure></p>
-<p>将<code>order by id</code>改成<code>order by id+0</code>，由于<code>id+0</code>是个表达式所以优化器就就不会使用user_gift_pkey这个索引了。</p>
-<p>这个方案不适合所有场景，如果数据分布均匀的话则某些情况下使用user_gift_pkey扫描更加合理。</p>
-<h2 id="增加user_id-id索引">增加(user_id, id)索引</h2>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">create index idx_user_id on user_gift(user_id, id);</span><br></pre></td></tr></table></figure>
-<p>通过增加where条件列和排序键的复合索引，来避免走主键扫描。</p>
-<h1 id="写在最后">写在最后</h1>
-<p>从排除缓存因素，分析查询计划，定位数据分布倾斜，到调试内核源码来进一步确定原因，最终成功解决性能问题。通过这个有趣的SQL优化经历，相信能给大家带来收获。</p>
-
-          
+          <blockquote>
+<p>从使用者，DBA，内核开发三个不同角度来分析SQL的性能问题 ......
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2021/09/10/postgresql_sql_case/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
-    </div>
+    </p></blockquote></div>
     
     
     
@@ -1876,166 +1859,13 @@ min\_io\_cost = 1 \times random\_page\_cost + (pages\_fetched - 1) \times seq\_p
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/01/which-most-important/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/01/01/which-most-important/" itemprop="url">What Is the Most Important Thing in Life？</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-01-01T00:00:00+08:00">
-                2018-01-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2018/" itemprop="url" rel="index">
-                    <span itemprop="name">2018</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/01/01/which-most-important/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2018/01/01/which-most-important/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>the most important thing in life.
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/01/01/which-most-important/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+  </nav>
+
 
 
           </div>
@@ -2081,7 +1911,7 @@ min\_io\_cost = 1 \times random\_page\_cost + (pages\_fetched - 1) \times seq\_p
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-count">11</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -2092,7 +1922,7 @@ min\_io\_cost = 1 \times random\_page\_cost + (pages\_fetched - 1) \times seq\_p
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-count">5</span>
                   <span class="site-state-item-name">categories</span>
                 </a>
               </div>
@@ -2103,7 +1933,7 @@ min\_io\_cost = 1 \times random\_page\_cost + (pages\_fetched - 1) \times seq\_p
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-count">17</span>
                   <span class="site-state-item-name">tags</span>
                 </a>
               </div>

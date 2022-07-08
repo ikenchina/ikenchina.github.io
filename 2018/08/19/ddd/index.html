@@ -412,156 +412,147 @@
 
       
         <blockquote>
-<p>对领域驱动设计的理解与实践 <a id="more"></a></p>
+<p>对领域驱动设计的理解与实践 <a id="more"></a>  </p>
 </blockquote>
 <p>更新于：2020-06-14</p>
-<h1 id="什么是ddd">什么是DDD</h1>
-<p>领域驱动设计（Domain-Driven-Design）是一种针对大型复杂系统的领域建模与分析方法论。<br>
-2003 年，Eric Evans 发布《Domain-Driven Design: Tackling Complexity in the Heart of Software》（领域驱动设计：软件核心复杂性应对之道），其中定义了DDD。</p>
+<h1 id="什么是DDD"><a href="#什么是DDD" class="headerlink" title="什么是DDD"></a>什么是DDD</h1><p>领域驱动设计（Domain-Driven-Design）是一种针对大型复杂系统的领域建模与分析方法论。<br>2003 年，Eric Evans 发布《Domain-Driven Design: Tackling Complexity in the Heart of Software》（领域驱动设计：软件核心复杂性应对之道），其中定义了DDD。</p>
 <blockquote>
 <p>DDD改变了传统软件开发针对数据库进行的建模方法；DDD先对业务领域进行分析，建立领域模型，根据领域模型驱动代码设计。合理运用面向对象的高内聚低耦合设计要素，降低整个系统的业务复杂性，并使得系统具有更好的扩展性，更好的应对多变的业务需求。</p>
 </blockquote>
-<h2 id="领域-domain">领域 Domain</h2>
-<p>一个领域就是一个问题域，只要是同一个领域，那问题域就相同。<br>
-只要确定了系统所属的领域，那么这个系统的核心业务，即要解决的问题以及问题的边界就基本确定了。</p>
-<p><strong>举例</strong><br>
-陌生人社交领域，包含有聊天，用户推荐，朋友圈等核心环节。 只要是这个领域，一般都会有这些相同的核心业务，因为他们要解决问题的本质是一样的，就是交友。</p>
+<h2 id="领域-Domain"><a href="#领域-Domain" class="headerlink" title="领域 Domain"></a>领域 Domain</h2><p>一个领域就是一个问题域，只要是同一个领域，那问题域就相同。<br>只要确定了系统所属的领域，那么这个系统的核心业务，即要解决的问题以及问题的边界就基本确定了。</p>
+<p><strong>举例</strong><br>陌生人社交领域，包含有聊天，用户推荐，朋友圈等核心环节。<br>只要是这个领域，一般都会有这些相同的核心业务，因为他们要解决问题的本质是一样的，就是交友。</p>
 <blockquote>
 <p>每一个领域，都有一个对应的领域模型，领域模型能够很好的帮我们解决复杂的业务问题。</p>
 </blockquote>
-<h2 id="驱动设计">驱动设计</h2>
-<p>在DDD中，以领域(domain)为边界，分析领域的核心问题，再设计对应的领域模型，最后通过领域模型驱动代码设计的实现。这样设计的系统才有合理的分层与解耦，对以后业务的迭代开发，代码的维护才更加容易。</p>
-<p>然而很多互联网公司，为了追求快速的上线，都是模型都没有想清楚就开始写代码，这就导致了后续代码维护困难，无法扩展。修改bug同时又引入新的bug，反反复复，进入恶性循环。<br>
-当然，这跟梳理清楚领域模型需要一定时间，这与初创型的互联网公司需求快速上线有点相悖，但是，这点时间的投入是非常值得的。因为可以避免了系统上线后不久又得重构的问题。</p>
-<h2 id="概念总结">概念总结</h2>
-<ul>
+<h2 id="驱动设计"><a href="#驱动设计" class="headerlink" title="驱动设计"></a>驱动设计</h2><p>在DDD中，以领域(domain)为边界，分析领域的核心问题，再设计对应的领域模型，最后通过领域模型驱动代码设计的实现。这样设计的系统才有合理的分层与解耦，对以后业务的迭代开发，代码的维护才更加容易。</p>
+<p>然而很多互联网公司，为了追求快速的上线，都是模型都没有想清楚就开始写代码，这就导致了后续代码维护困难，无法扩展。修改bug同时又引入新的bug，反反复复，进入恶性循环。<br>当然，这跟梳理清楚领域模型需要一定时间，这与初创型的互联网公司需求快速上线有点相悖，但是，这点时间的投入是非常值得的。因为可以避免了系统上线后不久又得重构的问题。</p>
+<h2 id="概念总结"><a href="#概念总结" class="headerlink" title="概念总结"></a>概念总结</h2><ul>
 <li>领域就是问题域</li>
 <li>模型驱动的思想：通过建立领域模型来解决领域中的核心问题</li>
 <li>领域建模的目标：针对我们在领域中核心问题，而不是整个领域中的所有问题</li>
 <li>领域模型设计：设计时应考虑一定的抽象性、通用性，以及复用价值</li>
 <li>代码实现：通过领域模型驱动代码的实现，确保代码让领域模型落地，代码最终能解决问题</li>
 </ul>
-<h1 id="为什么需要ddd">为什么需要DDD</h1>
-<h2 id="系统复杂性">系统复杂性</h2>
-<h3 id="耦合">耦合</h3>
-<p>随着产品不断的迭代，业务逻辑变得越来越复杂，系统也越来越庞大。模块彼此互相关联、耦合。导致增加或修改一个功能变得异常艰难，同时功能间的界限也变得模糊，职责不再清晰。这个时候就需要进行重构，拆分。</p>
+<h1 id="为什么需要DDD"><a href="#为什么需要DDD" class="headerlink" title="为什么需要DDD"></a>为什么需要DDD</h1><h2 id="系统复杂性"><a href="#系统复杂性" class="headerlink" title="系统复杂性"></a>系统复杂性</h2><h3 id="耦合"><a href="#耦合" class="headerlink" title="耦合"></a>耦合</h3><p>随着产品不断的迭代，业务逻辑变得越来越复杂，系统也越来越庞大。模块彼此互相关联、耦合。导致增加或修改一个功能变得异常艰难，同时功能间的界限也变得模糊，职责不再清晰。这个时候就需要进行重构，拆分。</p>
 <p>虽然架构本身是随着业务进行不断演进的；但是，如果架构初始设计不体现出业务的模型，那么新需求就无法体现在现有架构上，导致不断腐化，不断重构。</p>
-<h3 id="内聚">内聚</h3>
-<p><strong>贫血模型 Anemic Domain Object</strong></p>
+<h3 id="内聚"><a href="#内聚" class="headerlink" title="内聚"></a>内聚</h3><p><strong>贫血模型 Anemic Domain Object</strong></p>
 <p>domain object仅用作数据载体，而没有行为和动作的领域对象。</p>
 <p>指领域对象里只有get和set方法，没有相关领域对象的业务逻辑。业务逻辑放在业务层。</p>
 <p><strong>充血模型 Rich Domain Object</strong></p>
-<p>将业务逻辑和对象存储放在domain object里面，业务层只是简单进行小部分业务的封装及其他domain的编排。<br>
-面向对象设计，符合单一职责设计。</p>
+<p>将业务逻辑和对象存储放在domain object里面，业务层只是简单进行小部分业务的封装及其他domain的编排。<br>面向对象设计，符合单一职责设计。</p>
 <p><strong>贫血 vs 充血</strong></p>
 <p>贫血模型的domain object很轻量，这导致业务层的复杂，domain object相关的业务逻辑散布在各个业务层，造成业务逻辑的冗余以及原本domain object的定义就变得相对模糊，这就是贫血症引起的失忆症。</p>
 <p>而采用领域开发的方式，将数据和行为封装在一起，与业务对象相映射；领域对象职责清晰，将相关业务聚合到领域对象内部。</p>
-<h2 id="微服务">微服务</h2>
-<p>DDD 的本质是一种软件设计方法论，而微服务架构是具体的实现方式。微服务架构并没有定义对复杂系统进行分解的具体方法论，而 DDD 正好就是解决方案。</p>
+<h2 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h2><p>DDD 的本质是一种软件设计方法论，而微服务架构是具体的实现方式。微服务架构并没有定义对复杂系统进行分解的具体方法论，而 DDD 正好就是解决方案。</p>
 <p>微服务架构强调从业务维度来分治系统的复杂度，而DDD也是同样的着重业务视角。</p>
-<h2 id="ddd能带来什么">DDD能带来什么</h2>
-<ul>
+<h2 id="DDD能带来什么"><a href="#DDD能带来什么" class="headerlink" title="DDD能带来什么"></a>DDD能带来什么</h2><ul>
 <li>建立通用语言： 围绕领域模型建立的一种语言，团队所有成员都使用这种语言进行沟通和活动</li>
 <li>驱动代码设计：领域建立模型，模型指导设计，设计产出代码</li>
 <li>解决核心问题：模型的设计中心就是核心域，就是解决核心的问题</li>
 </ul>
-<h1 id="ddd建模">DDD建模</h1>
-<h2 id="战略设计">战略设计</h2>
-<p>战略设计就是从宏观角度对领域进行建模。划分出业务的边界，组织架构，系统架构。</p>
+<h1 id="DDD建模"><a href="#DDD建模" class="headerlink" title="DDD建模"></a>DDD建模</h1><h2 id="战略设计"><a href="#战略设计" class="headerlink" title="战略设计"></a>战略设计</h2><p>战略设计就是从宏观角度对领域进行建模。划分出业务的边界，组织架构，系统架构。</p>
 <p>DDD中，对系统的划分是基于领域的，也是基于业务的。</p>
-<h3 id="通用语言ubiquitous-language">通用语言Ubiquitous Language</h3>
-<p>通用语言是指确定统一的领域术语，提高开发人员与领域专家之间的沟通效率。</p>
+<h3 id="通用语言Ubiquitous-Language"><a href="#通用语言Ubiquitous-Language" class="headerlink" title="通用语言Ubiquitous Language"></a>通用语言Ubiquitous Language</h3><p>通用语言是指确定统一的领域术语，提高开发人员与领域专家之间的沟通效率。</p>
 <p>一旦确定了统一语言，无论是与领域专家的讨论，还是最终的实现代码，都可以通过使用相同的术语，清晰准确地定义领域知识。</p>
 <p>当确认整个团队统一的语言后，就可以开始进行领域建模。</p>
-<h3 id="领域和子域">领域和子域</h3>
-<p><strong>领域Domain</strong><br>
-一个领域本质上可以理解为就是一个问题域。只要我们确定了系统所属的领域，那这个系统的核心业务，即要解决的关键问题、问题的范围边界就基本确定了。</p>
-<p><strong>举例</strong><br>
-- 社交领域：关键问题是用户推荐，聊天 - 电商领域：关键问题是购物，订单，物流</p>
-<p><strong>子域Subdomain</strong></p>
+<h3 id="领域和子域"><a href="#领域和子域" class="headerlink" title="领域和子域"></a>领域和子域</h3><p><strong>领域Domain</strong><br>一个领域本质上可以理解为就是一个问题域。只要我们确定了系统所属的领域，那这个系统的核心业务，即要解决的关键问题、问题的范围边界就基本确定了。 </p>
+<p><strong>举例</strong>  </p>
+<ul>
+<li>社交领域：关键问题是用户推荐，聊天</li>
+<li>电商领域：关键问题是购物，订单，物流</li>
+</ul>
+<p><strong>子域Subdomain</strong>    </p>
 <p>如果一个领域过于复杂，涉及到的领域概念、业务规则、交互流程太多，导致没办法直接针对这个大的领域进行领域建模。这时就需要将领域进行拆分，本质上就是把大问题拆分为小问题，把一个大的领域划分为了多个小的领域（子域），那最关键的就是要理清每个子域的边界</p>
-<p>子域可以根据自身重要性和功能属性划分为三类子域： - 核心域：公司核心产品和业务的领域 - 支撑子域：不包含决定产品和公司核心竞争力的功能，也不包含通用功能的子域 - 通用子域：被多个子域使用的通用功能子域</p>
+<p>子域可以根据自身重要性和功能属性划分为三类子域：</p>
+<ul>
+<li>核心域：公司核心产品和业务的领域</li>
+<li>支撑子域：不包含决定产品和公司核心竞争力的功能，也不包含通用功能的子域</li>
+<li>通用子域：被多个子域使用的通用功能子域</li>
+</ul>
 <blockquote>
 <p>每个领域的划分都不一样。对相同领域公司而言，其核心，支撑，通用的子域也可能有不一样的地方，但大体上基本都是一样的。</p>
 </blockquote>
-<p><strong>举例</strong><br>
-社交领域的划分 - 核心域：用户推荐，聊天 - 支撑子域：客服，反垃圾 - 通用子域：消息推送</p>
-<h3 id="限界上下文bounded-context">限界上下文Bounded Context</h3>
-<p><strong>限界上下文</strong></p>
-<p>限界指划分边界，上下文对应一个聚合，限界上下文可以理解为业务的边界。<br>
-一个子域对应一个或多个限界上下文。如果对应多个上下文，则可以考虑子域是否要再进行细粒度的拆分。</p>
+<p><strong>举例</strong><br>社交领域的划分</p>
+<ul>
+<li>核心域：用户推荐，聊天</li>
+<li>支撑子域：客服，反垃圾</li>
+<li>通用子域：消息推送</li>
+</ul>
+<h3 id="限界上下文Bounded-Context"><a href="#限界上下文Bounded-Context" class="headerlink" title="限界上下文Bounded Context"></a>限界上下文Bounded Context</h3><p><strong>限界上下文</strong></p>
+<p>限界指划分边界，上下文对应一个聚合，限界上下文可以理解为业务的边界。<br>一个子域对应一个或多个限界上下文。如果对应多个上下文，则可以考虑子域是否要再进行细粒度的拆分。</p>
 <blockquote>
 <p>限界上下文的目的是为了更加明确领域模型的职责和范围</p>
 </blockquote>
-<p><strong>划分限界上下文</strong></p>
-<p>三个原则： - 概念相同，含义不同(通用语言)：如果一个模型在一个上下文里面有歧义，那有歧义的地方就是边界所在，应该把它们拆到不同的限界上下文中。 - 外部系统：有时候系统需要同外部系统交互，这时可以把与外部系统交互的那部分拆分出去以实现更好的扩展性。这样一旦外部系统发生了变化，就不会影响到我们的核心业务逻辑。 - 组织扩展：尽量不要两个团队一起在一个限界上下文里面开发，因为这样可能会存在沟通不顺畅、集成困难等问题。</p>
+<p><strong>划分限界上下文</strong>  </p>
+<p>三个原则：</p>
+<ul>
+<li>概念相同，含义不同(通用语言)：如果一个模型在一个上下文里面有歧义，那有歧义的地方就是边界所在，应该把它们拆到不同的限界上下文中。</li>
+<li>外部系统：有时候系统需要同外部系统交互，这时可以把与外部系统交互的那部分拆分出去以实现更好的扩展性。这样一旦外部系统发生了变化，就不会影响到我们的核心业务逻辑。</li>
+<li>组织扩展：尽量不要两个团队一起在一个限界上下文里面开发，因为这样可能会存在沟通不顺畅、集成困难等问题。</li>
+</ul>
 <p><strong>组织架构</strong></p>
 <blockquote>
-<p>康威定律<br>
-任何组织在设计一套系统时，所交付的设计方案在结构上都与该组织的沟通结构保持一致。</p>
+<p>康威定律<br>任何组织在设计一套系统时，所交付的设计方案在结构上都与该组织的沟通结构保持一致。</p>
 </blockquote>
 <p>团队结构就是组织结构，限界上下文就是系统的业务结构。所以，团队结构应该尽量和限界上下文保持一致。</p>
-<p><strong>举例</strong><br>
-社交领域中，订单子域对应订单上下文</p>
+<p><strong>举例</strong><br>社交领域中，订单子域对应订单上下文</p>
 <p><strong>上下文映射</strong></p>
 <p>从宏观上看每个上下文之间的关系，可以更好理解各个上下文之间的依赖关系。</p>
-<p>梳理清楚上下文之间的关系是为了： - 任务更好拆分，一个开发人员可以全身心的投入到相关的一个单独的上下文中 - 沟通更加顺畅，一个上下文可以明确自己对其他上下文的依赖关系，从而使得团队内开发直接更好的对接 - 每个团队在它的上下文中能够更加明确自己领域内的概念，因为上下文是领域的解系统</p>
-<p><strong>举例</strong><br>
-聊天上下文依赖消息推送，推广上下文也依赖消息推送</p>
-<h2 id="战术建模">战术建模</h2>
-<p>战术建模是从微观角度对上下文进行建模。<br>
-梳理清楚聚合根，实体，值对象，领域服务，领域事件，资源库等。</p>
-<h3 id="实体entity">实体Entity</h3>
-<p>当一个对象可以由标识进行区分时，这种对象称为实体</p>
+<p>梳理清楚上下文之间的关系是为了：</p>
+<ul>
+<li>任务更好拆分，一个开发人员可以全身心的投入到相关的一个单独的上下文中</li>
+<li>沟通更加顺畅，一个上下文可以明确自己对其他上下文的依赖关系，从而使得团队内开发直接更好的对接</li>
+<li>每个团队在它的上下文中能够更加明确自己领域内的概念，因为上下文是领域的解系统</li>
+</ul>
+<p><strong>举例</strong><br>聊天上下文依赖消息推送，推广上下文也依赖消息推送</p>
+<h2 id="战术建模"><a href="#战术建模" class="headerlink" title="战术建模"></a>战术建模</h2><p>战术建模是从微观角度对上下文进行建模。<br>梳理清楚聚合根，实体，值对象，领域服务，领域事件，资源库等。</p>
+<h3 id="实体Entity"><a href="#实体Entity" class="headerlink" title="实体Entity"></a>实体Entity</h3><p>当一个对象可以由标识进行区分时，这种对象称为实体</p>
 <blockquote>
 <p>和数据库中的实体是不同的，这里的实体是从业务角度进行划分的。</p>
 </blockquote>
-<p>实体： - 具有唯一标识 - 持久化 - 可变</p>
-<p><strong>举例</strong><br>
-社交中的用户即为实体，可以通过用户唯一的id进行区分。</p>
-<h3 id="值对象value-object">值对象value object</h3>
-<p>当一个对象用于对事物进行描述而没有唯一标识时，它被称作值对象。<br>
-在实践中，需要保证值对象创建后就不能被修改，即不允许外部再修改其属性。</p>
+<p>实体：</p>
+<ul>
+<li>具有唯一标识</li>
+<li>持久化</li>
+<li>可变</li>
+</ul>
+<p><strong>举例</strong><br>社交中的用户即为实体，可以通过用户唯一的id进行区分。</p>
+<h3 id="值对象value-object"><a href="#值对象value-object" class="headerlink" title="值对象value object"></a>值对象value object</h3><p>当一个对象用于对事物进行描述而没有唯一标识时，它被称作值对象。<br>在实践中，需要保证值对象创建后就不能被修改，即不允许外部再修改其属性。</p>
 <p>例如：年龄，聊天表情符号（ 😛: 吐舌 (U+1F61B)）</p>
 <blockquote>
 <p>习惯了使用数据库的数据建模后，很容易将所有对象看作实体</p>
 </blockquote>
-<h3 id="聚合根aggregate-root">聚合根Aggregate Root</h3>
-<p>聚合是一组相关对象的集合，作为一个整体被外界访问，聚合根是这个聚合的根节点。</p>
+<h3 id="聚合根Aggregate-Root"><a href="#聚合根Aggregate-Root" class="headerlink" title="聚合根Aggregate Root"></a>聚合根Aggregate Root</h3><p>聚合是一组相关对象的集合，作为一个整体被外界访问，聚合根是这个聚合的根节点。</p>
 <p>聚合由根实体，值对象和实体组成。(聚合根里面有多少个实体，由领域建模决定)</p>
 <p>外部对象需要访问聚合内的实体时，只能通过聚合根进行访问，而不能直接访问</p>
-<p><strong>举例</strong><br>
-一个订单是一个聚合根，订单购买的商品是实体，收货地址是值对象。</p>
-<h3 id="领域服务domain-service">领域服务Domain Service</h3>
-<p><strong>领域服务</strong><br>
-一些既不是实体，也不是值对象的范畴的领域行为或操作，可以放到领域服务中。用来处理业务逻辑，协调领域对象来完成相关业务。</p>
+<p><strong>举例</strong><br>一个订单是一个聚合根，订单购买的商品是实体，收货地址是值对象。</p>
+<h3 id="领域服务Domain-Service"><a href="#领域服务Domain-Service" class="headerlink" title="领域服务Domain Service"></a>领域服务Domain Service</h3><p><strong>领域服务</strong><br>一些既不是实体，也不是值对象的范畴的领域行为或操作，可以放到领域服务中。用来处理业务逻辑，协调领域对象来完成相关业务。</p>
 <p>例如，有些业务逻辑不适合放到领域对象中，或实体之间的业务协调，这些业务逻辑都可以放到领域服务中。</p>
-<p><strong>特征</strong> - 与领域相关的操作如执行一个业务操作过程，但它又并不适合放入实体与值对象中 - 操作是无状态的 - 对领域对象进行转换，或以多个领域对象作为输入进行计算，结果产生一个值对象</p>
-<p>当采用微服务架构风格，一切领域逻辑的对外暴露均需要通过领域服务来进行。<br>
-如原本由聚合根暴露的业务逻辑也需要依托于领域服务。</p>
-<p><strong>举例</strong><br>
-必须通过订单领域服务来创建和访问订单</p>
-<h3 id="领域事件">领域事件</h3>
-<p>领域事件是对领域内发生的活动进行的建模。捕获一些有价值的领域活动事件。</p>
-<p><strong>作用</strong> - 解耦：可以通过发布订阅模式，发布领域事件 - 一致性：通过领域事件来达到最终一致性 - 事件溯源</p>
-<p><strong>举例</strong><br>
-发送聊天消息，这属于一个领域事件；撤回消息，也属于一个领域事件。<br>
-推送服务订阅消息事件，然后将消息推送给用户端。这样就解耦了消息服务与推送服务之间的强依赖关系。</p>
-<h3 id="资源库repository">资源库Repository</h3>
-<p>资源库用于保存和获取聚合对象。</p>
-<p><strong>领域模型 vs 数据模型</strong><br>
-资源库介于领域模型(业务模型)和数据模型(数据库)之间，主要用于聚合对象的持久化和检索。</p>
+<p><strong>特征</strong></p>
+<ul>
+<li>与领域相关的操作如执行一个业务操作过程，但它又并不适合放入实体与值对象中</li>
+<li>操作是无状态的</li>
+<li>对领域对象进行转换，或以多个领域对象作为输入进行计算，结果产生一个值对象</li>
+</ul>
+<p>当采用微服务架构风格，一切领域逻辑的对外暴露均需要通过领域服务来进行。<br>如原本由聚合根暴露的业务逻辑也需要依托于领域服务。</p>
+<p><strong>举例</strong><br>必须通过订单领域服务来创建和访问订单</p>
+<h3 id="领域事件"><a href="#领域事件" class="headerlink" title="领域事件"></a>领域事件</h3><p>领域事件是对领域内发生的活动进行的建模。捕获一些有价值的领域活动事件。</p>
+<p><strong>作用</strong></p>
+<ul>
+<li>解耦：可以通过发布订阅模式，发布领域事件</li>
+<li>一致性：通过领域事件来达到最终一致性</li>
+<li>事件溯源</li>
+</ul>
+<p><strong>举例</strong><br>发送聊天消息，这属于一个领域事件；撤回消息，也属于一个领域事件。<br>推送服务订阅消息事件，然后将消息推送给用户端。这样就解耦了消息服务与推送服务之间的强依赖关系。</p>
+<h3 id="资源库Repository"><a href="#资源库Repository" class="headerlink" title="资源库Repository"></a>资源库Repository</h3><p>资源库用于保存和获取聚合对象。</p>
+<p><strong>领域模型 vs 数据模型</strong><br>资源库介于领域模型(业务模型)和数据模型(数据库)之间，主要用于聚合对象的持久化和检索。</p>
 <blockquote>
 <p>资源库隔离了领域模型和数据模型，以便上层只需要关注于领域模型而不需要考虑如何进行持久化。</p>
 </blockquote>
-<h2 id="分层架构">分层架构</h2>
-<p>把一系列相同的对象进行分类放在同一层，然后根据他们之间的依赖关系再确定上下层次关系。</p>
-<p>在实际决策时，我们需要知道各层的职责、意义以及相应的场景；<br>
-落实到代码层面时，我们还需要知道各层所包含的具体内容、各层的一些常见的具体策略/模式、层次之间的交互/依赖关系。</p>
+<h2 id="分层架构"><a href="#分层架构" class="headerlink" title="分层架构"></a>分层架构</h2><p>把一系列相同的对象进行分类放在同一层，然后根据他们之间的依赖关系再确定上下层次关系。</p>
+<p>在实际决策时，我们需要知道各层的职责、意义以及相应的场景；<br>落实到代码层面时，我们还需要知道各层所包含的具体内容、各层的一些常见的具体策略/模式、层次之间的交互/依赖关系。</p>
 <p><strong>DDD经典分层架构</strong></p>
-<figure>
-<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkU2SE4zVk1RN1FNQkU3RTRYV0ZRWFlRRDNXNDJGSzA2IiwidyI6NDQ0LCJoIjo0NzcsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzMxMTIwMTEwOTg4MDY2MDQ0OH0" alt="ddd_layers.png"><figcaption aria-hidden="true">ddd_layers.png</figcaption>
-</figure>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkU2SE4zVk1RN1FNQkU3RTRYV0ZRWFlRRDNXNDJGSzA2IiwidyI6NDQ0LCJoIjo0NzcsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzMxMTIwMTEwOTg4MDY2MDQ0OH0" alt="ddd_layers.png"></p>
 <ul>
 <li>用户接口层（interfaces）：处理显示和用户请求，以及一些基本的参数检查，不包括业务逻辑</li>
 <li>应用层（application）：主要协调领域对象的操作；处理持久化事务、发送消息、安全认证等</li>
@@ -569,31 +560,29 @@
 <li>基础设施层（infrastructure）：处理纯技术细节，为其他层提供技术支撑，也可用于封装调用的外部系统细节。例如：持久化的实现，消息中间件的实现，工具类，rpc等</li>
 </ul>
 <blockquote>
-<p>个人理解：这种分层，既可以在一个单体应用中，也可以是微服务的形式。DDD分层并不一定要按微服务的服务粒度进行分层。<br>
-如果一个业务逻辑非常简单的子域，则可以将几层都放进一个单体应用中，在应用中进行分层。如果业务较为复杂，则可以按服务进行拆分，每层都有自己对应的服务。</p>
+<p>个人理解：这种分层，既可以在一个单体应用中，也可以是微服务的形式。DDD分层并不一定要按微服务的服务粒度进行分层。<br>如果一个业务逻辑非常简单的子域，则可以将几层都放进一个单体应用中，在应用中进行分层。如果业务较为复杂，则可以按服务进行拆分，每层都有自己对应的服务。</p>
 </blockquote>
-<h2 id="其他架构">其他架构</h2>
-<ul>
+<h2 id="其他架构"><a href="#其他架构" class="headerlink" title="其他架构"></a>其他架构</h2><ul>
 <li>对称性架构</li>
 <li>洋葱架构</li>
 <li>整洁架构</li>
 <li>CQRS架构</li>
 </ul>
-<h1 id="ddd工程实践">DDD工程实践</h1>
-<p>以一个简化的社交领域的例子来实践DDD。</p>
-<h2 id="核心概念">核心概念</h2>
-<ul>
+<h1 id="DDD工程实践"><a href="#DDD工程实践" class="headerlink" title="DDD工程实践"></a>DDD工程实践</h1><p>以一个简化的社交领域的例子来实践DDD。</p>
+<h2 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h2><ul>
 <li>用户（User）： 一个账户，并以用户id识别</li>
 <li>关系（Relationship）：用户之间的关系</li>
 <li>动态（Feed）： 用户发布文字，图片，视频，评论等内容</li>
 <li>会话（Conversation）：用户之间的聊天会话</li>
 </ul>
-<h2 id="领域设计">领域设计</h2>
-<h3 id="战略建模">战略建模</h3>
-<p>领域就是社交领域，核心问题和绝大部分社交系统一样。</p>
-<p><strong>子域</strong><br>
-- 核心域：聊天，动态 - 支撑子域：反作弊，推广 - 通用子域：用户，关系，消息推送</p>
-<p><strong>上下文</strong></p>
+<h2 id="领域设计"><a href="#领域设计" class="headerlink" title="领域设计"></a>领域设计</h2><h3 id="战略建模"><a href="#战略建模" class="headerlink" title="战略建模"></a>战略建模</h3><p>领域就是社交领域，核心问题和绝大部分社交系统一样。</p>
+<p><strong>子域</strong>   </p>
+<ul>
+<li>核心域：聊天，动态</li>
+<li>支撑子域：反作弊，推广</li>
+<li>通用子域：用户，关系，消息推送</li>
+</ul>
+<p><strong>上下文</strong>   </p>
 <ul>
 <li>消息上下文</li>
 <li>会话上下文</li>
@@ -601,75 +590,78 @@
 <li>推送上下文</li>
 <li>用户上下文</li>
 </ul>
-<h3 id="战术建模-1">战术建模</h3>
-<p>以会话上下文为例子来进行战术建模</p>
+<h3 id="战术建模-1"><a href="#战术建模-1" class="headerlink" title="战术建模"></a>战术建模</h3><p>以会话上下文为例子来进行战术建模</p>
 <p><strong>会话上下文</strong></p>
 <ul>
-<li>会话：聚合根
-<ul>
+<li>会话：聚合根<ul>
 <li>用户：实体</li>
 <li>用户：实体</li>
-<li>消息列表：实体
-<ul>
+<li>消息列表：实体<ul>
 <li>发送人：实体</li>
 <li>接收人：实体</li>
 <li>消息内容：值对象</li>
-</ul></li>
-</ul></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p>消息在会话上下文属于实体，在消息上下文属于聚合根。</p>
-<h3 id="结构">结构</h3>
-<p>以会话子域为例</p>
+<h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p>以会话子域为例</p>
 <p><strong>架构分层</strong></p>
 <ul>
-<li>interfaces 接口层
-<ul>
+<li>interfaces 接口层<ul>
 <li>RESTful</li>
 <li>RPC</li>
-</ul></li>
-<li>application 应用层
-<ul>
+</ul>
+</li>
+<li>application 应用层<ul>
+<li>Conversation </li>
+<li>Message</li>
+</ul>
+</li>
+<li>domain_service 领域服务层<ul>
+<li>model<ul>
 <li>Conversation</li>
 <li>Message</li>
-</ul></li>
-<li>domain_service 领域服务层
-<ul>
-<li>model
-<ul>
+</ul>
+</li>
+<li>repository<ul>
 <li>Conversation</li>
 <li>Message</li>
-</ul></li>
-<li>repository
-<ul>
-<li>Conversation</li>
-<li>Message</li>
-</ul></li>
-</ul></li>
-<li>infrastructure 基础设施层
-<ul>
-<li>store
-<ul>
+</ul>
+</li>
+</ul>
+</li>
+<li>infrastructure 基础设施层<ul>
+<li>store<ul>
 <li>ConversationRepository</li>
 <li>MessageRepository</li>
-</ul></li>
-<li>message
-<ul>
+</ul>
+</li>
+<li>message<ul>
 <li>SendMessage</li>
-</ul></li>
+</ul>
+</li>
 <li>utils</li>
-</ul></li>
+</ul>
+</li>
 </ul>
 <p><strong>领域</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">package domain</span><br><span class="line"></span><br><span class="line">// 聚合根</span><br><span class="line">type Conversation struct &#123;</span><br><span class="line">    ID int</span><br><span class="line">    User1 User</span><br><span class="line">    User2 User</span><br><span class="line">    Messages list.List</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 实体</span><br><span class="line">type Message struct &#123;</span><br><span class="line">    ID int</span><br><span class="line">    From User       // 实体</span><br><span class="line">    To User     </span><br><span class="line">    Body Content    // 值对象</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p><strong>用户接口层</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">type ChatInferface struct &#123;</span><br><span class="line">    // 应用层</span><br><span class="line">    app app.ChatApplication</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (c *ChatInferface) Route() &#123;</span><br><span class="line">    c.route(&quot;POST&quot;, &quot;/api/message&quot;, c.SendMessage)</span><br><span class="line">    c.route(&quot;PATCH&quot;, &quot;/api/message&quot;, c.RecallMessage)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// POST /api/message</span><br><span class="line">func (c *ChatInferface) SendMessage(ctx *Context) &#123;</span><br><span class="line">    if !c.validateRequest(ctx) &#123;</span><br><span class="line">        return</span><br><span class="line">    &#125;</span><br><span class="line">    message := c.parseMessage(ctx)</span><br><span class="line">    app.SendMessage(message)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (c *ChatInferface) RecallMessage(ctx *Context) &#123;</span><br><span class="line">    if !c.validateRequest(ctx) &#123;</span><br><span class="line">        return</span><br><span class="line">    &#125;</span><br><span class="line">    messageID := c.parseMessage(ctx)</span><br><span class="line">    app.RecallMessage(messageID)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p><strong>应用层</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">type ChatApplication struct &#123;</span><br><span class="line">    user service.UserService</span><br><span class="line">    chat service.ChatService</span><br><span class="line">    // 这里领域事件由应用层发布</span><br><span class="line">    // publisher EventPublisher</span><br><span class="line">    lbs LBSFacade</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (c *ChatApplication) SendMessage(msg *Message) &#123;</span><br><span class="line">    if !c.user.CheckUser(msg.UserID) &#123;</span><br><span class="line">        return</span><br><span class="line">    &#125;</span><br><span class="line">    c.chat.SendMessage(msg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>领域服务层</strong> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">type ChatService struct &#123;</span><br><span class="line">    // 领域事件</span><br><span class="line">    publisher MessageEventPublisher</span><br><span class="line">    repo MessageRepository</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (c *ChatService SendMessage(msg *Message) &#123;</span><br><span class="line">    // 业务逻辑</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    // 领域资源持久化</span><br><span class="line">    c.repo.Save(msg)</span><br><span class="line">    </span><br><span class="line">    // 发布领域事件</span><br><span class="line">    c.publisher.Publish(msg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+<p><strong>领域服务层</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">type ChatService struct &#123;</span><br><span class="line">    // 领域事件</span><br><span class="line">    publisher MessageEventPublisher</span><br><span class="line">    repo MessageRepository</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (c *ChatService SendMessage(msg *Message) &#123;</span><br><span class="line">    // 业务逻辑</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    // 领域资源持久化</span><br><span class="line">    c.repo.Save(msg)</span><br><span class="line">    </span><br><span class="line">    // 发布领域事件</span><br><span class="line">    c.publisher.Publish(msg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p><strong>基础设施层</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">package infrastructure</span><br><span class="line"></span><br><span class="line">type MessageRepository struct &#123;</span><br><span class="line">    db MessageDatabase</span><br><span class="line">    cache MessageCache</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (m *MessageRepository) Save(msg *Message) &#123;</span><br><span class="line">    db.Save(m.ToPO(msg))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func (m MessageRepository) Get(msgID int) *Message &#123;</span><br><span class="line">    msg := m.cache.Get(msgID)</span><br><span class="line">    if msg != nil &#123;</span><br><span class="line">        return m.FromPO(msg)</span><br><span class="line">    &#125;</span><br><span class="line">    return m.FromPO(m.db.Get(msgID))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="总结">总结</h1>
-<p>在设计和实现一个系统的时候，这个系统所要处理问题的领域专家和开发人员以一套统一语言进行协作，共同完成该领域模型的构建，在这个过程中，业务架构和系统架构等问题都得到了解决，之后将领域模型中关于系统架构的主体映射为实现代码，完成系统的实现落地。</p>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>在设计和实现一个系统的时候，这个系统所要处理问题的领域专家和开发人员以一套统一语言进行协作，共同完成该领域模型的构建，在这个过程中，业务架构和系统架构等问题都得到了解决，之后将领域模型中关于系统架构的主体映射为实现代码，完成系统的实现落地。</p>
 
       
     </div>
@@ -907,7 +899,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是ddd"><span class="nav-number">1.</span> <span class="nav-text">什么是DDD</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#领域-domain"><span class="nav-number">1.1.</span> <span class="nav-text">领域 Domain</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#驱动设计"><span class="nav-number">1.2.</span> <span class="nav-text">驱动设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概念总结"><span class="nav-number">1.3.</span> <span class="nav-text">概念总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么需要ddd"><span class="nav-number">2.</span> <span class="nav-text">为什么需要DDD</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#系统复杂性"><span class="nav-number">2.1.</span> <span class="nav-text">系统复杂性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#耦合"><span class="nav-number">2.1.1.</span> <span class="nav-text">耦合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内聚"><span class="nav-number">2.1.2.</span> <span class="nav-text">内聚</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#微服务"><span class="nav-number">2.2.</span> <span class="nav-text">微服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ddd能带来什么"><span class="nav-number">2.3.</span> <span class="nav-text">DDD能带来什么</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ddd建模"><span class="nav-number">3.</span> <span class="nav-text">DDD建模</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#战略设计"><span class="nav-number">3.1.</span> <span class="nav-text">战略设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#通用语言ubiquitous-language"><span class="nav-number">3.1.1.</span> <span class="nav-text">通用语言Ubiquitous Language</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#领域和子域"><span class="nav-number">3.1.2.</span> <span class="nav-text">领域和子域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#限界上下文bounded-context"><span class="nav-number">3.1.3.</span> <span class="nav-text">限界上下文Bounded Context</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#战术建模"><span class="nav-number">3.2.</span> <span class="nav-text">战术建模</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实体entity"><span class="nav-number">3.2.1.</span> <span class="nav-text">实体Entity</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#值对象value-object"><span class="nav-number">3.2.2.</span> <span class="nav-text">值对象value object</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#聚合根aggregate-root"><span class="nav-number">3.2.3.</span> <span class="nav-text">聚合根Aggregate Root</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#领域服务domain-service"><span class="nav-number">3.2.4.</span> <span class="nav-text">领域服务Domain Service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#领域事件"><span class="nav-number">3.2.5.</span> <span class="nav-text">领域事件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#资源库repository"><span class="nav-number">3.2.6.</span> <span class="nav-text">资源库Repository</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分层架构"><span class="nav-number">3.3.</span> <span class="nav-text">分层架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他架构"><span class="nav-number">3.4.</span> <span class="nav-text">其他架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ddd工程实践"><span class="nav-number">4.</span> <span class="nav-text">DDD工程实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#核心概念"><span class="nav-number">4.1.</span> <span class="nav-text">核心概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#领域设计"><span class="nav-number">4.2.</span> <span class="nav-text">领域设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#战略建模"><span class="nav-number">4.2.1.</span> <span class="nav-text">战略建模</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#战术建模-1"><span class="nav-number">4.2.2.</span> <span class="nav-text">战术建模</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结构"><span class="nav-number">4.2.3.</span> <span class="nav-text">结构</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是DDD"><span class="nav-number">1.</span> <span class="nav-text">什么是DDD</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#领域-Domain"><span class="nav-number">1.1.</span> <span class="nav-text">领域 Domain</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#驱动设计"><span class="nav-number">1.2.</span> <span class="nav-text">驱动设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概念总结"><span class="nav-number">1.3.</span> <span class="nav-text">概念总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么需要DDD"><span class="nav-number">2.</span> <span class="nav-text">为什么需要DDD</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#系统复杂性"><span class="nav-number">2.1.</span> <span class="nav-text">系统复杂性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#耦合"><span class="nav-number">2.1.1.</span> <span class="nav-text">耦合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内聚"><span class="nav-number">2.1.2.</span> <span class="nav-text">内聚</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#微服务"><span class="nav-number">2.2.</span> <span class="nav-text">微服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DDD能带来什么"><span class="nav-number">2.3.</span> <span class="nav-text">DDD能带来什么</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DDD建模"><span class="nav-number">3.</span> <span class="nav-text">DDD建模</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#战略设计"><span class="nav-number">3.1.</span> <span class="nav-text">战略设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#通用语言Ubiquitous-Language"><span class="nav-number">3.1.1.</span> <span class="nav-text">通用语言Ubiquitous Language</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#领域和子域"><span class="nav-number">3.1.2.</span> <span class="nav-text">领域和子域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#限界上下文Bounded-Context"><span class="nav-number">3.1.3.</span> <span class="nav-text">限界上下文Bounded Context</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#战术建模"><span class="nav-number">3.2.</span> <span class="nav-text">战术建模</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实体Entity"><span class="nav-number">3.2.1.</span> <span class="nav-text">实体Entity</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#值对象value-object"><span class="nav-number">3.2.2.</span> <span class="nav-text">值对象value object</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#聚合根Aggregate-Root"><span class="nav-number">3.2.3.</span> <span class="nav-text">聚合根Aggregate Root</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#领域服务Domain-Service"><span class="nav-number">3.2.4.</span> <span class="nav-text">领域服务Domain Service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#领域事件"><span class="nav-number">3.2.5.</span> <span class="nav-text">领域事件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#资源库Repository"><span class="nav-number">3.2.6.</span> <span class="nav-text">资源库Repository</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分层架构"><span class="nav-number">3.3.</span> <span class="nav-text">分层架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他架构"><span class="nav-number">3.4.</span> <span class="nav-text">其他架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DDD工程实践"><span class="nav-number">4.</span> <span class="nav-text">DDD工程实践</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#核心概念"><span class="nav-number">4.1.</span> <span class="nav-text">核心概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#领域设计"><span class="nav-number">4.2.</span> <span class="nav-text">领域设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#战略建模"><span class="nav-number">4.2.1.</span> <span class="nav-text">战略建模</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#战术建模-1"><span class="nav-number">4.2.2.</span> <span class="nav-text">战术建模</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结构"><span class="nav-number">4.2.3.</span> <span class="nav-text">结构</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
 
           </div>

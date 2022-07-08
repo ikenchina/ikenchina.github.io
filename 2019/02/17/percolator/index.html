@@ -416,262 +416,269 @@
 
       
         <blockquote>
-<p>对percolator的理解与tidb实现 <a id="more"></a></p>
+<p>对percolator的理解与tidb实现 <a id="more"></a>  </p>
 </blockquote>
-<h1 id="论文">论文</h1>
-<p><strong>论文地址</strong><br>
-https://research.google/pubs/pub36726/</p>
-<h2 id="概述">概述</h2>
-<p><strong>设计percolator的目的</strong><br>
-为大数据集群进行增量处理更新的系统，主要用于google网页搜索索引服务。使用基于Percolator的增量处理系统代替原有的批处理索引系统后，Google在处理同样数据量的文档时，将文档的平均搜索延时降低了50%。</p>
-<p><strong>基于bigtable单行事务实现跨行事务</strong><br>
-Percolator 在 Bigtable 之上实现的，以client library 的方式实现。<br>
-Percolator 利用 Bigtable 的单行事务能力，依靠client的协议和一个全局的授时服务器 TSO 以及两阶段提交协议来实现了跨机器的多行事务。</p>
-<p><strong>MVCC与snapshot isolation</strong><br>
-Percolator依据全局时间戳和MVCC实现 Snapshot Isolation 隔离级别的并发控制协议。</p>
-<p><strong>percolator特点</strong><br>
-- 事务: 跨行、跨表的、基于快照隔离的ACID事务 - 观察者(observers)：一种类似触发器的通知机制</p>
-<h1 id="设计">设计</h1>
-<h2 id="隔离等级">隔离等级</h2>
-<p>通过MVCC来实现SI(Snapshop isolation)隔离等级。</p>
-<p>Percolator 使用Bigtable的时间戳记维度实现了数据的多版本化。优点如下： - 读操作：可以读取任何指定时间戳版本的记录 - 写操作，能很好的应对写写冲突：若两个事务操作同一记录，只有一个会提交成功</p>
+<h1 id="论文"><a href="#论文" class="headerlink" title="论文"></a>论文</h1><p><strong>论文地址</strong><br><a href="https://research.google/pubs/pub36726/" target="_blank" rel="noopener">https://research.google/pubs/pub36726/</a></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>设计percolator的目的</strong><br>为大数据集群进行增量处理更新的系统，主要用于google网页搜索索引服务。使用基于Percolator的增量处理系统代替原有的批处理索引系统后，Google在处理同样数据量的文档时，将文档的平均搜索延时降低了50%。</p>
+<p><strong>基于bigtable单行事务实现跨行事务</strong><br>Percolator 在 Bigtable 之上实现的，以client library 的方式实现。<br>Percolator 利用 Bigtable 的单行事务能力，依靠client的协议和一个全局的授时服务器 TSO 以及两阶段提交协议来实现了跨机器的多行事务。</p>
+<p><strong>MVCC与snapshot isolation</strong><br>Percolator依据全局时间戳和MVCC实现 Snapshot Isolation 隔离级别的并发控制协议。</p>
+<p><strong>percolator特点</strong>   </p>
+<ul>
+<li>事务: 跨行、跨表的、基于快照隔离的ACID事务</li>
+<li>观察者(observers)：一种类似触发器的通知机制</li>
+</ul>
+<h1 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h1><h2 id="隔离等级"><a href="#隔离等级" class="headerlink" title="隔离等级"></a>隔离等级</h2><p>通过MVCC来实现SI(Snapshop isolation)隔离等级。</p>
+<p>Percolator 使用Bigtable的时间戳记维度实现了数据的多版本化。优点如下：</p>
+<ul>
+<li>读操作：可以读取任何指定时间戳版本的记录</li>
+<li>写操作，能很好的应对写写冲突：若两个事务操作同一记录，只有一个会提交成功</li>
+</ul>
 <blockquote>
 <p>I存在write skew(写偏斜)</p>
 </blockquote>
-<h2 id="锁机制">锁机制</h2>
-<blockquote>
+<h2 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h2><blockquote>
 <p>Because it is built as a client library accessing Bigtable, rather than controlling access to storage itself, Percolator faces a different set of challenges implementing distributed transactions than traditional PDBMSs. Other parallel databases integrate locking into the system component that manages access to the disk: since each node already mediates access to data on the disk it can grant locks on requests and deny accesses that violate locking requirements.</p>
 </blockquote>
-<p>Percolator锁的管理必须满足以下条件： - 能应对机器故障：若一个锁在两阶段提交时消失，系统可能将两个有冲突的事务都提交 - 高吞吐量：上千台机器会同时请求获取锁 - 低延时</p>
-<p>锁服务要实现： - 多副本 ： survive failure - distributed and balanced ： handle load - 写入持久化存储系统</p>
-<h2 id="时间戳">时间戳</h2>
-<p>Timestamp Oracle(不是Oracle数据库)： TSO通过统一中心授权可以保证按照递增的方式分配逻辑时钟,任何事件申请的时钟都不会重复，能够保证事务版本号的单调递增，确保分布式事务的时序。</p>
-<p>所以TSO是一个分配严格的单调递增时间戳的服务器。</p>
-<p><strong>优化</strong><br>
-因为每个事务都需要调用oracle两次，所以这个服务必须有很好的可伸缩性。<br>
-Oracle会定期分配一个范围的时间戳，然后将范围中的最大值写入持久化，Oracle在内存中原子递增来快速分配时间戳，查询时不涉及磁盘I/O。如果oracle重启，将以存储中的最大值作为开始值。 worker会维持一个长连接RPC到oracle，低频率的、批量的获取时间戳。</p>
-<p><strong>性能</strong><br>
-Oracle中单台机器每秒向外分配接近两百万的时间戳。</p>
-<p><strong>关于批量获取时间戳</strong></p>
-<p>批量获取时间戳并不会造成乱序问题，因为就算事务A先获取时间戳T1，事务B后获取时间戳T2，T1&lt;T2，那么分布式系统中，也无法保证事务A先执行，事务B后执行。<br>
-如果事务B先执行，那么事务A势必能发现写冲突从而rollback。</p>
-<p><strong>单点</strong></p>
-<p>为了保证单调递增的特性，所以很多TSO的开源实现都存在单点问题。如tidb的TSO。<br>
-而且，一般TSO也存在跨数据中心高延迟的问题。</p>
+<p>Percolator锁的管理必须满足以下条件：</p>
+<ul>
+<li>能应对机器故障：若一个锁在两阶段提交时消失，系统可能将两个有冲突的事务都提交</li>
+<li>高吞吐量：上千台机器会同时请求获取锁</li>
+<li>低延时</li>
+</ul>
+<p>锁服务要实现：</p>
+<ul>
+<li>多副本 ： survive failure</li>
+<li>distributed and balanced ： handle load</li>
+<li>写入持久化存储系统</li>
+</ul>
+<h2 id="时间戳"><a href="#时间戳" class="headerlink" title="时间戳"></a>时间戳</h2><p>Timestamp Oracle(不是Oracle数据库)： TSO通过统一中心授权可以保证按照递增的方式分配逻辑时钟,任何事件申请的时钟都不会重复，能够保证事务版本号的单调递增，确保分布式事务的时序。</p>
+<p>所以TSO是一个分配严格的单调递增时间戳的服务器。  </p>
+<p><strong>优化</strong><br>因为每个事务都需要调用oracle两次，所以这个服务必须有很好的可伸缩性。<br>Oracle会定期分配一个范围的时间戳，然后将范围中的最大值写入持久化，Oracle在内存中原子递增来快速分配时间戳，查询时不涉及磁盘I/O。如果oracle重启，将以存储中的最大值作为开始值。<br>worker会维持一个长连接RPC到oracle，低频率的、批量的获取时间戳。</p>
+<p><strong>性能</strong><br>Oracle中单台机器每秒向外分配接近两百万的时间戳。</p>
+<p><strong>关于批量获取时间戳</strong>   </p>
+<p>批量获取时间戳并不会造成乱序问题，因为就算事务A先获取时间戳T1，事务B后获取时间戳T2，T1&lt;T2，那么分布式系统中，也无法保证事务A先执行，事务B后执行。<br>如果事务B先执行，那么事务A势必能发现写冲突从而rollback。</p>
+<p><strong>单点</strong>   </p>
+<p>为了保证单调递增的特性，所以很多TSO的开源实现都存在单点问题。如tidb的TSO。<br>而且，一般TSO也存在跨数据中心高延迟的问题。</p>
 <p><strong>其他时序方案</strong></p>
 <ul>
-<li>Logic Clock: dynamoDB</li>
+<li>Logic Clock: dynamoDB </li>
 <li>True Time : spanner</li>
 <li>Hybrid Logic Clock : cockroachDB，没有单点问题，但是为了解决时钟误差而无法避免的时延问题。</li>
 </ul>
-<h2 id="数据存储">数据存储</h2>
-<p>percolator定义了5个列</p>
+<h2 id="数据存储"><a href="#数据存储" class="headerlink" title="数据存储"></a>数据存储</h2><p>percolator定义了5个列</p>
 <table>
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
 <thead>
-<tr class="header">
+<tr>
 <th>Column</th>
 <th>Use</th>
 </tr>
 </thead>
-<tbody>
-<tr class="odd">
+<tbody><tr>
 <td>c:lock</td>
 <td>An uncommitted transaction is writing this cell; contains the location of primary lock</td>
 </tr>
-<tr class="even">
+<tr>
 <td>c:write</td>
 <td>Committed data present; stores the Bigtable timestamp of the data</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>c:data</td>
 <td>Stores the data itself</td>
 </tr>
-<tr class="even">
+<tr>
 <td>c:notify Hint:</td>
 <td>observers may need to run</td>
 </tr>
-<tr class="odd">
+<tr>
 <td>c:ack</td>
 <td>O Observer “O” has run ; stores start timestamp of successful last run</td>
 </tr>
-</tbody>
-</table>
-<p><strong>Lock</strong></p>
+</tbody></table>
+<p><strong>Lock</strong>   </p>
 <p>事务的锁，key value映射</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,start_ts) ==&gt; (primary_key,lock_type)</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>key：数据的key</li>
 <li>start_ts：事务开始时间</li>
 <li>primary：该锁的primary的引用。事务从待修改的keys中选择一个作为primary,其余的则作为secondary，secondary的primary_key指向primary的key，事务的上锁和解锁都由primary key决定。</li>
 </ul>
-<p><strong>Write</strong><br>
-已提交的数据对应的时间戳。key value映射 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,commit_ts) ==&gt; (start_ts)</span><br></pre></td></tr></table></figure></p>
+<p><strong>Write</strong><br>已提交的数据对应的时间戳。key value映射</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,commit_ts) ==&gt; (start_ts)</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>key：数据的key</li>
 <li>commit_ts：事务的提交时间</li>
 <li>start_ts：事务的开始时间（此数据在data中的时间戳版本）</li>
 </ul>
-<p><strong>Data</strong></p>
-<p>存储数据的列，key value映射 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,start_ts) ==&gt; (value)</span><br></pre></td></tr></table></figure></p>
+<p><strong>Data</strong>   </p>
+<p>存储数据的列，key value映射</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key,start_ts) ==&gt; (value)</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>key：对应的主键</li>
 <li>start_ts：事务的开始时间</li>
 <li>value：除主键外的数据列</li>
 </ul>
-<p><strong>Notify</strong><br>
-notify列仅仅是一个hint值（可能是个bool值），表示是否需要触发通知。</p>
-<p><strong>Ack</strong><br>
-ack列是一个简单的时间戳值，表示最近执行通知的观察者的开始时间。</p>
-<h2 id="案例">案例</h2>
-<p>以银行转账为案例<br>
-Bob 向 Joe 转账7元。<br>
-事务开始时间：start timestamp =7 ，提交时间：commit timestamp=8。</p>
-<figure>
-<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlFMNFlEVlBDT1BVVFBHRjI3NTVFWVQ0QUpXRU1KSjA2IiwidyI6NTU3LCJoIjoxODIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDA0Mjc5MTYxNTY5OTg1MDM4OX0" alt="percolator-demo1.png"><figcaption aria-hidden="true">percolator-demo1.png</figcaption>
-</figure>
+<p><strong>Notify</strong><br>notify列仅仅是一个hint值（可能是个bool值），表示是否需要触发通知。</p>
+<p><strong>Ack</strong><br>ack列是一个简单的时间戳值，表示最近执行通知的观察者的开始时间。</p>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><p>以银行转账为案例<br>Bob 向 Joe 转账7元。<br>事务开始时间：start timestamp =7 ，提交时间：commit timestamp=8。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlFMNFlEVlBDT1BVVFBHRjI3NTVFWVQ0QUpXRU1KSjA2IiwidyI6NTU3LCJoIjoxODIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDA0Mjc5MTYxNTY5OTg1MDM4OX0" alt="percolator-demo1.png"></p>
 <ul>
 <li>Bob有10元：查询column write获取最新时间戳版本的数据(data@5),然后从column data里面获取时间戳为5的数据($10），Joe($2)</li>
 </ul>
-<figure>
-<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkVWNFoyUE1QNkNPRkFEUVRISVlPSkFCQUVLWkRUVTA3IiwidyI6NTQ5LCJoIjoyMzksImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTI2NDYyNjQyODkxNjU3Nzc2NH0" alt="percolator-demo2.png"><figcaption aria-hidden="true">percolator-demo2.png</figcaption>
-</figure>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkVWNFoyUE1QNkNPRkFEUVRISVlPSkFCQUVLWkRUVTA3IiwidyI6NTQ5LCJoIjoyMzksImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTI2NDYyNjQyODkxNjU3Nzc2NH0" alt="percolator-demo2.png"></p>
 <ul>
 <li>stat timestamp=7 作为当前事务的开始时间戳，将Bob选为此事务的primary key，再写入column:lock对Bob上锁，同时将column:data列更新为7:$3。</li>
 </ul>
-<figure>
-<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjdGSE1CRTRWTzZNVkdGSkpFWVo1U05BUVdDT0xPNTA3IiwidyI6NTY1LCJoIjozMDYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMjI5NzgzODM4NDM1ODE0MzE0MH0" alt="percolator-demo3.png"><figcaption aria-hidden="true">percolator-demo3.png</figcaption>
-</figure>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjdGSE1CRTRWTzZNVkdGSkpFWVo1U05BUVdDT0xPNTA3IiwidyI6NTY1LCJoIjozMDYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMjI5NzgzODM4NDM1ODE0MzE0MH0" alt="percolator-demo3.png"></p>
 <ul>
 <li>start timestamp=7作为锁定Joe账户的时间戳，更新其column:data为$9，其锁是secondary指向primary</li>
 </ul>
-<figure>
-<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IktYRE9SUkQ0SUZOVkRJRUhUS09YUExJQVhLRkpWSDA3IiwidyI6NTY4LCJoIjozMzEsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDA2NzQzMDY1MTcyNDA3ODIyOH0" alt="percolator-demo4.png"><figcaption aria-hidden="true">percolator-demo4.png</figcaption>
-</figure>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IktYRE9SUkQ0SUZOVkRJRUhUS09YUExJQVhLRkpWSDA3IiwidyI6NTY4LCJoIjozMzEsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDA2NzQzMDY1MTcyNDA3ODIyOH0" alt="percolator-demo4.png"></p>
 <ul>
 <li>当前时间戳commit timestamp=8作为事务提交时间戳：删除primary所在的lock，在write列中写入commit_ts：data@7</li>
 </ul>
-<figure>
-<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllOSUdWUFNUVlBJNkpXS1NHSjVSSE1GWDVTVlVHRTA3IiwidyI6NTU4LCJoIjoyODUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTQ2ODMzOTIzNjAyNjIyNjA3MH0" alt="percolator-demo5.png"><figcaption aria-hidden="true">percolator-demo5.png</figcaption>
-</figure>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IllOSUdWUFNUVlBJNkpXS1NHSjVSSE1GWDVTVlVHRTA3IiwidyI6NTU4LCJoIjoyODUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTQ2ODMzOTIzNjAyNjIyNjA3MH0" alt="percolator-demo5.png"></p>
 <ul>
 <li>在所有secondary中写入column:write且清理column:lock，事务完成。</li>
 </ul>
-<h2 id="流程">流程</h2>
-<h3 id="伪代码">伪代码</h3>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">class Transaction &#123;</span><br><span class="line">    struct Write&#123; Row row; Column: col; string value;&#125;;</span><br><span class="line">    vector&lt;Write&gt; writes_;</span><br><span class="line">    int start_ts_;</span><br><span class="line"></span><br><span class="line">    Transaction():start_ts_(oracle.GetTimestamp()) &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    // 往事务中添加一行数据</span><br><span class="line">    void Set(Write w) &#123;writes_.push_back(w);&#125;</span><br><span class="line">    </span><br><span class="line">    bool Get(Row row, Column c, string* value) &#123;</span><br><span class="line">        while(true) &#123;</span><br><span class="line">        </span><br><span class="line">            // 开启bigtable事务</span><br><span class="line">            bigtable::Txn = bigtable::StartRowTransaction(row);</span><br><span class="line">            </span><br><span class="line">            // Check for locks that signal concurrent writes.</span><br><span class="line">            // 检查[0, start_ts]内是否有锁，有则等待再重试</span><br><span class="line">            if (T.Read(row, c+&quot;locks&quot;, [0, start_ts_])) &#123;</span><br><span class="line">                // There is a pending lock; try to clean it and wait</span><br><span class="line">                BackoffAndMaybeCleanupLock(row, c);</span><br><span class="line">                continue;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Find the latest write below our start_timestamp.</span><br><span class="line">        // 读取column:wriet的[0, start_ts]的最新提交记录版本</span><br><span class="line">        latest_write = T.Read(row, c+&quot;write&quot;, [0, start_ts_]);</span><br><span class="line">        if(!latest_write.found()) return false; // no data</span><br><span class="line">        </span><br><span class="line">        // 根据此时间戳版本去column:data读取数据</span><br><span class="line">        int data_ts = latest_write.start_timestamp();</span><br><span class="line">        *value = T.Read(row, c+&quot;data&quot;, [data_ts, data_ts]);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // prewrite : 尝试上锁+写数据，如果锁冲突则返回失败</span><br><span class="line">    bool Prewrite(Write w, Write primary) &#123;</span><br><span class="line">        Column c = w.col;</span><br><span class="line">        </span><br><span class="line">        // bigtable 事务</span><br><span class="line">        bigtable::Txn T = bigtable::StartRowTransaction(w.row);</span><br><span class="line"></span><br><span class="line">        // 检查写写冲突：从column:write获取最新数据，如果commit_ts&gt;=事务开始时间，则冲突</span><br><span class="line">        if (T.Read(w.row, c+&quot;write&quot;, [start_ts_, max])) return false;</span><br><span class="line">        </span><br><span class="line">        // 检查column:lock，如果存在已存在，则锁冲突</span><br><span class="line">        if (T.Read(w.row, c+&quot;lock&quot;, [0, max])) return false;</span><br><span class="line">        </span><br><span class="line">        // 往column:lock写入锁，若为secondary，则指向primary</span><br><span class="line">        T.Write(w.row, c+&quot;lock&quot;, start_ts_, &#123;primary.row, primary.col&#125;)</span><br><span class="line">        </span><br><span class="line">        // 往column:data写入(key, start_ts = value)</span><br><span class="line">        T.Write(w.row, c+&quot;data&quot;, start_ts_, w.value);</span><br><span class="line">        </span><br><span class="line">        // 提交bigtable事务</span><br><span class="line">        return T.Commit();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // 此commit整合 2PC的prewrite和commit，</span><br><span class="line">    // 对外caller而言不需要关注是2PC提交，直接commit就好</span><br><span class="line">    bool Commit() &#123;</span><br><span class="line">        // ***** Prewrite *****//</span><br><span class="line">        // 2PC 第一阶段：prewrite</span><br><span class="line">        // 第一行为primary</span><br><span class="line">        Write primary = write_[0];</span><br><span class="line">        // 其余为secondary</span><br><span class="line">        vector&lt;Write&gt; secondaries(write_.begin() + 1, write_.end());</span><br><span class="line">        </span><br><span class="line">        if (!Prewrite(primary, primary)) return false;</span><br><span class="line">        for (Write w : secondaries)</span><br><span class="line">            if (!Prewrite(w, primary)) return false;</span><br><span class="line">        </span><br><span class="line">        // ***** Commit *****//</span><br><span class="line">        // 2PC第二阶段：commit</span><br><span class="line">        </span><br><span class="line">        // 从oracle获取commit timestamp</span><br><span class="line">        int commit_ts = oracle.GetTimestamp();</span><br><span class="line"></span><br><span class="line">        // Commit primary first. </span><br><span class="line">        Write p = primary;</span><br><span class="line">        </span><br><span class="line">        // primary : 先开始bigtable的事务</span><br><span class="line">        bigtable::Txn T = bigtable::StartRowTransaction(p.row);</span><br><span class="line">        </span><br><span class="line">        // primary : 如果primiary的锁不存在，则abort</span><br><span class="line">        if (!T.Read(p.row, p.col+&quot;lock&quot;, [start_ts_, start_ts_]))</span><br><span class="line">            return false; // aborted while working</span><br><span class="line">        </span><br><span class="line">        // primary : 在column:write 列写入开始时间（Pointer to data written at start_ts_）</span><br><span class="line">        T.Write(p.row, p.col+&quot;write&quot;, commit_ts, start_ts_); </span><br><span class="line">        // primary : 移除column:lock 列</span><br><span class="line">        T.Erase(p.row, p.col+&quot;lock&quot;, commit_ts);</span><br><span class="line">        </span><br><span class="line">        // primary : 提交bigtable 事务</span><br><span class="line">        if(!T.Commit()) return false;</span><br><span class="line"></span><br><span class="line">        // Second phase: write our write records for secondary cells.</span><br><span class="line">        // 遍历所有secondary，写入column:write数据同时删除column:lock</span><br><span class="line">        for (Write w:secondaries) &#123;</span><br><span class="line">            bigtable::write(w.row, w.col+&quot;write&quot;, commit_ts, start_ts_);</span><br><span class="line">            bigtable::Erase(w.row, w.col+&quot;lock&quot;, commit_ts);</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><strong>事务</strong><br>
-- 第一阶段 - 获取时间戳T1, - 写入column:data和锁：时间戳都为T1 - 第二阶段 - 获取时间戳T2 - 写入column:write：key:commit_ts:start_ts (key:T2:T1) - 删除锁</p>
-<p><strong>读取</strong><br>
-- 获取时间戳Tx - 从column:write 读取key[0, Tx]的最大时间戳数据(获取到事务写入的commit_ts=T2) - 从T2中提取出start_ts为T1 - 从column:data中读取 key:T1的数据</p>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><h3 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">class Transaction &#123;</span><br><span class="line">    struct Write&#123; Row row; Column: col; string value;&#125;;</span><br><span class="line">    vector&lt;Write&gt; writes_;</span><br><span class="line">    int start_ts_;</span><br><span class="line"></span><br><span class="line">    Transaction():start_ts_(oracle.GetTimestamp()) &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    // 往事务中添加一行数据</span><br><span class="line">    void Set(Write w) &#123;writes_.push_back(w);&#125;</span><br><span class="line">    </span><br><span class="line">    bool Get(Row row, Column c, string* value) &#123;</span><br><span class="line">        while(true) &#123;</span><br><span class="line">        </span><br><span class="line">            // 开启bigtable事务</span><br><span class="line">            bigtable::Txn = bigtable::StartRowTransaction(row);</span><br><span class="line">            </span><br><span class="line">            // Check for locks that signal concurrent writes.</span><br><span class="line">            // 检查[0, start_ts]内是否有锁，有则等待再重试</span><br><span class="line">            if (T.Read(row, c+&quot;locks&quot;, [0, start_ts_])) &#123;</span><br><span class="line">                // There is a pending lock; try to clean it and wait</span><br><span class="line">                BackoffAndMaybeCleanupLock(row, c);</span><br><span class="line">                continue;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Find the latest write below our start_timestamp.</span><br><span class="line">        // 读取column:wriet的[0, start_ts]的最新提交记录版本</span><br><span class="line">        latest_write = T.Read(row, c+&quot;write&quot;, [0, start_ts_]);</span><br><span class="line">        if(!latest_write.found()) return false; // no data</span><br><span class="line">        </span><br><span class="line">        // 根据此时间戳版本去column:data读取数据</span><br><span class="line">        int data_ts = latest_write.start_timestamp();</span><br><span class="line">        *value = T.Read(row, c+&quot;data&quot;, [data_ts, data_ts]);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // prewrite : 尝试上锁+写数据，如果锁冲突则返回失败</span><br><span class="line">    bool Prewrite(Write w, Write primary) &#123;</span><br><span class="line">        Column c = w.col;</span><br><span class="line">        </span><br><span class="line">        // bigtable 事务</span><br><span class="line">        bigtable::Txn T = bigtable::StartRowTransaction(w.row);</span><br><span class="line"></span><br><span class="line">        // 检查写写冲突：从column:write获取最新数据，如果commit_ts&gt;=事务开始时间，则冲突</span><br><span class="line">        if (T.Read(w.row, c+&quot;write&quot;, [start_ts_, max])) return false;</span><br><span class="line">        </span><br><span class="line">        // 检查column:lock，如果存在已存在，则锁冲突</span><br><span class="line">        if (T.Read(w.row, c+&quot;lock&quot;, [0, max])) return false;</span><br><span class="line">        </span><br><span class="line">        // 往column:lock写入锁，若为secondary，则指向primary</span><br><span class="line">        T.Write(w.row, c+&quot;lock&quot;, start_ts_, &#123;primary.row, primary.col&#125;)</span><br><span class="line">        </span><br><span class="line">        // 往column:data写入(key, start_ts = value)</span><br><span class="line">        T.Write(w.row, c+&quot;data&quot;, start_ts_, w.value);</span><br><span class="line">        </span><br><span class="line">        // 提交bigtable事务</span><br><span class="line">        return T.Commit();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    // 此commit整合 2PC的prewrite和commit，</span><br><span class="line">    // 对外caller而言不需要关注是2PC提交，直接commit就好</span><br><span class="line">    bool Commit() &#123;</span><br><span class="line">        // ***** Prewrite *****//</span><br><span class="line">        // 2PC 第一阶段：prewrite</span><br><span class="line">        // 第一行为primary</span><br><span class="line">        Write primary = write_[0];</span><br><span class="line">        // 其余为secondary</span><br><span class="line">        vector&lt;Write&gt; secondaries(write_.begin() + 1, write_.end());</span><br><span class="line">        </span><br><span class="line">        if (!Prewrite(primary, primary)) return false;</span><br><span class="line">        for (Write w : secondaries)</span><br><span class="line">            if (!Prewrite(w, primary)) return false;</span><br><span class="line">        </span><br><span class="line">        // ***** Commit *****//</span><br><span class="line">        // 2PC第二阶段：commit</span><br><span class="line">        </span><br><span class="line">        // 从oracle获取commit timestamp</span><br><span class="line">        int commit_ts = oracle.GetTimestamp();</span><br><span class="line"></span><br><span class="line">        // Commit primary first. </span><br><span class="line">        Write p = primary;</span><br><span class="line">        </span><br><span class="line">        // primary : 先开始bigtable的事务</span><br><span class="line">        bigtable::Txn T = bigtable::StartRowTransaction(p.row);</span><br><span class="line">        </span><br><span class="line">        // primary : 如果primiary的锁不存在，则abort</span><br><span class="line">        if (!T.Read(p.row, p.col+&quot;lock&quot;, [start_ts_, start_ts_]))</span><br><span class="line">            return false; // aborted while working</span><br><span class="line">        </span><br><span class="line">        // primary : 在column:write 列写入开始时间（Pointer to data written at start_ts_）</span><br><span class="line">        T.Write(p.row, p.col+&quot;write&quot;, commit_ts, start_ts_); </span><br><span class="line">        // primary : 移除column:lock 列</span><br><span class="line">        T.Erase(p.row, p.col+&quot;lock&quot;, commit_ts);</span><br><span class="line">        </span><br><span class="line">        // primary : 提交bigtable 事务</span><br><span class="line">        if(!T.Commit()) return false;</span><br><span class="line"></span><br><span class="line">        // Second phase: write our write records for secondary cells.</span><br><span class="line">        // 遍历所有secondary，写入column:write数据同时删除column:lock</span><br><span class="line">        for (Write w:secondaries) &#123;</span><br><span class="line">            bigtable::write(w.row, w.col+&quot;write&quot;, commit_ts, start_ts_);</span><br><span class="line">            bigtable::Erase(w.row, w.col+&quot;lock&quot;, commit_ts);</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>事务</strong>   </p>
+<ul>
+<li>第一阶段<ul>
+<li>获取时间戳T1,</li>
+<li>写入column:data和锁：时间戳都为T1</li>
+</ul>
+</li>
+<li>第二阶段<ul>
+<li>获取时间戳T2</li>
+<li>写入column:write：key:commit_ts:start_ts (key:T2:T1)</li>
+<li>删除锁</li>
+</ul>
+</li>
+</ul>
+<p><strong>读取</strong>   </p>
+<ul>
+<li>获取时间戳Tx</li>
+<li>从column:write 读取key[0, Tx]的最大时间戳数据(获取到事务写入的commit_ts=T2)</li>
+<li>从T2中提取出start_ts为T1</li>
+<li>从column:data中读取 key:T1的数据</li>
+</ul>
 <p>所以读取到的数据是commit时间戳的数据。</p>
-<h3 id="清理锁">清理锁</h3>
-<p>若客户端在Commit一个事务时，出现了异常，Prepare时产生的锁会被留下。为避免将新事务挂住，Percolator必须清理这些锁。</p>
+<h3 id="清理锁"><a href="#清理锁" class="headerlink" title="清理锁"></a>清理锁</h3><p>若客户端在Commit一个事务时，出现了异常，Prepare时产生的锁会被留下。为避免将新事务挂住，Percolator必须清理这些锁。</p>
 <p>Percolator用lazy方式来处理未处理的锁：当事务在执行时，发现其他事务造成的锁未处理掉，事务将决定其他事务是否失败，以及清理其他事务的那些锁。</p>
-<p>当客户端在执行两阶段提交的commit阶段crash时，事务会留下一个提交点commit point(至少已经写入一条write记录)，但可能会留下一些lock未被处理掉 - 如果priarmy lock 已被write所替代：意味着该事务已被提交，事务需要roll forword，也就是对所有涉及到的、未完成提交的数据，用write记录替代标准的锁standed lock。 - 如果primary lock存在：事务将roll back(因为总是最先提交primary，所以primary未被提交时，可以安全地执行回滚)</p>
+<p>当客户端在执行两阶段提交的commit阶段crash时，事务会留下一个提交点commit point(至少已经写入一条write记录)，但可能会留下一些lock未被处理掉</p>
+<ul>
+<li>如果priarmy lock 已被write所替代：意味着该事务已被提交，事务需要roll forword，也就是对所有涉及到的、未完成提交的数据，用write记录替代标准的锁standed lock。</li>
+<li>如果primary lock存在：事务将roll back(因为总是最先提交primary，所以primary未被提交时，可以安全地执行回滚)</li>
+</ul>
 <blockquote>
 <p>这些都是基于bigtable的事务中的。</p>
 </blockquote>
-<p>清理操作在primary锁上是同步的，所以清理alive客户端持有的锁是安全的；然而回滚会强迫事务取消，这会严重影响性能。所以，一个事务将不会清理一个锁除非它猜测这个锁属于一个僵死的worker。<br>
-Percolator使用简单的机制来确定另一个事务的活跃度。运行中的worker会写一个token到Chubby锁服务来指示他们属于本系统，token会被其他worker视为一个代表活跃度的信号（退出时token会被自动删除）。有些worker是活跃的，但不在运行中，为了处理这种情况，我们附加的写入一个wall time到锁中；一个锁的wall time如果太老，即使token有效也会被清理。有些操作运行很长时间才会提交，针对这种情况，在整个提交过程中worker会周期的更新wall time。</p>
-<h2 id="通知">通知</h2>
-<p>用户对感兴趣的列编写观察者function注册到percolator，当列发生改变时，percolator通知percolator的worker运行用户function。</p>
-<p><strong>通知与写操作不是原子的</strong><br>
-通知类似于数据库中的触发器，然而不同的是，通知在其他事务(worker)中执行，所以写操作与观察者执行不是原子的，且观察者的执行会有时效性问题。</p>
+<p>清理操作在primary锁上是同步的，所以清理alive客户端持有的锁是安全的；然而回滚会强迫事务取消，这会严重影响性能。所以，一个事务将不会清理一个锁除非它猜测这个锁属于一个僵死的worker。<br>Percolator使用简单的机制来确定另一个事务的活跃度。运行中的worker会写一个token到Chubby锁服务来指示他们属于本系统，token会被其他worker视为一个代表活跃度的信号（退出时token会被自动删除）。有些worker是活跃的，但不在运行中，为了处理这种情况，我们附加的写入一个wall time到锁中；一个锁的wall time如果太老，即使token有效也会被清理。有些操作运行很长时间才会提交，针对这种情况，在整个提交过程中worker会周期的更新wall time。</p>
+<h2 id="通知"><a href="#通知" class="headerlink" title="通知"></a>通知</h2><p>用户对感兴趣的列编写观察者function注册到percolator，当列发生改变时，percolator通知percolator的worker运行用户function。</p>
+<p><strong>通知与写操作不是原子的</strong><br>通知类似于数据库中的触发器，然而不同的是，通知在其他事务(worker)中执行，所以写操作与观察者执行不是原子的，且观察者的执行会有时效性问题。</p>
 <blockquote>
 <p>这和传统关系型数据库的ACID的C有一定的差别，我猜: 所以这里不叫trigger而是通知的原因</p>
 </blockquote>
-<p><strong>通知与观察者无限循环</strong><br>
-编写观察者时，用户要自己考虑通知与观察者进入无限循环的情况(通知-&gt;观察者-&gt;通知-&gt;观察者.....)。</p>
-<p><strong>通知的"丢失"</strong><br>
-一个列的多次更改只会触发一次通知，所以通知和操作系统的中断一样会存在“丢失”的问题。</p>
-<p><strong>实现通知机制</strong></p>
-<p>为了实现通知机制，Percolator需要高效找到被观察的脏cell。 Percolator在Bigtable维护一个“notify”列(notify列为一个独立的Bigtable locality group)，表示此cell是否为脏。当事务修改被观察的cell时，则设置cell的notify。worker对notify列执行一个分布式扫描来找到脏cell。找到notify则触发观察者并且等到观察者事务提交成功后，会删除对应的notify cell。</p>
-<h1 id="tidb的实现">tidb的实现</h1>
-<p>percolator定义了5个列：data, write, lock, ack, notify。<br>
-tidb定义了其中3个：data, write, lock。所以tidb没有实现notify功能(tidb不需要增量处理能力)。</p>
-<p>tidb定义了3个rocksdb的column family： - CF_DEFAULT：对应percolator的data列 - CF_LOCK：对应percolator的lock列 - CF_WRITE：对应percolator的write列</p>
-<p><strong>CF_DEFAULT</strong><br>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key, start_ts) ==&gt; value</span><br></pre></td></tr></table></figure></p>
-<p><strong>CF_LOCK</strong><br>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">key ==&gt; lock_info</span><br></pre></td></tr></table></figure></p>
-<p>同一时刻一个key最多只有一个锁，所以，tidb的锁没有start_ts。</p>
-<p><strong>CF_WRITE</strong><br>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key, commit_ts) ==&gt; write_info</span><br></pre></td></tr></table></figure></p>
-<h2 id="tidb">tidb</h2>
+<p><strong>通知与观察者无限循环</strong><br>编写观察者时，用户要自己考虑通知与观察者进入无限循环的情况(通知-&gt;观察者-&gt;通知-&gt;观察者…..)。   </p>
+<p><strong>通知的”丢失”</strong><br>一个列的多次更改只会触发一次通知，所以通知和操作系统的中断一样会存在“丢失”的问题。</p>
+<p><strong>实现通知机制</strong>   </p>
+<p>为了实现通知机制，Percolator需要高效找到被观察的脏cell。<br>Percolator在Bigtable维护一个“notify”列(notify列为一个独立的Bigtable locality group)，表示此cell是否为脏。当事务修改被观察的cell时，则设置cell的notify。worker对notify列执行一个分布式扫描来找到脏cell。找到notify则触发观察者并且等到观察者事务提交成功后，会删除对应的notify cell。</p>
+<h1 id="tidb的实现"><a href="#tidb的实现" class="headerlink" title="tidb的实现"></a>tidb的实现</h1><p>percolator定义了5个列：data, write, lock, ack, notify。<br>tidb定义了其中3个：data, write, lock。所以tidb没有实现notify功能(tidb不需要增量处理能力)。   </p>
+<p>tidb定义了3个rocksdb的column family：</p>
 <ul>
+<li>CF_DEFAULT：对应percolator的data列</li>
+<li>CF_LOCK：对应percolator的lock列</li>
+<li>CF_WRITE：对应percolator的write列</li>
+</ul>
+<p><strong>CF_DEFAULT</strong>   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key, start_ts) ==&gt; value</span><br></pre></td></tr></table></figure>
+
+<p><strong>CF_LOCK</strong>   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">key ==&gt; lock_info</span><br></pre></td></tr></table></figure>
+
+<p>同一时刻一个key最多只有一个锁，所以，tidb的锁没有start_ts。</p>
+<p><strong>CF_WRITE</strong>   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(key, commit_ts) ==&gt; write_info</span><br></pre></td></tr></table></figure>
+
+<h2 id="tidb"><a href="#tidb" class="headerlink" title="tidb"></a>tidb</h2><ul>
 <li>1 client 向 tidb 发起开启事务 begin</li>
 <li>2 tidb 向 pd 获取 tso 作为当前事务的 start_ts</li>
-<li>3 client 向 tidb 执行以下请求：
-<ul>
+<li>3 client 向 tidb 执行以下请求：<ul>
 <li>读操作，从 tikv 读取版本 start_ts 对应具体数据.</li>
 <li>写操作，写入 memory 中。</li>
-</ul></li>
+</ul>
+</li>
 <li>4 client 向 tidb 发起 commit 提交事务请求</li>
 <li>5 tidb 开始两阶段提交。</li>
 <li>6 tidb 按照 region 对需要写的数据进行分组。</li>
-<li>7 tidb 开始 prewrite 操作：向所有涉及改动的 region 并发执行 prewrite 请求。若其中某个prewrite 失败，根据错误类型决定处理方式：
-<ul>
+<li>7 tidb 开始 prewrite 操作：向所有涉及改动的 region 并发执行 prewrite 请求。若其中某个prewrite 失败，根据错误类型决定处理方式：<ul>
 <li>KeyIsLock：尝试 Resolve Lock 后，若成功，则重试当前 region 的 prewrite[步骤7]。否则，重新获取 tso 作为 start_ts 启动 2pc 提交（步骤5）。</li>
 <li>WriteConfict 有其它事务在写当前 key, abort事务</li>
 <li>其它错误，向 client 返回失败。</li>
-</ul></li>
+</ul>
+</li>
 <li>8 commit : tidb 向 pd 获取 tso 作为当前事务的 commit_ts。</li>
-<li>9 tidb 开始 commit:tidb 向 primary 所在 region 发起 commit。 若 commit primary 失败，则先执行 rollback keys,然后根据错误判断是否重试:
-<ul>
+<li>9 tidb 开始 commit:tidb 向 primary 所在 region 发起 commit。 若 commit primary 失败，则先执行 rollback keys,然后根据错误判断是否重试:<ul>
 <li>LockNotExist abort事务</li>
 <li>其它错误，向 client 返回失败。</li>
-</ul></li>
+</ul>
+</li>
 <li>10 tidb 向 tikv 异步并发向剩余 region 发起 commit。</li>
 <li>11 tidb 向 client 返回事务提交成功信息。</li>
 </ul>
 <blockquote>
 <p>所有涉及重新获取 tso 重启事务的两阶段提交的地方，会先检查当前事务是否可以满足重试条件：只有单条语句组成的事务才可以重新获取tso作为start_ts。</p>
 </blockquote>
-<h2 id="tikv">tikv</h2>
-<h3 id="prewrite">Prewrite</h3>
-<p>伪代码 - <code>-&gt;</code> 代表rpc调用, 例如<code>tidb-&gt;tikv.Prewrite</code> tidb调用tikv的Prewrite接口 - <code>.</code> 代表进程内调用, 例如<code>memory.Put</code>往内存模型写数据</p>
+<h2 id="tikv"><a href="#tikv" class="headerlink" title="tikv"></a>tikv</h2><h3 id="Prewrite"><a href="#Prewrite" class="headerlink" title="Prewrite"></a>Prewrite</h3><p>伪代码</p>
+<ul>
+<li><code>-&gt;</code> 代表rpc调用, 例如<code>tidb-&gt;tikv.Prewrite</code> tidb调用tikv的Prewrite接口</li>
+<li><code>.</code> 代表进程内调用, 例如<code>memory.Put</code>往内存模型写数据</li>
+</ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">start_ts = tidb-&gt;pd.GetTso() // get start_ts</span><br><span class="line"></span><br><span class="line">// tidb调用tikv prewrite接口 </span><br><span class="line">tidb-&gt;tikv.Prewrite(start_ts, data_list)</span><br><span class="line">&#123; // tikv prewrite实现</span><br><span class="line">    keyIsLockedArray = []</span><br><span class="line">    </span><br><span class="line">    // prewrite each key with start_ts in memory，中间出现失败，则整个prewrite失败</span><br><span class="line">    for key in data_list </span><br><span class="line">    &#123;</span><br><span class="line">        // check write conflict: 通过raft获取key的数据</span><br><span class="line">       record = raft.Get(WriteColumn, key, start_ts)</span><br><span class="line">       if record.commit_ts &gt;= start_ts</span><br><span class="line">       &#123;</span><br><span class="line">           return error(write conflict, END)</span><br><span class="line">       &#125;</span><br><span class="line">       </span><br><span class="line">       // check lock</span><br><span class="line">       lock = raft.Get(LockColumn, key)</span><br><span class="line">       if lock != null &amp;&amp; lock.ts != start_ts // lock已存在且为其他tx的锁</span><br><span class="line">       &#123;</span><br><span class="line">           keyIsLockedArray.append(key)</span><br><span class="line">           continue</span><br><span class="line">       &#125;</span><br><span class="line">       // 往内存中的 lock 列写入 lock(start_ts,key) 为当前key加锁,</span><br><span class="line">       //   若当前key被选为 primary, 则标记为 primary,</span><br><span class="line">       //   若为secondary,则标明指向primary的信息。</span><br><span class="line">       memory.Put(LockColumn, key, start_ts, (primary|secondary), ttl, short_value)</span><br><span class="line">       memory.Put(DataColumn, key, start_ts, long_value)</span><br><span class="line">    &#125;</span><br><span class="line">    if len(keyIsLockedArray) &gt; 0</span><br><span class="line">    &#123;</span><br><span class="line">        return error(keyIsLockedArray)</span><br><span class="line">    &#125;</span><br><span class="line">    // 将此事务在内存模型中写入的数据 持久化到raft中</span><br><span class="line">    raft.Commit(memory_data)</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="commit">Commit</h3>
-<p>伪代码 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用rikv的Commit接口，进行2PC的Commit阶段</span><br><span class="line">tidb-&gt;tikv.Commit(keys, start_ts, commit_ts)</span><br><span class="line">&#123;</span><br><span class="line">    for key in keys // do commit</span><br><span class="line">    &#123;</span><br><span class="line">        lock = raft.Get(LockColumn, key)</span><br><span class="line">        // lock存在且匹配，则提交</span><br><span class="line">        if lock != null &amp;&amp; lock.ts == start_ts </span><br><span class="line">        &#123;</span><br><span class="line">            memory.Put(WriteColumn, key, commit_ts, start_ts)</span><br><span class="line">            memory.Del(LockColumn, key, start_ts)    </span><br><span class="line">       &#125;</span><br><span class="line">       // lock does not exist or tx dismatch</span><br><span class="line">       else if lock == null || lock.ts != start_ts </span><br><span class="line">       &#123;</span><br><span class="line">           record = raft.Get(WriteColumn, key, start_ts, commit_ts)</span><br><span class="line">           if record != null &amp;&amp; record.write_type == (PUT|DELETE|Lock)</span><br><span class="line">           &#123;</span><br><span class="line">               continue; // already commited</span><br><span class="line">           &#125; else if record == null || record.write_type == RollBack</span><br><span class="line">           &#123;</span><br><span class="line">               return error(tx conflict, lock not exist)</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;       </span><br><span class="line">    &#125;</span><br><span class="line">    // commit to raft</span><br><span class="line">    raft.Save(memory.data)</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h3 id="rollback">Rollback</h3>
-<p>当事务在两阶段提交过程中失败时， tidb 会向当前事务涉及到的所有 tikv 发起回滚操作。</p>
-<p>伪代码 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的Rollback接口</span><br><span class="line">tidb-&gt;tikv.Rollback(keys)</span><br><span class="line">&#123;   // Rollback接口实现</span><br><span class="line"></span><br><span class="line">    // 检查合法性</span><br><span class="line">    for key in keys</span><br><span class="line">    &#123;</span><br><span class="line">        // 检查当前key的锁</span><br><span class="line">        lock=memory.GetLockColumn(start_ts, key)</span><br><span class="line">        if lock != null and lock.ts = start_ts</span><br><span class="line">        &#123;   // 如果锁还存在且是之前的锁，则删除锁，写入的数据</span><br><span class="line">            // 且在WriteColumn写入rollback记录防止后面commit请求的到来</span><br><span class="line">            memory.Del(DataColumn, key, start_ts)</span><br><span class="line">            memory.Put(WriteColumn, key, start_ts, rollback)</span><br><span class="line">            meomry.Del(LockColumn, key, start_ts)</span><br><span class="line">            continue</span><br><span class="line">        &#125;</span><br><span class="line">       </span><br><span class="line">        // 检查提交情况</span><br><span class="line">        record = raft.Get(WriteColumn, key, start_ts)</span><br><span class="line">        if record != null  </span><br><span class="line">        &#123;</span><br><span class="line">           if record.status == (PUT|DELETE)</span><br><span class="line">           &#123;</span><br><span class="line">               return error(transaction is already commited.)</span><br><span class="line">           &#125; else if record.status == RollBack</span><br><span class="line">           &#123;</span><br><span class="line">               continue;  // already rollbacked</span><br><span class="line">           &#125;</span><br><span class="line">        &#125; else &#123; // record is null</span><br><span class="line">           // 提交纪录不存在，说明当前 key 尚未被 prewrite 过，</span><br><span class="line">           // 为预防 prewrite 在rollback之后过来(可能网络原因)，</span><br><span class="line">           // 在这里留下 (key,start_ts,rollback)记录</span><br><span class="line">           memory.Put(WriteColumn, key, start_ts, rollback)</span><br><span class="line">           continue</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        // persist</span><br><span class="line">        raft-&gt;Save(memory.data)</span><br><span class="line">    &#125;</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h3 id="resolve-lock">Resolve Lock</h3>
-<p>若客户端在Commit一个事务时，出现了异常，Prepare 时产生的锁会被留下。为避免将新事务hang住，Percolator必须清理这些锁。</p>
+
+<h3 id="Commit"><a href="#Commit" class="headerlink" title="Commit"></a>Commit</h3><p>伪代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用rikv的Commit接口，进行2PC的Commit阶段</span><br><span class="line">tidb-&gt;tikv.Commit(keys, start_ts, commit_ts)</span><br><span class="line">&#123;</span><br><span class="line">    for key in keys // do commit</span><br><span class="line">    &#123;</span><br><span class="line">        lock = raft.Get(LockColumn, key)</span><br><span class="line">        // lock存在且匹配，则提交</span><br><span class="line">        if lock != null &amp;&amp; lock.ts == start_ts </span><br><span class="line">        &#123;</span><br><span class="line">            memory.Put(WriteColumn, key, commit_ts, start_ts)</span><br><span class="line">            memory.Del(LockColumn, key, start_ts)    </span><br><span class="line">       &#125;</span><br><span class="line">       // lock does not exist or tx dismatch</span><br><span class="line">       else if lock == null || lock.ts != start_ts </span><br><span class="line">       &#123;</span><br><span class="line">           record = raft.Get(WriteColumn, key, start_ts, commit_ts)</span><br><span class="line">           if record != null &amp;&amp; record.write_type == (PUT|DELETE|Lock)</span><br><span class="line">           &#123;</span><br><span class="line">               continue; // already commited</span><br><span class="line">           &#125; else if record == null || record.write_type == RollBack</span><br><span class="line">           &#123;</span><br><span class="line">               return error(tx conflict, lock not exist)</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;       </span><br><span class="line">    &#125;</span><br><span class="line">    // commit to raft</span><br><span class="line">    raft.Save(memory.data)</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Rollback"><a href="#Rollback" class="headerlink" title="Rollback"></a>Rollback</h3><p>当事务在两阶段提交过程中失败时， tidb 会向当前事务涉及到的所有 tikv 发起回滚操作。</p>
+<p>伪代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的Rollback接口</span><br><span class="line">tidb-&gt;tikv.Rollback(keys)</span><br><span class="line">&#123;   // Rollback接口实现</span><br><span class="line"></span><br><span class="line">    // 检查合法性</span><br><span class="line">    for key in keys</span><br><span class="line">    &#123;</span><br><span class="line">        // 检查当前key的锁</span><br><span class="line">        lock=memory.GetLockColumn(start_ts, key)</span><br><span class="line">        if lock != null and lock.ts = start_ts</span><br><span class="line">        &#123;   // 如果锁还存在且是之前的锁，则删除锁，写入的数据</span><br><span class="line">            // 且在WriteColumn写入rollback记录防止后面commit请求的到来</span><br><span class="line">            memory.Del(DataColumn, key, start_ts)</span><br><span class="line">            memory.Put(WriteColumn, key, start_ts, rollback)</span><br><span class="line">            meomry.Del(LockColumn, key, start_ts)</span><br><span class="line">            continue</span><br><span class="line">        &#125;</span><br><span class="line">       </span><br><span class="line">        // 检查提交情况</span><br><span class="line">        record = raft.Get(WriteColumn, key, start_ts)</span><br><span class="line">        if record != null  </span><br><span class="line">        &#123;</span><br><span class="line">           if record.status == (PUT|DELETE)</span><br><span class="line">           &#123;</span><br><span class="line">               return error(transaction is already commited.)</span><br><span class="line">           &#125; else if record.status == RollBack</span><br><span class="line">           &#123;</span><br><span class="line">               continue;  // already rollbacked</span><br><span class="line">           &#125;</span><br><span class="line">        &#125; else &#123; // record is null</span><br><span class="line">           // 提交纪录不存在，说明当前 key 尚未被 prewrite 过，</span><br><span class="line">           // 为预防 prewrite 在rollback之后过来(可能网络原因)，</span><br><span class="line">           // 在这里留下 (key,start_ts,rollback)记录</span><br><span class="line">           memory.Put(WriteColumn, key, start_ts, rollback)</span><br><span class="line">           continue</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        // persist</span><br><span class="line">        raft-&gt;Save(memory.data)</span><br><span class="line">    &#125;</span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Resolve-Lock"><a href="#Resolve-Lock" class="headerlink" title="Resolve Lock"></a>Resolve Lock</h3><p>若客户端在Commit一个事务时，出现了异常，Prepare 时产生的锁会被留下。为避免将新事务hang住，Percolator必须清理这些锁。  </p>
 <p>Percolator用lazy方式处理这些锁：当事务A在执行时，发现事务B造成的锁冲突，事务A将决定事务B是否失败，以及清理事务B的那些锁。</p>
 <p>tidb 在执行 prewrite, get 过程中，若遇到锁，在锁超时的情况下，会向 tikv 发起清锁操作。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的ResolveLock接口</span><br><span class="line">tidb-&gt;tikv.ResolveLock(start_ts, commit_ts)</span><br><span class="line">&#123;</span><br><span class="line">    // 找出所有 lock.ts==start_ts 的锁并执行清锁操作</span><br><span class="line">    locks = raft.Scan(LockColumn, lock.ts = start_ts)</span><br><span class="line">    for (lock in locks)</span><br><span class="line">    &#123;</span><br><span class="line">        // commit_ts存在，则说明已提交</span><br><span class="line">        if (commit_ts != null)</span><br><span class="line">        &#123;</span><br><span class="line">            // 对已上锁的key进行提交</span><br><span class="line">            memory.Commit(lock.key, commit_ts)</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            memory.Rollback(lock.key)</span><br><span class="line">        &#125;       </span><br><span class="line">    &#125;</span><br><span class="line">    raft-&gt;Save(memory.data)</span><br><span class="line">    </span><br><span class="line">    return ok</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="get">Get</h3>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的Get接口</span><br><span class="line">tidb-&gt;tikv.Get(key, start_ts)</span><br><span class="line">&#123;</span><br><span class="line">    // check lock: 如果锁存在且在此之前加的锁，则返回锁冲突</span><br><span class="line">    lock = raft-&gt;Get(LockColumn, key)</span><br><span class="line">    if (lock != null &amp;&amp; lock.ts &lt;= start_ts)</span><br><span class="line">        return error(isLocked);</span><br><span class="line">    version = start_ts - 1;</span><br><span class="line">    </span><br><span class="line">RAFTGET:</span><br><span class="line">    // get writeColumn： 获取小于start_ts的最新提交记录</span><br><span class="line">    data = raft-&gt;Get(WriteColumn, key, version)</span><br><span class="line">    if (data != null)</span><br><span class="line">    &#123;</span><br><span class="line">        if (data.writeType == PUT)</span><br><span class="line">        &#123;</span><br><span class="line">            if (data.isShortValue)</span><br><span class="line">                return data.shortValue;</span><br><span class="line">            // long value</span><br><span class="line">            return raft-&gt;Get(DataColumn, key, start_ts)</span><br><span class="line">        &#125; else if (data.writeType == DELETE)</span><br><span class="line">        &#123;</span><br><span class="line">            // 没有出现过该值，或该值最近已被删除，返回tidb空</span><br><span class="line">            return ok(None)；</span><br><span class="line">        &#125; else if (data.writeType == &quot;LOCK | ROLLBACK&quot;)</span><br><span class="line">        &#123;</span><br><span class="line">            // version=commit_ts-1, 继续查找下一个最近版本</span><br><span class="line">            version=commit_ts-1</span><br><span class="line">            goto RAFTGET</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return ok(None)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="gc">GC</h3>
-<p>TiDB 的事务的实现采用了MVCC机制，当新写入的数据覆盖旧的数据时，旧的数据不会被替换掉，而是与新写入的数据同时保留，并以时间戳来区分版本。<br>
-GC 的任务便是清理不再需要的旧数据。</p>
+
+<h3 id="Get"><a href="#Get" class="headerlink" title="Get"></a>Get</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">// tidb调用tikv的Get接口</span><br><span class="line">tidb-&gt;tikv.Get(key, start_ts)</span><br><span class="line">&#123;</span><br><span class="line">    // check lock: 如果锁存在且在此之前加的锁，则返回锁冲突</span><br><span class="line">    lock = raft-&gt;Get(LockColumn, key)</span><br><span class="line">    if (lock != null &amp;&amp; lock.ts &lt;= start_ts)</span><br><span class="line">        return error(isLocked);</span><br><span class="line">    version = start_ts - 1;</span><br><span class="line">    </span><br><span class="line">RAFTGET:</span><br><span class="line">    // get writeColumn： 获取小于start_ts的最新提交记录</span><br><span class="line">    data = raft-&gt;Get(WriteColumn, key, version)</span><br><span class="line">    if (data != null)</span><br><span class="line">    &#123;</span><br><span class="line">        if (data.writeType == PUT)</span><br><span class="line">        &#123;</span><br><span class="line">            if (data.isShortValue)</span><br><span class="line">                return data.shortValue;</span><br><span class="line">            // long value</span><br><span class="line">            return raft-&gt;Get(DataColumn, key, start_ts)</span><br><span class="line">        &#125; else if (data.writeType == DELETE)</span><br><span class="line">        &#123;</span><br><span class="line">            // 没有出现过该值，或该值最近已被删除，返回tidb空</span><br><span class="line">            return ok(None)；</span><br><span class="line">        &#125; else if (data.writeType == &quot;LOCK | ROLLBACK&quot;)</span><br><span class="line">        &#123;</span><br><span class="line">            // version=commit_ts-1, 继续查找下一个最近版本</span><br><span class="line">            version=commit_ts-1</span><br><span class="line">            goto RAFTGET</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return ok(None)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="GC"><a href="#GC" class="headerlink" title="GC"></a>GC</h3><p>TiDB 的事务的实现采用了MVCC机制，当新写入的数据覆盖旧的数据时，旧的数据不会被替换掉，而是与新写入的数据同时保留，并以时间戳来区分版本。<br>GC 的任务便是清理不再需要的旧数据。 </p>
 <p>一个 TiDB 集群中会有一个 TiDB 实例被选举为 GC leader，GC 的运行由 GC leader 来控制。</p>
-<p>GC 会被定期触发。每次 GC 时，首先，TiDB 会计算一个称为 safe point 的时间戳，接下来 TiDB 会在保证 safe point 之后的快照全部拥有正确数据的前提下，删除更早的过期数据。</p>
-<p>每一轮 GC 分为以下三个步骤： - Resolve Locks：该阶段会对所有 Region 扫描 safe point 之前的锁，并清理这些锁 - Delete Ranges：该阶段快速地删除由于 DROP TABLE/DROP INDEX 等操作产生的整区间的废弃数据 - Do GC：该阶段每个 TiKV 节点将会各自扫描该节点上的数据，并对每一个 key 删除其不再需要的旧版本</p>
+<p>GC 会被定期触发。每次 GC 时，首先，TiDB 会计算一个称为 safe point 的时间戳，接下来 TiDB 会在保证 safe point  之后的快照全部拥有正确数据的前提下，删除更早的过期数据。  </p>
+<p>每一轮 GC 分为以下三个步骤：</p>
+<ul>
+<li>Resolve Locks：该阶段会对所有 Region 扫描 safe point 之前的锁，并清理这些锁</li>
+<li>Delete Ranges：该阶段快速地删除由于 DROP TABLE/DROP INDEX 等操作产生的整区间的废弃数据</li>
+<li>Do GC：该阶段每个 TiKV 节点将会各自扫描该节点上的数据，并对每一个 key 删除其不再需要的旧版本</li>
+</ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">// tidb 向 tikv 发起 GC操作，要求清理 safe-point 版本之前的所有无意义版本</span><br><span class="line"></span><br><span class="line">// tidb调用tikv的GC接口</span><br><span class="line">tidb-&gt;tikv.Gc(savePoint)</span><br><span class="line">&#123;</span><br><span class="line">    startKey=null;</span><br><span class="line">    for &#123;</span><br><span class="line">        // scan (startKey, maxKey]</span><br><span class="line">        keys = raft.Scan(WriteColumn, startKey, batchSize)</span><br><span class="line">        if (batch == null)</span><br><span class="line">            return ok;</span><br><span class="line">        </span><br><span class="line">        // 对每个key进行gc操作</span><br><span class="line">        for (key in keys)</span><br><span class="line">        &#123;</span><br><span class="line">            bool remove_older = false;</span><br><span class="line">            </span><br><span class="line">            // 清理write中commit_ts &lt;= startPoint的每个item</span><br><span class="line">            // item: 一个key的所有write记录</span><br><span class="line">            for (item in key)</span><br><span class="line">            &#123;</span><br><span class="line">                if (remove_older is true)</span><br><span class="line">                &#123;</span><br><span class="line">                    memory.Del(WriteColumn, item);</span><br><span class="line">                    memory.Del(DataColumn, item);</span><br><span class="line">                &#125;</span><br><span class="line">                    </span><br><span class="line">                // check if is ordest version to save</span><br><span class="line">                if (writeType == PUT)</span><br><span class="line">                &#123;   // 保留该提交，清理所有该提交之前的数据</span><br><span class="line">                    memory.Set(memoryOrder, true);</span><br><span class="line">                &#125; else if (writeType == DELETE)</span><br><span class="line">                &#123;   //  清理所有safe-point 之前的数据</span><br><span class="line">                    remove_older = true;</span><br><span class="line">                    memory.Del(WriteColumn, item);</span><br><span class="line">                &#125; else if (writeType == ROLLBACK | LOCK)</span><br><span class="line">                &#123;   // 清理所有小于 safe-point 的 Rollback 和 Lock</span><br><span class="line">                    memory.Del(WriteColumn, item);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        startKey = keys[keys.length() - 1];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="优化">优化</h2>
-<h3 id="parallel-prewrite">Parallel Prewrite</h3>
-<p>tikv分批的并发进行prewrite，不会像percolator要先prewrite primary，再去prewrite secondary。<br>
-如果事务冲突，导致rollback，在tikv的rollback实现中，其会留下rollback记录，这样就会导致事务的prewrite失败，而不会产生副作用。</p>
-<h3 id="short-value">Short Value</h3>
-<p>对于percolator，先读取column:write 列，提取到key的start_ts，再去column:data列读取key数据本身。<br>
-这样会造成两次读取，tidb的优化是，如果数据本身很小，那么就直接存储在colulmn:write中，只需读取一次即可。</p>
-<h3 id="point-read-without-timestamp">Point Read Without Timestamp</h3>
-<p>为了减少一次RPC调用和减轻TSO压力，对于单点读，并不需要获取timestamp。</p>
-<p>因为单点读不存在跨行一致性问题(读取多行数据时，必须是同一个版本的数据)，所以直接可以读取最新的数据即可。</p>
-<h3 id="calculated-commit-timestamp">Calculated Commit Timestamp</h3>
-<p>如果不通过TSO获取commit_ts，则会减少一次RPC交互从而降低事务的时延。</p>
+
+<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><h3 id="Parallel-Prewrite"><a href="#Parallel-Prewrite" class="headerlink" title="Parallel Prewrite"></a>Parallel Prewrite</h3><p>tikv分批的并发进行prewrite，不会像percolator要先prewrite primary，再去prewrite secondary。<br>如果事务冲突，导致rollback，在tikv的rollback实现中，其会留下rollback记录，这样就会导致事务的prewrite失败，而不会产生副作用。</p>
+<h3 id="Short-Value"><a href="#Short-Value" class="headerlink" title="Short Value"></a>Short Value</h3><p>对于percolator，先读取column:write 列，提取到key的start_ts，再去column:data列读取key数据本身。<br>这样会造成两次读取，tidb的优化是，如果数据本身很小，那么就直接存储在colulmn:write中，只需读取一次即可。</p>
+<h3 id="Point-Read-Without-Timestamp"><a href="#Point-Read-Without-Timestamp" class="headerlink" title="Point Read Without Timestamp"></a>Point Read Without Timestamp</h3><p>为了减少一次RPC调用和减轻TSO压力，对于单点读，并不需要获取timestamp。</p>
+<p>因为单点读不存在跨行一致性问题(读取多行数据时，必须是同一个版本的数据)，所以直接可以读取最新的数据即可。    </p>
+<h3 id="Calculated-Commit-Timestamp"><a href="#Calculated-Commit-Timestamp" class="headerlink" title="Calculated Commit Timestamp"></a>Calculated Commit Timestamp</h3><p>如果不通过TSO获取commit_ts，则会减少一次RPC交互从而降低事务的时延。   </p>
 <p>然而，为了实现SI的RR特性(repeatable read)，所以commit_ts需要确保其他事务多次读取的值是一样的。那么commit_ts就和其他事务的读取有相关性。</p>
-<p>下面公式可以计算出一个commit_ts <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">max&#123;start_ts, max_read_ts_of_written_keys&#125; &lt; commit_ts &lt;= now</span><br></pre></td></tr></table></figure></p>
-<p>由于不可能记录每个key的最大的读取时间，但是可以记录每个region的最大读取时间，所以公式转换为： <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">commit_ts = max&#123;start_ts, region_1_max_read_ts, region_2_max_read_ts, ...&#125; + 1</span><br></pre></td></tr></table></figure></p>
+<p>下面公式可以计算出一个commit_ts</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">max&#123;start_ts, max_read_ts_of_written_keys&#125; &lt; commit_ts &lt;= now</span><br></pre></td></tr></table></figure>
+
+<p>由于不可能记录每个key的最大的读取时间，但是可以记录每个region的最大读取时间，所以公式转换为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">commit_ts = max&#123;start_ts, region_1_max_read_ts, region_2_max_read_ts, ...&#125; + 1</span><br></pre></td></tr></table></figure>
+
 <p>region_x_max_read_ts : 事务涉及到的key的region。</p>
-<h3 id="single-region-1pc">Single Region 1PC</h3>
-<p>对于事务只涉及到一个Region，那么其实是没有必要走2PC流程的。直接提交事务即可。</p>
+<h3 id="Single-Region-1PC"><a href="#Single-Region-1PC" class="headerlink" title="Single Region 1PC"></a>Single Region 1PC</h3><p>对于事务只涉及到一个Region，那么其实是没有必要走2PC流程的。直接提交事务即可。</p>
 
       
     </div>
@@ -909,7 +916,7 @@ GC 的任务便是清理不再需要的旧数据。</p>
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#论文"><span class="nav-number">1.</span> <span class="nav-text">论文</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.1.</span> <span class="nav-text">概述</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#设计"><span class="nav-number">2.</span> <span class="nav-text">设计</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离等级"><span class="nav-number">2.1.</span> <span class="nav-text">隔离等级</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁机制"><span class="nav-number">2.2.</span> <span class="nav-text">锁机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时间戳"><span class="nav-number">2.3.</span> <span class="nav-text">时间戳</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据存储"><span class="nav-number">2.4.</span> <span class="nav-text">数据存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#案例"><span class="nav-number">2.5.</span> <span class="nav-text">案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流程"><span class="nav-number">2.6.</span> <span class="nav-text">流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码"><span class="nav-number">2.6.1.</span> <span class="nav-text">伪代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#清理锁"><span class="nav-number">2.6.2.</span> <span class="nav-text">清理锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通知"><span class="nav-number">2.7.</span> <span class="nav-text">通知</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#tidb的实现"><span class="nav-number">3.</span> <span class="nav-text">tidb的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tidb"><span class="nav-number">3.1.</span> <span class="nav-text">tidb</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tikv"><span class="nav-number">3.2.</span> <span class="nav-text">tikv</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#prewrite"><span class="nav-number">3.2.1.</span> <span class="nav-text">Prewrite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#commit"><span class="nav-number">3.2.2.</span> <span class="nav-text">Commit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rollback"><span class="nav-number">3.2.3.</span> <span class="nav-text">Rollback</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#resolve-lock"><span class="nav-number">3.2.4.</span> <span class="nav-text">Resolve Lock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#get"><span class="nav-number">3.2.5.</span> <span class="nav-text">Get</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gc"><span class="nav-number">3.2.6.</span> <span class="nav-text">GC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化"><span class="nav-number">3.3.</span> <span class="nav-text">优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#parallel-prewrite"><span class="nav-number">3.3.1.</span> <span class="nav-text">Parallel Prewrite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#short-value"><span class="nav-number">3.3.2.</span> <span class="nav-text">Short Value</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#point-read-without-timestamp"><span class="nav-number">3.3.3.</span> <span class="nav-text">Point Read Without Timestamp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#calculated-commit-timestamp"><span class="nav-number">3.3.4.</span> <span class="nav-text">Calculated Commit Timestamp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#single-region-1pc"><span class="nav-number">3.3.5.</span> <span class="nav-text">Single Region 1PC</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#论文"><span class="nav-number">1.</span> <span class="nav-text">论文</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.1.</span> <span class="nav-text">概述</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#设计"><span class="nav-number">2.</span> <span class="nav-text">设计</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离等级"><span class="nav-number">2.1.</span> <span class="nav-text">隔离等级</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁机制"><span class="nav-number">2.2.</span> <span class="nav-text">锁机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时间戳"><span class="nav-number">2.3.</span> <span class="nav-text">时间戳</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据存储"><span class="nav-number">2.4.</span> <span class="nav-text">数据存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#案例"><span class="nav-number">2.5.</span> <span class="nav-text">案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流程"><span class="nav-number">2.6.</span> <span class="nav-text">流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码"><span class="nav-number">2.6.1.</span> <span class="nav-text">伪代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#清理锁"><span class="nav-number">2.6.2.</span> <span class="nav-text">清理锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通知"><span class="nav-number">2.7.</span> <span class="nav-text">通知</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#tidb的实现"><span class="nav-number">3.</span> <span class="nav-text">tidb的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tidb"><span class="nav-number">3.1.</span> <span class="nav-text">tidb</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tikv"><span class="nav-number">3.2.</span> <span class="nav-text">tikv</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Prewrite"><span class="nav-number">3.2.1.</span> <span class="nav-text">Prewrite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Commit"><span class="nav-number">3.2.2.</span> <span class="nav-text">Commit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Rollback"><span class="nav-number">3.2.3.</span> <span class="nav-text">Rollback</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Resolve-Lock"><span class="nav-number">3.2.4.</span> <span class="nav-text">Resolve Lock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Get"><span class="nav-number">3.2.5.</span> <span class="nav-text">Get</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GC"><span class="nav-number">3.2.6.</span> <span class="nav-text">GC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化"><span class="nav-number">3.3.</span> <span class="nav-text">优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-Prewrite"><span class="nav-number">3.3.1.</span> <span class="nav-text">Parallel Prewrite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Short-Value"><span class="nav-number">3.3.2.</span> <span class="nav-text">Short Value</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Point-Read-Without-Timestamp"><span class="nav-number">3.3.3.</span> <span class="nav-text">Point Read Without Timestamp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Calculated-Commit-Timestamp"><span class="nav-number">3.3.4.</span> <span class="nav-text">Calculated Commit Timestamp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Single-Region-1PC"><span class="nav-number">3.3.5.</span> <span class="nav-text">Single Region 1PC</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>

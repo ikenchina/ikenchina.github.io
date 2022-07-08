@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="ken, ikenchina">
+  <meta name="keywords" content="database,PostgreSQL,Concurrency Control,">
 
 
 
@@ -79,14 +79,29 @@
 
 
 
-<meta name="keywords" content="ikenchina">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Ken&#39;s blog">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="概述 并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。 广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。 事务的正确性主要体现在ACID特性上，而并发控制主要涉及其中的I即Isolation，即事务隔离性，避免脏读，幻读，写偏斜等读写异常。且满足事务的可恢复性属性。">
+<meta name="keywords" content="database,PostgreSQL,Concurrency Control">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库并发控制理论">
+<meta property="og:url" content="http://yoursite.com/2022/07/08/database_concurrency_control/index.html">
 <meta property="og:site_name" content="Ken&#39;s blog">
+<meta property="og:description" content="概述 并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。 广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。 事务的正确性主要体现在ACID特性上，而并发控制主要涉及其中的I即Isolation，即事务隔离性，避免脏读，幻读，写偏斜等读写异常。且满足事务的可恢复性属性。">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IjU3SDVVUVVBNUxUU01UMk82RzM2TVRJVVgzWVNRRjEwIiwidyI6MzAzLCJoIjoxMzYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNTEwMjQ5NDgzMDUxNzgyNjcyfQ?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkFKQkJLTEJIN1VINk1IV1lZMzdSQVNGTjZFM0tSSjExIiwidyI6NjAwLCJoIjo0MDAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo3MDEwMjE5NDQ1MTQ3NDkyNzY5fQ?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IldUUFRRNFJEUkJFMzNISUxES1dCS1VKTFRLS0xaVjEwIiwidyI6OTgzLCJoIjozNDgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDc0Mzg5NzQzMTMxOTUzOTExN30?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkFUVVM0RkZIRkJISDJYNkhCNE1HSUUzRlVFS1JMRjExIiwidyI6NjgwLCJoIjo0NTIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNjE4NDE3ODE2MjYwMjY1MzQxNH0?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IlU1WDVFTzNDVElETVdITEpBVVZBSkpNNzdNQ0haNzEwIiwidyI6Njc4LCJoIjo0MzIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNjczNzg1NzMwODg0NDQ3NTU3NX0?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IjRTVExKUUdLSEhRUk1NQ0cyQUtLU0JBQU9MREgyTjEwIiwidyI6OTUwLCJoIjoyODAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDc2NDczODY5MDE2MjY0ODA2NH0?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IklQSUM1WkxMRTRKWTdNQ0JISDVONFRDMkZBTkJHUjExIiwidyI6MTM3NiwiaCI6NDMzLCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MTQxNTMxMTA0NTQzMjE3MjIzOTN9?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkVSN1ZFTVI1R1NHN0NJQ0ZRRlM1NkhEVkRCVU9TVDEwIiwidyI6NTc2LCJoIjoyMDcsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzI4NzE4NjQ3MjE2ODQ5OTIxfQ?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6Ilg2SkZIQ0NCNlNLNFZSSDJMR041RlRQS1BRV0pNNTExIiwidyI6NTc0LCJoIjo0MzgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDIzNjAwMzAyNTEzMzU5NzIzMn0?format=originalOFGHLERTH">
+<meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkRLVVlGWFdUVDdWSFpZQko3NkVaUlNBTUhaUUhLWDEwIiwidyI6NjcyLCJoIjo0NzUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTA1MDEzOTkyNjgzMzA2MTU3Mn0?format=originalOFGHLERTH">
+<meta property="og:updated_time" content="2022-07-08T05:41:44.686Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Ken&#39;s blog">
+<meta name="twitter:title" content="数据库并发控制理论">
+<meta name="twitter:description" content="概述 并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。 广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。 事务的正确性主要体现在ACID特性上，而并发控制主要涉及其中的I即Isolation，即事务隔离性，避免脏读，幻读，写偏斜等读写异常。且满足事务的可恢复性属性。">
+<meta name="twitter:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IjU3SDVVUVVBNUxUU01UMk82RzM2TVRJVVgzWVNRRjEwIiwidyI6MzAzLCJoIjoxMzYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNTEwMjQ5NDgzMDUxNzgyNjcyfQ?format=originalOFGHLERTH">
 
 
 
@@ -116,13 +131,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/">
+  <link rel="canonical" href="http://yoursite.com/2022/07/08/database_concurrency_control/">
 
 
 
 
 
-  <title>Ken's blog</title>
+  <title>数据库并发控制理论 | Ken's blog</title>
   
 
 
@@ -151,8 +166,7 @@
     
   
 
-  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left 
-  page-home">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -287,9 +301,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -319,9 +333,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2022/07/08/database_concurrency_control/" itemprop="url">数据库并发控制理论</a></h2>
+          <h2 class="post-title" itemprop="name headline">数据库并发控制理论</h2>
         
 
         <div class="post-meta">
@@ -385,6 +397,11 @@
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>浏览
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
 
           
 
@@ -403,9 +420,7 @@
       
 
       
-        
-          
-            <h1 id="概述">概述</h1>
+        <h1 id="概述">概述</h1>
 <p>并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。</p>
 <p>广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。</p>
 <p>事务的正确性主要体现在ACID特性上，而并发控制主要涉及其中的I即Isolation，即事务隔离性，避免脏读，幻读，写偏斜等读写异常。且满足事务的可恢复性属性。</p>
@@ -878,8 +893,6 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
 <li>《database system concepts》</li>
 </ul>
 
-          
-        
       
     </div>
     
@@ -889,333 +902,91 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
     
 
     
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>Donate comment here</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
 
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="Ken WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+      <div>
+        <footer class="post-footer"> 原有内容
+<div>    
+ 
+ 
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+      <strong>本文作者：</strong>Ken
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="/2022/07/08/database_concurrency_control/" title="数据库并发控制理论">2022/07/08/database_concurrency_control/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权： </strong>
+    本站文章均采用 <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0 CN</a> 许可协议，请勿用于商业，转载注明出处！
+  </li>
+</ul>
+
+</div>
+      </footer></div>
     
 
     <footer class="post-footer">
       
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/02/20/database-postgresql-path/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2022/02/20/database-postgresql-path/" itemprop="url">数据库路径选择理论与postgreSQL实现</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2022-02-20T00:00:00+08:00">
-                2022-02-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
+        <div class="post-tags">
           
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2022/" itemprop="url" rel="index">
-                    <span itemprop="name">2022</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
+            <a href="/tags/database/" rel="tag"><i class="fa fa-tag"></i> database</a>
           
-
+            <a href="/tags/PostgreSQL/" rel="tag"><i class="fa fa-tag"></i> PostgreSQL</a>
           
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2022/02/20/database-postgresql-path/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2022/02/20/database-postgresql-path/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
+            <a href="/tags/Concurrency-Control/" rel="tag"><i class="fa fa-tag"></i> Concurrency Control</a>
           
-
-          
-          
-
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
+      
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
+      
       
       
 
       
-        
-          <blockquote>
-<p>对要枚举出查询树上所有路径，从中找出一个代价最小的路径，是个NP问题，计算成本是非常高昂的。而当查询树的关系(表、子查询等)较少时，可以使用动态规划算法枚举出所有的路径找出最优解，但是当关系较多时，枚举的计算成本是我们无法接收的，这时就需要使用一些折中方案，如贪心算法、遗传算法。遗传算法借鉴自然界“优胜劣汰”的法则对路径进化，从而能找出相对较优的查询路径......
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2022/02/20/database-postgresql-path/#more" rel="contents">
-              Read more &raquo;
-            </a>
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2022/02/20/database-postgresql-path/" rel="next" title="数据库路径选择理论与postgreSQL实现">
+                <i class="fa fa-chevron-left"></i> 数据库路径选择理论与postgreSQL实现
+              </a>
+            
           </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
 
-    
+          <span class="post-nav-divider"></span>
 
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/10/26/kubernetes_case/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2021/10/26/kubernetes_case/" itemprop="url">kubernetes雪崩了</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
+          <div class="post-nav-prev post-nav-item">
             
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2021-10-26T00:00:00+08:00">
-                2021-10-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2021/" itemprop="url" rel="index">
-                    <span itemprop="name">2021</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2021/10/26/kubernetes_case/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2021/10/26/kubernetes_case/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          <blockquote>
-<p>云原生最重要的组件之一，竟然“雪崩”了......
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2021/10/26/kubernetes_case/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -1225,1113 +996,11 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
   </article>
 
 
-    
+
+    <div class="post-spread">
       
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/09/10/postgresql_sql_case/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2021/09/10/postgresql_sql_case/" itemprop="url">从使用者，DBA，内核开发三个不同角度来分析SQL的性能问题</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2021-09-10T00:00:00+08:00">
-                2021-09-10
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2019/" itemprop="url" rel="index">
-                    <span itemprop="name">2019</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2021/09/10/postgresql_sql_case/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2021/09/10/postgresql_sql_case/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>从使用者，DBA，内核开发三个不同角度来分析SQL的性能问题 ......
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2021/09/10/postgresql_sql_case/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
+    </div>
   </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/01/TreadMarks/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/04/01/TreadMarks/" itemprop="url">[译文]TreadMarks: 基于工作站网络的共享内存计算</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-04-01T00:00:00+08:00">
-                2020-04-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2020/" itemprop="url" rel="index">
-                    <span itemprop="name">2020</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2020/04/01/TreadMarks/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2020/04/01/TreadMarks/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>TreadMarks: 基于工作站网络的共享内存计算
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2020/04/01/TreadMarks/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/17/percolator/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/02/17/percolator/" itemprop="url">percolator的理解与开源实现分析</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-02-17T00:00:00+08:00">
-                2019-02-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2019/" itemprop="url" rel="index">
-                    <span itemprop="name">2019</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2019/02/17/percolator/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2019/02/17/percolator/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>对percolator的理解与tidb实现
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2019/02/17/percolator/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/08/19/ddd/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/08/19/ddd/" itemprop="url">对领域驱动设计的理解与实践</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-08-19T00:00:00+08:00">
-                2018-08-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2018/" itemprop="url" rel="index">
-                    <span itemprop="name">2018</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/08/19/ddd/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2018/08/19/ddd/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>对领域驱动设计的理解与实践
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/08/19/ddd/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/02/grpc/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/02/grpc/" itemprop="url">grpc</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-02T00:00:00+08:00">
-                2018-06-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2018/" itemprop="url" rel="index">
-                    <span itemprop="name">2018</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/06/02/grpc/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2018/06/02/grpc/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>grpc 特性、原理、实践、生态
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/06/02/grpc/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/18/rate_limit/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/04/18/rate_limit/" itemprop="url">高可用之限流</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-18T00:00:00+08:00">
-                2018-04-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2018/" itemprop="url" rel="index">
-                    <span itemprop="name">2018</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/04/18/rate_limit/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2018/04/18/rate_limit/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>限流的概念，算法，分布式限流以及微服务架构下限流的难点
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/04/18/rate_limit/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/12/numa/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Ken">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Ken's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/04/12/numa/" itemprop="url">NUMA笔记</a></h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-12T00:00:00+08:00">
-                2018-04-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/2018/" itemprop="url" rel="index">
-                    <span itemprop="name">2018</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/04/12/numa/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2018/04/12/numa/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <blockquote>
-<p>NUMA 概念、历史、问题
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/04/12/numa/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </p></blockquote></div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
-
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
-  </nav>
-
 
 
           </div>
@@ -2339,6 +1008,13 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
 
 
           
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
 
         </div>
         
@@ -2359,8 +1035,17 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -2432,6 +1117,22 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#理论"><span class="nav-number">2.</span> <span class="nav-text">理论</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#实现方向"><span class="nav-number">2.1.</span> <span class="nav-text">实现方向</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可串行化"><span class="nav-number">2.2.</span> <span class="nav-text">可串行化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#终态可串行化"><span class="nav-number">2.2.1.</span> <span class="nav-text">终态可串行化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#冲突可串行化"><span class="nav-number">2.2.2.</span> <span class="nav-text">冲突可串行化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#视图可串行化"><span class="nav-number">2.2.3.</span> <span class="nav-text">视图可串行化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可恢复性"><span class="nav-number">2.3.</span> <span class="nav-text">可恢复性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#级联回滚"><span class="nav-number">2.3.1.</span> <span class="nav-text">级联回滚</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#避免级联回滚"><span class="nav-number">2.3.2.</span> <span class="nav-text">避免级联回滚</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#严格性"><span class="nav-number">2.3.3.</span> <span class="nav-text">严格性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#属性关系"><span class="nav-number">2.4.</span> <span class="nav-text">属性关系</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#基于锁的并发控制"><span class="nav-number">3.</span> <span class="nav-text">基于锁的并发控制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#pl"><span class="nav-number">3.1.</span> <span class="nav-text">2PL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#s2pl"><span class="nav-number">3.2.</span> <span class="nav-text">S2PL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ss2pl"><span class="nav-number">3.3.</span> <span class="nav-text">SS2PL</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离级别"><span class="nav-number">3.4.</span> <span class="nav-text">隔离级别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#多版本并发控制"><span class="nav-number">4.</span> <span class="nav-text">多版本并发控制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#版本存储"><span class="nav-number">4.1.</span> <span class="nav-text">版本存储</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#追加方式"><span class="nav-number">4.1.1.</span> <span class="nav-text">追加方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间线方式"><span class="nav-number">4.1.2.</span> <span class="nav-text">时间线方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增量存储方式"><span class="nav-number">4.1.3.</span> <span class="nav-text">增量存储方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#垃圾回收"><span class="nav-number">4.2.</span> <span class="nav-text">垃圾回收</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#元组级别的回收"><span class="nav-number">4.2.1.</span> <span class="nav-text">元组级别的回收</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#事务级别的回收"><span class="nav-number">4.2.2.</span> <span class="nav-text">事务级别的回收</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引管理"><span class="nav-number">4.3.</span> <span class="nav-text">索引管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#逻辑指针"><span class="nav-number">4.3.1.</span> <span class="nav-text">逻辑指针</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#物理指针"><span class="nav-number">4.3.2.</span> <span class="nav-text">物理指针</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离级别-1"><span class="nav-number">4.4.</span> <span class="nav-text">隔离级别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#基于可串行化快照隔离的并发控制"><span class="nav-number">5.</span> <span class="nav-text">基于可串行化快照隔离的并发控制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#快照"><span class="nav-number">5.1.</span> <span class="nav-text">快照</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#快照隔离"><span class="nav-number">5.2.</span> <span class="nav-text">快照隔离</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#可序列化的快照隔离技术"><span class="nav-number">5.3.</span> <span class="nav-text">可序列化的快照隔离技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#理论基础"><span class="nav-number">5.3.1.</span> <span class="nav-text">理论基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ssi"><span class="nav-number">5.3.2.</span> <span class="nav-text">SSI</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离级别-2"><span class="nav-number">5.4.</span> <span class="nav-text">隔离级别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ss2plmvcc-vs-ssi"><span class="nav-number">6.</span> <span class="nav-text">SS2PL+MVCC vs SSI</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#最后"><span class="nav-number">7.</span> <span class="nav-text">最后</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -2589,6 +1290,10 @@ time-travel也是append-only的存储方式，只是新老版本在不同的表�
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 

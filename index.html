@@ -408,22 +408,27 @@
             <blockquote>
 <p>本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。</p>
 </blockquote>
-<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。</p>
+<h1 id="概述">概述</h1>
+<p>并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。</p>
 <p>广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。</p>
-<p>事务的正确性主要体现在ACID特性上，而并发控制主要涉及其中的I即Isolation，即事务隔离性，避免脏读，幻读，写偏斜等读写异常。且满足事务的可恢复性属性。    </p>
+<p>事务的正确性主要体现在ACID特性上，而并发控制主要涉及其中的I即Isolation，即事务隔离性，避免脏读，幻读，写偏斜等读写异常。且满足事务的可恢复性属性。</p>
 <p>为了提高事务的并发度，则ISO定义了几种不同的隔离级别，让数据库在不同隔离级别下提供不同的正确性保证，在并发度和正确性之间取舍。</p>
 <p>本文主要描述关系数据库的并发控制理论，不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。</p>
-<h1 id="理论"><a href="#理论" class="headerlink" title="理论"></a>理论</h1><h2 id="实现方向"><a href="#实现方向" class="headerlink" title="实现方向"></a>实现方向</h2><p>并发控制技术，从检测是否存在冲突的角度看，包括乐观的，悲观的，处于两者之间的半乐观方法</p>
+<h1 id="理论">理论</h1>
+<h2 id="实现方向">实现方向</h2>
+<p>并发控制技术，从检测是否存在冲突的角度看，包括乐观的，悲观的，处于两者之间的半乐观方法</p>
 <ul>
 <li>乐观（optimistic concurrency control，OCC）：从一开始，每一项操作都允许进行，但在事务提交的时刻，进行隔离性和完整性约束的检查，如果有违反则事务被回滚</li>
 <li>悲观（pessimistic concurrency control，PCC）：从一开始，即检查每一项操作是否会违反隔离性和完整性约束，如果可能违反，则阻塞这样的操作</li>
 </ul>
 <p>从控制冲突的时机看，包括基于锁的，基于时间的，基于提交顺序的，基于串行化图测试检验的各种方法，还有基于多版本并发控制的技术。</p>
 <p>串行化的含义是完全限制并发；可串行化是在能保证一致性的情况下，允许某些并发的操作被执行；以提高数据库整体的运行效率。数据确保事务特性的前提下，还要在不同的调度下能满足事务的属性：可串行化(serializability)，可恢复性(recoverability)。然而不是所有的调度都是满足事务属性的，有的调度可以牺牲可串行化或者可恢复性，以获得更高的并发度。</p>
-<h2 id="可串行化"><a href="#可串行化" class="headerlink" title="可串行化"></a>可串行化</h2><p><strong>Serial schedule</strong><br>要想事务不互相影响，那么最简单的方式就是让事务的执行是串行的，不交叉执行，称这种执行调度为serial schedule，串行化调度（也有翻译称序列化调度的）。</p>
+<h2 id="可串行化">可串行化</h2>
+<p><strong>Serial schedule</strong><br>
+要想事务不互相影响，那么最简单的方式就是让事务的执行是串行的，不交叉执行，称这种执行调度为serial schedule，串行化调度（也有翻译称序列化调度的）。</p>
 <p>然而多个事务在这种调度下是无法并发执行的，那么执行效率就非常低下。数据库要能够并发执行，就不能使用串行化的调度策略，但是又要保证性能和隔离性，也就是<strong><em>等价于</em></strong>serial schedule，那么我们称这种调度策略为serializable schedule，可串行化调度。</p>
-<p>那么，如何理解”等价于”呢？也就是事务执行的正确性？    </p>
-<p>数据库系统中，将”等价”分为三种</p>
+<p>那么，如何理解"等价于"呢？也就是事务执行的正确性？</p>
+<p>数据库系统中，将"等价"分为三种</p>
 <ul>
 <li>final state equivalence终态等价</li>
 <li>view equivalence视图等价</li>
@@ -435,10 +440,13 @@
 <li>view serializability视图串行化</li>
 <li>conflict serializability冲突串行化</li>
 </ul>
-<h3 id="终态可串行化"><a href="#终态可串行化" class="headerlink" title="终态可串行化"></a>终态可串行化</h3><p>终态可串行化，final state serializability，又称为result equivalence serializability。</p>
+<h3 id="终态可串行化">终态可串行化</h3>
+<p>终态可串行化，final state serializability，又称为result equivalence serializability。</p>
 <p>如果两个调度的执行结果一样，则认为两个调度是final state equivalent的，如果调度的执行结果和serial schedule一样，则是final state serializability的。就像两个函数，输入的参数一样，如果返回的结果也一样的话，则两者是final state equivalent的。其忽略了如何实现函数的内部结构，把函数当成黑盒了。</p>
-<p>那如何判断两个调度是否为final state equivalent的呢？把两个调度各自执行一遍？显然这是不可能的，也有研究将调度操作转换成有向图，但要确保正确性就需要将调度的所有操作（读、写和控制流）都加入到有向图中，那和执行一遍调度几乎没有什么区别。<br>所以final state serializability对于现实工程实现并没有什么指导意义。</p>
-<h3 id="冲突可串行化"><a href="#冲突可串行化" class="headerlink" title="冲突可串行化"></a>冲突可串行化</h3><p>冲突可串行化， conflict serializability</p>
+<p>那如何判断两个调度是否为final state equivalent的呢？把两个调度各自执行一遍？显然这是不可能的，也有研究将调度操作转换成有向图，但要确保正确性就需要将调度的所有操作（读、写和控制流）都加入到有向图中，那和执行一遍调度几乎没有什么区别。<br>
+所以final state serializability对于现实工程实现并没有什么指导意义。</p>
+<h3 id="冲突可串行化">冲突可串行化</h3>
+<p>冲突可串行化， conflict serializability</p>
 <p><strong>冲突行为</strong></p>
 <p>当下面三种条件都满足时，我们将两个操作视为冲突</p>
 <ul>
@@ -454,126 +462,128 @@
 </ul>
 <p><strong>conflict equivalence</strong></p>
 <p>如果某个调度能通过交换非冲突操作来将调度转换成serial schedule，则两者是conflict equivalent的，则称这种调度为conflict serializability。</p>
-<p>例如：<br>事务的执行</p>
+<p>例如： 事务的执行</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">T1: R(A), W(A), R(B), W(B)</span><br><span class="line">T2: R(A), W(A), R(B), W(B)</span><br></pre></td></tr></table></figure>
-
 <p>可能的serial schedules：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">// T1-&gt;T2</span><br><span class="line">T1          T2</span><br><span class="line">R1(A)</span><br><span class="line">W1(A)</span><br><span class="line">R1(B)</span><br><span class="line">W1(B)</span><br><span class="line">            R2(A)</span><br><span class="line">            W2(A)</span><br><span class="line">            R2(B)</span><br><span class="line">            W2(B)</span><br><span class="line">-------------------------</span><br><span class="line">// T2-&gt;T1</span><br><span class="line">            R2(A)</span><br><span class="line">            W2(A)</span><br><span class="line">            R2(B)</span><br><span class="line">            W2(B)</span><br><span class="line">R1(A)</span><br><span class="line">W1(A)</span><br><span class="line">R1(B)</span><br><span class="line">W1(B)</span><br></pre></td></tr></table></figure>
-
 <p>现在我们通过交换非冲突操作来达到conflict serializability</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">// S1 </span><br><span class="line">T1        T2</span><br><span class="line">R(A)</span><br><span class="line">W(A)</span><br><span class="line">          R(A)      &lt;---</span><br><span class="line">          W(A)      &lt;------</span><br><span class="line">R(B)                &lt;---   </span><br><span class="line">W(B)                &lt;------</span><br><span class="line">          R(B)</span><br><span class="line">          W(B)</span><br></pre></td></tr></table></figure>
-
 <p>T1的R(B), W(B) 和 T2的R(A), W(A)是非冲突的，所以可以将他们进行交换。</p>
 <p>通过两次交换，可以将S1转换成 T1-&gt;T2的serial schedule，所以S1是 conflict serializability。</p>
 <p>再看看不是conflict serializability的例子</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">// S2 </span><br><span class="line">T1         T2</span><br><span class="line">           R(A)</span><br><span class="line">           W(A)</span><br><span class="line">R(A)</span><br><span class="line">W(A)</span><br><span class="line">R(B)</span><br><span class="line">W(B)</span><br><span class="line">           R(B)</span><br><span class="line">           W(B)</span><br></pre></td></tr></table></figure>
-
 <p>可以看出，T1对A和B的操作，都没有办法交换到T2的前面或后面。所以S2不是conflict serializability。</p>
 <p><strong>优先图检测冲突可串行化</strong></p>
-<p>然而对两三个事务进行判断conflict serializability相对还比较简单，但是对很多事务要进行判断却是非常困难的，那要如何检测呢？    </p>
-<p>我们以事务为单位，使用事务之间的冲突行为定义事务执行的先后顺序。<br>如Ti的Ri(A)与Tj的Wj(A)冲突，而<code>Ri(A)&lt;Wj(A)</code>，所以Ti就要先于Tj执行，所以就可以使用优先图来检测冲突可串行化。而如果优先图(precedence graph)没有环，则说明调度是冲突可串行化的。因为如果Ti需要在Tj前执行，又有Tj需要在Ti前执行，显然这是矛盾的，所以存在环则不是冲突可串行化的。</p>
+<p>然而对两三个事务进行判断conflict serializability相对还比较简单，但是对很多事务要进行判断却是非常困难的，那要如何检测呢？</p>
+<p>我们以事务为单位，使用事务之间的冲突行为定义事务执行的先后顺序。<br>
+如Ti的Ri(A)与Tj的Wj(A)冲突，而<code>Ri(A)&lt;Wj(A)</code>，所以Ti就要先于Tj执行，所以就可以使用优先图来检测冲突可串行化。而如果优先图(precedence graph)没有环，则说明调度是冲突可串行化的。因为如果Ti需要在Tj前执行，又有Tj需要在Ti前执行，显然这是矛盾的，所以存在环则不是冲突可串行化的。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">T1          T2</span><br><span class="line">R(A)</span><br><span class="line">W(A)</span><br><span class="line">            R(A)</span><br><span class="line">            R(B)</span><br><span class="line">R(B)</span><br><span class="line">W(B)</span><br></pre></td></tr></table></figure>
-
 <p>可以看出，T1先写了A，T2后读了A，所以wr冲突，T1优先于T2；而T2读取了B，后面T1又修改了B，那么rw冲突，T2优先于T1。所以形成了环，说明不是冲突可串行化的。</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjU3SDVVUVVBNUxUU01UMk82RzM2TVRJVVgzWVNRRjEwIiwidyI6MzAzLCJoIjoxMzYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNTEwMjQ5NDgzMDUxNzgyNjcyfQ?format=originalOFGHLERTH" alt="image"></p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjU3SDVVUVVBNUxUU01UMk82RzM2TVRJVVgzWVNRRjEwIiwidyI6MzAzLCJoIjoxMzYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNTEwMjQ5NDgzMDUxNzgyNjcyfQ?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
 <blockquote>
 <p>实际上，这只是一种研究的理论方向，从现有主流并发控制技术来看，基于锁的并发控制实现，将冲突操作通过锁的方式来互斥，就这天然的阻止了冲突操作中环的形成。</p>
 </blockquote>
-<h3 id="视图可串行化"><a href="#视图可串行化" class="headerlink" title="视图可串行化"></a>视图可串行化</h3><p>视图可串行化, view serializability。</p>
+<h3 id="视图可串行化">视图可串行化</h3>
+<p>视图可串行化, view serializability。</p>
 <p>《concurrency control and recovery in database systems》定义两个schedule S1和 S2是 view-equivalent的，只有满足：</p>
 <ul>
 <li>S1和S2的transactions相同。如果在S1中，T1最先读取A，则在S2中，也必须是T1最先读取A。</li>
-<li>读写依赖：对于S1 和 S2中的Ti和Tj，如果在S1中，Oi 从 Oj中读取，那么在S2中，Oi也从Oj中读取。Tj先写了O，而Ti后读取O，<code>Wj(O) &lt; Ri(O)</code> </li>
+<li>读写依赖：对于S1 和 S2中的Ti和Tj，如果在S1中，Oi 从 Oj中读取，那么在S2中，Oi也从Oj中读取。Tj先写了O，而Ti后读取O，<code>Wj(O) &lt; Ri(O)</code></li>
 <li>最后写(final write)：如果在S1中Ti最后写入O，那么S2中也是Ti最后写入O。</li>
 </ul>
-<p><strong>读写</strong>    </p>
+<p><strong>读写</strong></p>
 <p>两种调度对同一对象的读写顺序必须一致，其实也就是其冲突操作是要一致的，和conflict equivelance一样。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">        S1                      S2</span><br><span class="line">-------------------       ----------------</span><br><span class="line">T1     T2     T3          T1    T2    T3                   </span><br><span class="line">W(A)                      W(A)       </span><br><span class="line">       W(A)                            R(A)</span><br><span class="line">              R(A)              W(A)</span><br></pre></td></tr></table></figure>
-
 <p>如上面两个调度就不是view-equivalent的，S1中，T3读取A的值是由T2更新的，而S2中T3读取的A是由T1更新了。</p>
 <p><strong>最后写</strong></p>
 <p>如果S1中事务Ti最后修改了数据O，则在S2最后修改数据O的也是事务Ti。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">        S1                      S2</span><br><span class="line">-------------------       ----------------</span><br><span class="line"> T1       T2                T1       T2            </span><br><span class="line"> R(A)                       R(A)</span><br><span class="line">         W(A)               W(A)</span><br><span class="line"> W(A)                                W(A)</span><br></pre></td></tr></table></figure>
-
 <p>如上，S1和S2不是view-equivalence的，因为S1最后写A的是T1，而S2中最后写A的是T2。</p>
 <p>从上面可以看出，view-equivalence和conflict-equivalence不一样的是，view-equivalence增加了final write的条件，这样相对于conflict-equivalence，反而约束宽松了。</p>
 <p>如下调度</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">T1       T2       T3</span><br><span class="line">R(A)</span><br><span class="line">         W(A)</span><br><span class="line">W(A)</span><br><span class="line">                  W(A)</span><br></pre></td></tr></table></figure>
-
-<p>由于此调度的优先图存在环(T1的R(A)或W(A)与W(A)也无法交换)，所以调度不是conflict serializability的。<br>但T3的W(A)在最后写（盲写blind write），所以和serial schedule(T1-&gt;T2-&gt;T3) 是view-equivalent的。<br>可以看出，优先图存在一定的局限性，虽然调度不是conflict serializability的，却可能是view serializability的，其实conflict serializability是view serializability的一个子集。<br>但现在仍没有一种高效的方法来判断调度是否为view serializability的，所以view serializability没有实用价值。</p>
+<p>由于此调度的优先图存在环(T1的R(A)或W(A)与W(A)也无法交换)，所以调度不是conflict serializability的。<br>
+但T3的W(A)在最后写（盲写blind write），所以和serial schedule(T1-&gt;T2-&gt;T3) 是view-equivalent的。<br>
+可以看出，优先图存在一定的局限性，虽然调度不是conflict serializability的，却可能是view serializability的，其实conflict serializability是view serializability的一个子集。 但现在仍没有一种高效的方法来判断调度是否为view serializability的，所以view serializability没有实用价值。</p>
 <hr>
-<h2 id="可恢复性"><a href="#可恢复性" class="headerlink" title="可恢复性"></a>可恢复性</h2><p>可恢复性的定义如下： </p>
+<h2 id="可恢复性">可恢复性</h2>
+<p>可恢复性的定义如下：</p>
 <blockquote>
-<p>Recoverability means that committed transactions have not read data written by aborted transactions（whose effects do not exist in the resulting database states）。 </p>
+<p>Recoverability means that committed transactions have not read data written by aborted transactions（whose effects do not exist in the resulting database states）。</p>
 </blockquote>
-<p>即：已经提交的事务没有读过被中止的事务写的数据。否则脏读异常发生，导致数据不一致。   </p>
+<p>即：已经提交的事务没有读过被中止的事务写的数据。否则脏读异常发生，导致数据不一致。</p>
 <p>其实可恢复性对事务回滚进行了定义，所以和可串行性一起保证事务正确执行</p>
 <ul>
 <li>可串行性：当所有事务提交时，调度执行的顺序和串行执行的结果一样</li>
 <li>可恢复性：当有事务回滚时，不会存在由于脏读导致数据不一致。</li>
 </ul>
-<p>下面调度，是可串行化的，T1在T2前执行，但T2先提交，所以不满足可恢复性。<br>可以想象如果发生崩溃，T2的提交记录到达磁盘，而T1没有到达，那么恢复后，T2都处于提交状态，而T1会回滚。C指Commit。</p>
+<p>下面调度，是可串行化的，T1在T2前执行，但T2先提交，所以不满足可恢复性。 可以想象如果发生崩溃，T2的提交记录到达磁盘，而T1没有到达，那么恢复后，T2都处于提交状态，而T1会回滚。C指Commit。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">T1          T2</span><br><span class="line">W(A)</span><br><span class="line">W(B)</span><br><span class="line">            W(A)</span><br><span class="line">            R(B)</span><br><span class="line">            C</span><br><span class="line">C</span><br></pre></td></tr></table></figure>
-
-<h3 id="级联回滚"><a href="#级联回滚" class="headerlink" title="级联回滚"></a>级联回滚</h3><p>由于允许脏读（读取还未提交事务修改的数据），所以如果一个更新某些数据的事务回滚，则其他读取了这些数据的事务也会导致回滚。</p>
+<h3 id="级联回滚">级联回滚</h3>
+<p>由于允许脏读（读取还未提交事务修改的数据），所以如果一个更新某些数据的事务回滚，则其他读取了这些数据的事务也会导致回滚。</p>
 <p>如下，T2读取了T1更新的值，T3读取了T2更新的值，那么T1回滚，为了避免数据不一致，所以T2和T3必须回滚。A指Abort。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">T1        T2         T3</span><br><span class="line">R(X)</span><br><span class="line">W(X)</span><br><span class="line">          R(X)</span><br><span class="line">          W(X)</span><br><span class="line">          </span><br><span class="line">                    R(X)</span><br><span class="line">                    W(X)</span><br><span class="line">A(X)</span><br><span class="line">          A(X)</span><br><span class="line">                    A(X)</span><br></pre></td></tr></table></figure>
-
 <p>所以级联回滚对性能影响很大，应该尽量避免。</p>
-<h3 id="避免级联回滚"><a href="#避免级联回滚" class="headerlink" title="避免级联回滚"></a>避免级联回滚</h3><p>cascadeless schedule，又称为avoiding cascading aborts (ACA)，避免级联回滚。</p>
-<p>其定义如下：     </p>
+<h3 id="避免级联回滚">避免级联回滚</h3>
+<p>cascadeless schedule，又称为avoiding cascading aborts (ACA)，避免级联回滚。</p>
+<p>其定义如下：</p>
 <blockquote>
-<p>A strategy to prevent cascading aborts is to disallow a transaction from reading uncommitted changes from another transaction in the same schedule. </p>
+<p>A strategy to prevent cascading aborts is to disallow a transaction from reading uncommitted changes from another transaction in the same schedule.</p>
 </blockquote>
 <p>既然脏读导致了级联回滚，那么不允许脏读就可以避免级联回滚了。也就是只允许读取已经提交事务修改的数据。</p>
 <p>如以下调度，必须等到T1完成提交，T2才能读取A</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">T1            T2</span><br><span class="line">R(A)</span><br><span class="line">W(A)</span><br><span class="line">C</span><br><span class="line">              R(A)</span><br><span class="line">              W(A)</span><br><span class="line">              C</span><br></pre></td></tr></table></figure>
-
-<h3 id="严格性"><a href="#严格性" class="headerlink" title="严格性"></a>严格性</h3><p>严格性strictness</p>
+<h3 id="严格性">严格性</h3>
+<p>严格性strictness</p>
 <blockquote>
-<p>A schedule is strict - has the strictness property - if for any two transactions T1, T2, if a write operation of T1 precedes a conflicting operation of T2 (either read or write), then the commit or abort event of T1 also precedes that conflicting operation of T2. </p>
+<p>A schedule is strict - has the strictness property - if for any two transactions T1, T2, if a write operation of T1 precedes a conflicting operation of T2 (either read or write), then the commit or abort event of T1 also precedes that conflicting operation of T2.</p>
 </blockquote>
 <p>避免级联回滚虽然不允许脏读，但是忽略了一个问题，就是丢失更新。不允许读取未提交事务修改的数据，没有不允许修改未提交事务修改的数据。所以严格性就对此做了限制，即不允许读取或修改未提交事务修改过的数据。</p>
 <p>如以下调度就是ACA的，但不是strictness的</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">T1            T2</span><br><span class="line">R(A)</span><br><span class="line">W(A)</span><br><span class="line">              W(A)   // 修改了T1修改的A</span><br><span class="line">C</span><br></pre></td></tr></table></figure>
-
-<p><strong>为什么不允许写未提交事务修改的数据呢？</strong>    </p>
+<p><strong>为什么不允许写未提交事务修改的数据呢？</strong></p>
 <p>我们可以想象以下场景：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">T1                  T2</span><br><span class="line">W(x, 1); </span><br><span class="line">W(y, 11); </span><br><span class="line">                   W(y, 22); </span><br><span class="line">A; </span><br><span class="line">                   R(x); </span><br><span class="line">                   A</span><br></pre></td></tr></table></figure>
-
-<p>T1 abort时，将y从11改成1(称为before image前像)，<br>但当T2 abort时，T2其执行W2(y, 22)的前像是11，T2如果简单回滚到前像，则会出错。<br>这样就增加了回滚复杂度。</p>
-<h2 id="属性关系"><a href="#属性关系" class="headerlink" title="属性关系"></a>属性关系</h2><p>我们引用维基百科的一张图来描述属性之间的关系</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkFKQkJLTEJIN1VINk1IV1lZMzdSQVNGTjZFM0tSSjExIiwidyI6NjAwLCJoIjo0MDAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo3MDEwMjE5NDQ1MTQ3NDkyNzY5fQ?format=originalOFGHLERTH" alt="image"></p>
+<p>T1 abort时，将y从11改成1(称为before image前像)， 但当T2 abort时，T2其执行W2(y, 22)的前像是11，T2如果简单回滚到前像，则会出错。 这样就增加了回滚复杂度。</p>
+<h2 id="属性关系">属性关系</h2>
+<p>我们引用维基百科的一张图来描述属性之间的关系</p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkFKQkJLTEJIN1VINk1IV1lZMzdSQVNGTjZFM0tSSjExIiwidyI6NjAwLCJoIjo0MDAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo3MDEwMjE5NDQ1MTQ3NDkyNzY5fQ?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
 <p>从串行化的角度看，严格程度的次序(前松后紧)：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">all schedules -&gt; view serializable -&gt; conflict serializable -&gt; serial</span><br></pre></td></tr></table></figure>
-
 <p>从可恢复性的角度看，严格程度的次序：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">all schedules -&gt; recoverable -&gt; avoids cascading aborts -&gt; strictness -&gt; serial</span><br></pre></td></tr></table></figure>
-
-<h1 id="基于锁的并发控制"><a href="#基于锁的并发控制" class="headerlink" title="基于锁的并发控制"></a>基于锁的并发控制</h1><p>基于锁的并发控制相关知识有很多，如</p>
+<h1 id="基于锁的并发控制">基于锁的并发控制</h1>
+<p>基于锁的并发控制相关知识有很多，如</p>
 <ul>
 <li>锁的粒度，tuple，page，table等等</li>
 <li>锁的类型：排他锁，共享锁，意向锁</li>
 <li>锁的合并与升级</li>
 <li>锁的管理：死锁检测、预防等</li>
 </ul>
-<p>不打算在本文中来聊这些技术实现，因为涉及到的内容实在太多了，<br>如死锁预防，相关手段就非常多，每一种都是一个细化的研究方向。<br>本文只关注如何通过锁来实现可串行化的并发控制，至于其他工程优化手段等，以后再写专门的文章来讨论吧。</p>
+<p>不打算在本文中来聊这些技术实现，因为涉及到的内容实在太多了， 如死锁预防，相关手段就非常多，每一种都是一个细化的研究方向。<br>
+本文只关注如何通过锁来实现可串行化的并发控制，至于其他工程优化手段等，以后再写专门的文章来讨论吧。</p>
 <p>如果锁是普通的加锁与解锁，我们看看会有什么问题</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">// A = 20, B = 20</span><br><span class="line">T1                 T2</span><br><span class="line">Lock(A)           </span><br><span class="line">A=A-10</span><br><span class="line">Unlock(A)</span><br><span class="line">               Lock(B)</span><br><span class="line">               Read(B)</span><br><span class="line">               Unlock(B)</span><br><span class="line">               </span><br><span class="line">               Lock(A)</span><br><span class="line">               Read(A)</span><br><span class="line">               Unlock(A)</span><br><span class="line">               echo A+B // 30</span><br><span class="line">Lock(B)</span><br><span class="line">B=B+10</span><br><span class="line">Unlock(B)</span><br></pre></td></tr></table></figure>
-
-<p>如果是序列化执行，不管T1先执行还是T2先执行，那么T2得出的<code>A+B</code>结果都是40。<br>而此调度会造成T2的结果是30，显然不是可序列化的。</p>
-<h2 id="2PL"><a href="#2PL" class="headerlink" title="2PL"></a>2PL</h2><p>2PL，two-phase locking，两阶段封锁协议。</p>
-<p>为了确保可串行化，所以引入两阶段锁。   </p>
+<p>如果是序列化执行，不管T1先执行还是T2先执行，那么T2得出的<code>A+B</code>结果都是40。<br>
+而此调度会造成T2的结果是30，显然不是可序列化的。</p>
+<h2 id="pl">2PL</h2>
+<p>2PL，two-phase locking，两阶段封锁协议。</p>
+<p>为了确保可串行化，所以引入两阶段锁。</p>
 <p>将事务的获取锁和释放锁分成了增长(growing)和缩减(shrinking)两个不同的阶段</p>
 <ul>
 <li>增长阶段：每个事务请求所有需要的锁资源，此阶段不允许释放任何锁</li>
 <li>缩减阶段：事务进入释放锁的阶段，不允许再对资源进行加锁</li>
 </ul>
-<p>2PL是能够保证冲突可串行化的，所以能满足可串行化。<br>可以看到下面调度的事务执行，结果和串行化执行结果是一样的。</p>
+<p>2PL是能够保证冲突可串行化的，所以能满足可串行化。 可以看到下面调度的事务执行，结果和串行化执行结果是一样的。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">// A = 20, B = 20</span><br><span class="line">T1                 T2</span><br><span class="line">Begin          Begin</span><br><span class="line">Lock(A)    </span><br><span class="line">Lock(B)</span><br><span class="line">A=A-10</span><br><span class="line">B=B+10</span><br><span class="line"></span><br><span class="line">Unlock(A)</span><br><span class="line">Unlock(B)</span><br><span class="line">               Lock(B)</span><br><span class="line">               Read(B)</span><br><span class="line">               </span><br><span class="line">               Lock(A)</span><br><span class="line">               Lock(Z)</span><br><span class="line">               Read(A)</span><br><span class="line">               </span><br><span class="line">               Z=A+B     // 40</span><br><span class="line">               Unlock(B)</span><br><span class="line">               Unlock(A)</span><br><span class="line">             </span><br><span class="line">commit</span><br><span class="line">               commit</span><br></pre></td></tr></table></figure>
-
-<p>但是如果T1的回滚了，则导致T2也必须回滚，不然就产生脏读。<br>所以如上所说，虽然保证了可串行化，但不满足可恢复性，故而不能避免级联回滚。   </p>
-<h2 id="S2PL"><a href="#S2PL" class="headerlink" title="S2PL"></a>S2PL</h2><p>为了避免上面的问题，所以很多现代数据库使用S2PL或SS2PL来实现并发控制。</p>
+<p>但是如果T1的回滚了，则导致T2也必须回滚，不然就产生脏读。<br>
+所以如上所说，虽然保证了可串行化，但不满足可恢复性，故而不能避免级联回滚。</p>
+<h2 id="s2pl">S2PL</h2>
+<p>为了避免上面的问题，所以很多现代数据库使用S2PL或SS2PL来实现并发控制。</p>
 <p>strict two-phase locking严格两阶段封锁。</p>
 <p>除了封锁满足两阶段封锁条件之外，还要求持有的排它锁必须在事务提交后才能释放。这个要求保证未提交事务所写的任何数据在该事务提交之前均以排它方式加锁，从而能够避免级联回滚。</p>
 <p>遵循严格封锁调度有两个特性</p>
@@ -581,66 +591,74 @@
 <li>符合ACA的也符合strictness，因为由于锁的存在无法读取或修改其他未提交事务修改的值</li>
 <li>是可串行化的</li>
 </ul>
-<p>可以看到下面的例子，只有当T1 Commit后，才会释放B的写锁，<br>所以T2要等到T1 Commit后，才能获取到B的读锁；假设T1回滚，也不会造成T2回滚，这样就避免了级联回滚了。</p>
+<p>可以看到下面的例子，只有当T1 Commit后，才会释放B的写锁， 所以T2要等到T1 Commit后，才能获取到B的读锁；假设T1回滚，也不会造成T2回滚，这样就避免了级联回滚了。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">// A = 20, B = 20</span><br><span class="line">T1                 T2</span><br><span class="line">Begin             Begin</span><br><span class="line">R-Lock(A)    </span><br><span class="line">W-Lock(B)        R-Lock(A)</span><br><span class="line">                 Read(A)</span><br><span class="line">B=A+10</span><br><span class="line"></span><br><span class="line">R-Unlock(A)</span><br><span class="line">Commit</span><br><span class="line">W-Unlock(B)</span><br><span class="line">                 R-Lock(B)</span><br><span class="line">                 Read(B)</span><br><span class="line">               </span><br><span class="line">                 W-Lock(Z)</span><br><span class="line">                 </span><br><span class="line">                 Z=A+B    </span><br><span class="line">                 R-Unlock(B)</span><br><span class="line">                 R-Unlock(A)</span><br><span class="line">    </span><br><span class="line">                 Commit   </span><br><span class="line">                 W-Unlock(Z)</span><br></pre></td></tr></table></figure>
-
-<h2 id="SS2PL"><a href="#SS2PL" class="headerlink" title="SS2PL"></a>SS2PL</h2><p>强严格两阶段锁，strong strict two-phase locking，也称为rigorous 2PL。</p>
+<h2 id="ss2pl">SS2PL</h2>
+<p>强严格两阶段锁，strong strict two-phase locking，也称为rigorous 2PL。</p>
 <p>除了封锁满足两阶段之外，还要求事务提交之前不得释放任何锁。</p>
 <p>SS2PL降低了并发度，但带来的好处是</p>
 <ul>
 <li>不像S2PL需要跟踪每个事务的锁的阶段，整个事务提交前都是两阶段增长阶段，提交后才是缩减阶段，这样实现起来就很简单了</li>
 <li>且保证了提交顺序，CO(commitment ordering)，以后再聊CO</li>
 </ul>
-<h2 id="隔离级别"><a href="#隔离级别" class="headerlink" title="隔离级别"></a>隔离级别</h2><p>我们再看看如何基于锁并发控制实现不同的隔离级别</p>
+<h2 id="隔离级别">隔离级别</h2>
+<p>我们再看看如何基于锁并发控制实现不同的隔离级别</p>
 <table>
 <thead>
-<tr>
+<tr class="header">
 <th>隔离级别</th>
 <th>读操作</th>
 <th>写操作</th>
 <th>范围操作</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr class="odd">
 <td>读未提交</td>
 <td>S</td>
 <td>S</td>
 <td>S</td>
 </tr>
-<tr>
+<tr class="even">
 <td>读已提交</td>
 <td>S</td>
 <td>C</td>
 <td>S</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>可重复读</td>
 <td>C</td>
 <td>C</td>
 <td>S</td>
 </tr>
-<tr>
+<tr class="even">
 <td>可串行化</td>
 <td>S</td>
 <td>S</td>
 <td>S</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <ul>
-<li>S表示操作前加锁，操作后释放锁  </li>
+<li>S表示操作前加锁，操作后释放锁<br>
+</li>
 <li>C表示操作前加锁，提交后释放锁</li>
 </ul>
 <p>通过这些锁的策略，则可以通过锁来实现各种隔离级别。</p>
 <p>例如读已提交：写操作在提交后再释放，这样就阻塞读请求了，从而避免读到未提交的数据。</p>
-<h1 id="多版本并发控制"><a href="#多版本并发控制" class="headerlink" title="多版本并发控制"></a>多版本并发控制</h1><p>multi-version concurrency control (MVCC) 是一个比较宽泛的概念，不仅仅指并发控制。<br>核心思想是对每个对象的修改都会产生一个新的版本，可以读取任意存在的版本，对所有对象进行版本的管理控制。<br>这样的好处是修改操作和读历史版本的读操作各自不影响对方，可以并行操作。</p>
+<h1 id="多版本并发控制">多版本并发控制</h1>
+<p>multi-version concurrency control (MVCC) 是一个比较宽泛的概念，不仅仅指并发控制。<br>
+核心思想是对每个对象的修改都会产生一个新的版本，可以读取任意存在的版本，对所有对象进行版本的管理控制。<br>
+这样的好处是修改操作和读历史版本的读操作各自不影响对方，可以并行操作。</p>
 <p>对于数据库操作冲突来说，读写冲突（快照）是可以通过MVCC机制来避免的，而写写冲突则可以通过加锁的方式来避免并发修改，从而保证正确性。</p>
-<p>设计MVCC的几个主要的考虑方向: </p>
+<p>设计MVCC的几个主要的考虑方向:</p>
 <ul>
-<li>版本存储：version storage </li>
-<li>垃圾回收：garbage collection </li>
-<li>索引管理：index management </li>
+<li>版本存储：version storage</li>
+<li>垃圾回收：garbage collection</li>
+<li>索引管理：index management</li>
 </ul>
-<h2 id="版本存储"><a href="#版本存储" class="headerlink" title="版本存储"></a>版本存储</h2><p>数据库中更新一条记录，就会对这条记录产生一个新的版本，通过指针将不同的版本记录链接起来，组成版本链。这样，数据库就可以通过版本链找到不同版本的记录。</p>
+<h2 id="版本存储">版本存储</h2>
+<p>数据库中更新一条记录，就会对这条记录产生一个新的版本，通过指针将不同的版本记录链接起来，组成版本链。这样，数据库就可以通过版本链找到不同版本的记录。</p>
 <p>版本的组织方式有以下几种</p>
 <ul>
 <li>append-only storage追加方式：新版本直接追加写入到同一个表空间中</li>
@@ -650,28 +668,42 @@
 <blockquote>
 <p>元组（tuple）：指的是数据库存储引擎中的一条有版本信息的记录。</p>
 </blockquote>
-<h3 id="追加方式"><a href="#追加方式" class="headerlink" title="追加方式"></a>追加方式</h3><p>append-only storage    </p>
+<h3 id="追加方式">追加方式</h3>
+<p>append-only storage</p>
 <p>版本链的指向顺序有两种方式</p>
 <ul>
 <li>老版本的指针指向新版本记录 oldest-to-newest(O2N)</li>
 <li>新版本的指针指向老版本记录 newest-to-oldest(N2O)</li>
 </ul>
-<p>O2N<br>生成新版本时，将老版本的指针指向新版本，所以访问这个新记录，需要遍历老记录，这样就会产生读放大，且生成新纪录时需要更新老记录的指针。</p>
-<p>N2O<br>生成新版本时，将新版本的指针指向老版本，所以访问某个版本的记录时，需要从新记录开始遍历到指定版本。</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IldUUFRRNFJEUkJFMzNISUxES1dCS1VKTFRLS0xaVjEwIiwidyI6OTgzLCJoIjozNDgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDc0Mzg5NzQzMTMxOTUzOTExN30?format=originalOFGHLERTH" alt="image"><br>图来源于论文：《An Empirical Evaluation of In-Memory Multi-Version Concurrency Control》</p>
-<h3 id="时间线方式"><a href="#时间线方式" class="headerlink" title="时间线方式"></a>时间线方式</h3><p>time-travel storage</p>
-<p>将老版本直接copy到time-travel表，新版本写入主表，新版本指向老版本。<br>索引指向主表即可，通过主表中最新版本的指针去遍历老版本。<br>time-travel也是append-only的存储方式，只是新老版本在不同的表空间中。这种方式有利于回收老版本记录，但同时产生了写放大。</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkFUVVM0RkZIRkJISDJYNkhCNE1HSUUzRlVFS1JMRjExIiwidyI6NjgwLCJoIjo0NTIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNjE4NDE3ODE2MjYwMjY1MzQxNH0?format=originalOFGHLERTH" alt="image"></p>
-<h3 id="增量存储方式"><a href="#增量存储方式" class="headerlink" title="增量存储方式"></a>增量存储方式</h3><p>delta storage</p>
-<p>只存储修改部分的数据，而不是整个tuple。由于不需要copy整个tuple，所以更快速。<br>而读取的时候需要组装数据，所以更慢。</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlU1WDVFTzNDVElETVdITEpBVVZBSkpNNzdNQ0haNzEwIiwidyI6Njc4LCJoIjo0MzIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNjczNzg1NzMwODg0NDQ3NTU3NX0?format=originalOFGHLERTH" alt="image"></p>
-<h2 id="垃圾回收"><a href="#垃圾回收" class="headerlink" title="垃圾回收"></a>垃圾回收</h2><p>当所有运行中的事务都不会再读取到一条记录的某个版本时，则这个版本是可回收的。<br>如所有运行的事务中，最小可见的版本号是11，如果一条记录的最新版本号是6，那么这条记录的小于6的版本都是可以回收的。</p>
+<p>O2N<br>
+生成新版本时，将老版本的指针指向新版本，所以访问这个新记录，需要遍历老记录，这样就会产生读放大，且生成新纪录时需要更新老记录的指针。</p>
+<p>N2O<br>
+生成新版本时，将新版本的指针指向老版本，所以访问某个版本的记录时，需要从新记录开始遍历到指定版本。</p>
+<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IldUUFRRNFJEUkJFMzNISUxES1dCS1VKTFRLS0xaVjEwIiwidyI6OTgzLCJoIjozNDgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDc0Mzg5NzQzMTMxOTUzOTExN30?format=originalOFGHLERTH" alt="image"> 图来源于论文：《An Empirical Evaluation of In-Memory Multi-Version Concurrency Control》</p>
+<h3 id="时间线方式">时间线方式</h3>
+<p>time-travel storage</p>
+<p>将老版本直接copy到time-travel表，新版本写入主表，新版本指向老版本。<br>
+索引指向主表即可，通过主表中最新版本的指针去遍历老版本。<br>
+time-travel也是append-only的存储方式，只是新老版本在不同的表空间中。这种方式有利于回收老版本记录，但同时产生了写放大。</p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkFUVVM0RkZIRkJISDJYNkhCNE1HSUUzRlVFS1JMRjExIiwidyI6NjgwLCJoIjo0NTIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNjE4NDE3ODE2MjYwMjY1MzQxNH0?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
+<h3 id="增量存储方式">增量存储方式</h3>
+<p>delta storage</p>
+<p>只存储修改部分的数据，而不是整个tuple。由于不需要copy整个tuple，所以更快速。 而读取的时候需要组装数据，所以更慢。</p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IlU1WDVFTzNDVElETVdITEpBVVZBSkpNNzdNQ0haNzEwIiwidyI6Njc4LCJoIjo0MzIsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNjczNzg1NzMwODg0NDQ3NTU3NX0?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
+<h2 id="垃圾回收">垃圾回收</h2>
+<p>当所有运行中的事务都不会再读取到一条记录的某个版本时，则这个版本是可回收的。<br>
+如所有运行的事务中，最小可见的版本号是11，如果一条记录的最新版本号是6，那么这条记录的小于6的版本都是可以回收的。</p>
 <p>一般有两种回收方式</p>
 <ul>
 <li>tuple-level元组级别：以元组为粒度进行回收过期记录。</li>
 <li>transaction-level事务级别：以事务为粒度回收过期记录。</li>
 </ul>
-<h3 id="元组级别的回收"><a href="#元组级别的回收" class="headerlink" title="元组级别的回收"></a>元组级别的回收</h3><p>两种回收方式</p>
+<h3 id="元组级别的回收">元组级别的回收</h3>
+<p>两种回收方式</p>
 <ul>
 <li>后台清理的方式background vacuuming：后台线程定期进行清理</li>
 <li>合作式回收cooperative cleaning：工作线程来清理</li>
@@ -683,34 +715,46 @@
 </blockquote>
 <p><strong>合作式回收</strong></p>
 <p>工作线程执行事务操作时，扫描到过期不可见的版本记录则直接删除，这样就不再需要单独的后台线程来定期清理了，但如果某条记录一直没有被事务扫描到，则永远无法被清理。</p>
-<p><strong>混合式</strong><br>使用合作式回收，然而定期再用后台清理方式，来避免有的数据没有被读取则无法回收的问题。</p>
-<h3 id="事务级别的回收"><a href="#事务级别的回收" class="headerlink" title="事务级别的回收"></a>事务级别的回收</h3><p>事务维护一个读集合和写集合，分别存储其读到的记录和创建的记录，当事务结束后，再从两个集合中找出对于运行中事务不再可见的记录，将他们删除掉。</p>
-<h2 id="索引管理"><a href="#索引管理" class="headerlink" title="索引管理"></a>索引管理</h2><p>索引管理是指数据库中的索引，如何指向实际的主表数据？<br>有两种方式</p>
+<p><strong>混合式</strong><br>
+使用合作式回收，然而定期再用后台清理方式，来避免有的数据没有被读取则无法回收的问题。</p>
+<h3 id="事务级别的回收">事务级别的回收</h3>
+<p>事务维护一个读集合和写集合，分别存储其读到的记录和创建的记录，当事务结束后，再从两个集合中找出对于运行中事务不再可见的记录，将他们删除掉。</p>
+<h2 id="索引管理">索引管理</h2>
+<p>索引管理是指数据库中的索引，如何指向实际的主表数据？<br>
+有两种方式</p>
 <ul>
 <li>逻辑指针 logical pointer</li>
 <li>物理指针 physical pointer</li>
 </ul>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjRTVExKUUdLSEhRUk1NQ0cyQUtLU0JBQU9MREgyTjEwIiwidyI6OTUwLCJoIjoyODAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDc2NDczODY5MDE2MjY0ODA2NH0?format=originalOFGHLERTH" alt="image"></p>
-<h3 id="逻辑指针"><a href="#逻辑指针" class="headerlink" title="逻辑指针"></a>逻辑指针</h3><p>索引指向一个”中间指针”即逻辑指针，这个中间指针再指向主表存储的元组的位置(某个页面的某个位置)，如图所示。</p>
-<p>这种方式对于写比较友好，例如，如果更新某条记录，则这条记录相关的所有索引都不需要更新，只需要更新”中间指针”指向新的元组的位置即可。<br>但是存在读放大问题，所有索引访问数据都需要先访问”中间指针”，再跳转到实际数据存储位置。</p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IjRTVExKUUdLSEhRUk1NQ0cyQUtLU0JBQU9MREgyTjEwIiwidyI6OTUwLCJoIjoyODAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNDc2NDczODY5MDE2MjY0ODA2NH0?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
+<h3 id="逻辑指针">逻辑指针</h3>
+<p>索引指向一个"中间指针"即逻辑指针，这个中间指针再指向主表存储的元组的位置(某个页面的某个位置)，如图所示。</p>
+<p>这种方式对于写比较友好，例如，如果更新某条记录，则这条记录相关的所有索引都不需要更新，只需要更新"中间指针"指向新的元组的位置即可。<br>
+但是存在读放大问题，所有索引访问数据都需要先访问"中间指针"，再跳转到实际数据存储位置。</p>
 <p>MySQL InnoDB就是使用逻辑指针的方式，所有索引都指向主键，通过主键再去访问真实的数据。</p>
-<h3 id="物理指针"><a href="#物理指针" class="headerlink" title="物理指针"></a>物理指针</h3><p>所有索引都指向主表存储的元组的真实位置。    </p>
-<p>这种方式和逻辑指针刚好相反，对于读比较友好，索引指向元组的实际位置，直接就可以访问到元组，无需通过中间指针进行跳转。<br>但不利于写，如果更新了某条记录的位置，则相关的索引都需要更新，造成写放大。</p>
+<h3 id="物理指针">物理指针</h3>
+<p>所有索引都指向主表存储的元组的真实位置。</p>
+<p>这种方式和逻辑指针刚好相反，对于读比较友好，索引指向元组的实际位置，直接就可以访问到元组，无需通过中间指针进行跳转。<br>
+但不利于写，如果更新了某条记录的位置，则相关的索引都需要更新，造成写放大。</p>
 <p>PostgreSQL使用这种方式，所以更新记录时成本较高。</p>
-<h2 id="隔离级别-1"><a href="#隔离级别-1" class="headerlink" title="隔离级别"></a>隔离级别</h2><p>MVCC不是单独可以使用的技术，需要配合其他并发控制技术一起来实现不同的隔离级别，如S2PL。</p>
-<p>那我们来看看MVCC+S2PL如何实现不同的隔离级别。   </p>
-<p><strong>事务号</strong><br>数据有多个版本由不同的版本号区分，这种版本号就是一个事务号，是一个单调递增的数字。</p>
-<p>将事务分成两种类型：只读事务和更新事务。   </p>
+<h2 id="隔离级别-1">隔离级别</h2>
+<p>MVCC不是单独可以使用的技术，需要配合其他并发控制技术一起来实现不同的隔离级别，如S2PL。</p>
+<p>那我们来看看MVCC+S2PL如何实现不同的隔离级别。</p>
+<p><strong>事务号</strong><br>
+数据有多个版本由不同的版本号区分，这种版本号就是一个事务号，是一个单调递增的数字。</p>
+<p>将事务分成两种类型：只读事务和更新事务。</p>
 <ul>
 <li>如果是只读事务：则在事务开始时获取一个事务号，读取数据时，就读取比这个事务号小的版本号的数据。这种读取是不用加锁的。</li>
-<li>如果是更新事务：<ul>
+<li>如果是更新事务：
+<ul>
 <li>读操作：获取共享锁，读取最新版本的值</li>
 <li>写操作：获取排它锁，为写的数据创建一个新版本，版本号为无穷大(版本号类型的最大值，当然实际数据库很少这样实现的，考虑到崩溃恢复和持久化，实际数据库实现的版本控制和可见性判断远比这复杂，属于工程上的优化，目的是一样的)，这样其他事务根据其版本号就无法读取到这条记录，提交时，重新获取事务号，将此写入的数据的版本号改为此事务的事务号+1。</li>
-</ul>
-</li>
+</ul></li>
 </ul>
 <p>所以MVCC天然就不会读取到未提交数据。</p>
-<p><strong>读已提交</strong>    </p>
+<p><strong>读已提交</strong></p>
 <p>每次读都重新获取一次快照，读取最新已提交数据。</p>
 <p><strong>可重复读</strong></p>
 <p>第一次执行读操作时生成快照，后面的读都以此快照进行读取，这样每次读取的版本都是一样的。</p>
@@ -718,28 +762,35 @@
 <p><strong>可串行化</strong></p>
 <p>可串行化用SS2PL来实现。</p>
 <p>这样，通过MVCC+S2PL实现了数据库的不同隔离级别。</p>
-<h1 id="基于可串行化快照隔离的并发控制"><a href="#基于可串行化快照隔离的并发控制" class="headerlink" title="基于可串行化快照隔离的并发控制"></a>基于可串行化快照隔离的并发控制</h1><h2 id="快照"><a href="#快照" class="headerlink" title="快照"></a>快照</h2><p>快照snapshot<br>数据库中数据和状态的某一版本（可以认为只要哪怕有一个数据修改，数据库就会产生一个新版本）。    </p>
-<h2 id="快照隔离"><a href="#快照隔离" class="headerlink" title="快照隔离"></a>快照隔离</h2><p>快照隔离 snapshot isolation</p>
+<h1 id="基于可串行化快照隔离的并发控制">基于可串行化快照隔离的并发控制</h1>
+<h2 id="快照">快照</h2>
+<p>快照snapshot<br>
+数据库中数据和状态的某一版本（可以认为只要哪怕有一个数据修改，数据库就会产生一个新版本）。</p>
+<h2 id="快照隔离">快照隔离</h2>
+<p>快照隔离 snapshot isolation</p>
 <blockquote>
-<p>snapshot isolation is a guarantee that all reads made in a transaction will see a consistent snapshot of the database (in practice it reads the last committed values that existed at the time it started), and the transaction itself will successfully commit only if no updates it has made conflict with any concurrent updates made since that snapshot. </p>
+<p>snapshot isolation is a guarantee that all reads made in a transaction will see a consistent snapshot of the database (in practice it reads the last committed values that existed at the time it started), and the transaction itself will successfully commit only if no updates it has made conflict with any concurrent updates made since that snapshot.</p>
 </blockquote>
-<p>事务像是被”隔离”起来了，对同一数据的操作互相不影响；快照隔离只是一种技术，而不是隔离级别，</p>
-<p>快照隔离（后面同一写成SI）技术是MVCC技术的一种实现，所以使用SI的读操作，读到的同一份快照的数据一定是一样的。<br>SI读取的是数据的某一快照，所以不会发生读写冲突或写读冲突。<br>这样就避免了幻读异常，不可重复读，脏读，但是SI无法阻止写偏序，所以SI并不是可串行化的。 </p>
+<p>事务像是被"隔离"起来了，对同一数据的操作互相不影响；快照隔离只是一种技术，而不是隔离级别，</p>
+<p>快照隔离（后面同一写成SI）技术是MVCC技术的一种实现，所以使用SI的读操作，读到的同一份快照的数据一定是一样的。 SI读取的是数据的某一快照，所以不会发生读写冲突或写读冲突。 这样就避免了幻读异常，不可重复读，脏读，但是SI无法阻止写偏序，所以SI并不是可串行化的。</p>
 <p>由于SI是MVCC的一种实现，所以避免异常的实现和前面的MVCC的一样，但是没有锁的保护，所以会产生写偏斜异常。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">database, version 11</span><br><span class="line">x=10, y=0，约束是 x + y &gt; 0</span><br><span class="line">------------------------------------------</span><br><span class="line">T1                          T2</span><br><span class="line">read(x,v11)=10              read(x,v11)=10   </span><br><span class="line">read(y,v11)=0               read(y,v11)=0</span><br><span class="line">if (x+y) &gt; 0,then           if (x+y) &gt; 0,then</span><br><span class="line">    write(x,v12)=0              write(y,v13)=0</span><br></pre></td></tr></table></figure>
-
 <p>对于SI来说，T1和T2读取的都是某一个快照v11的值，所以<code>if (x+y)&gt;0</code>就会成立，T1将x改成0，T2将y改成0，这样就造成x+y=0了，违反了约束。在串行调度下，不管T1先执行还是T2先执行，都不会出现这种结果。这种异常被称为写偏序(write skew)。</p>
 <p>为了解决write skew问题，所以就出现了可序列化的快照隔离技术serializable snapshot isolation(SSI)。</p>
-<h2 id="可序列化的快照隔离技术"><a href="#可序列化的快照隔离技术" class="headerlink" title="可序列化的快照隔离技术"></a>可序列化的快照隔离技术</h2><p>serializable snapshot isolation(SSI)</p>
+<h2 id="可序列化的快照隔离技术">可序列化的快照隔离技术</h2>
+<p>serializable snapshot isolation(SSI)</p>
 <p>既然write skew是读写冲突的一种类型，那么避免或者检测读写冲突就可以解决write skew问题。</p>
-<h3 id="理论基础"><a href="#理论基础" class="headerlink" title="理论基础"></a>理论基础</h3><p><strong>三种依赖关系</strong></p>
+<h3 id="理论基础">理论基础</h3>
+<p><strong>三种依赖关系</strong></p>
 <p>《Generialized isolation level definitions》定义三种依赖关系</p>
 <ul>
-<li>写读依赖(write-depends)：T1–wr–&gt;T2，T1写数据项X的一个版本，T2读取这个版本，意味着T1先于T2执行</li>
-<li>写写依赖(read-depends)：T1–ww–&gt;T2，T1写X的一个版本，T2再写一个新版本覆盖T1写的版本，意味着T1需要先于T2执行</li>
+<li>写读依赖(write-depends)：T1--wr--&gt;T2，T1写数据项X的一个版本，T2读取这个版本，意味着T1先于T2执行</li>
+<li>写写依赖(read-depends)：T1--ww--&gt;T2，T1写X的一个版本，T2再写一个新版本覆盖T1写的版本，意味着T1需要先于T2执行</li>
 <li>读写依赖(anti-depends)：rw-dependency或rw-conflicts，Ti先读了X的一个版本Xi，而Tj修改了X值，产生一个新版本Xj，所以是先读后写，属于wr的反向依赖</li>
 </ul>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IklQSUM1WkxMRTRKWTdNQ0JISDVONFRDMkZBTkJHUjExIiwidyI6MTM3NiwiaCI6NDMzLCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MTQxNTMxMTA0NTQzMjE3MjIzOTN9?format=originalOFGHLERTH" alt="image"></p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6IklQSUM1WkxMRTRKWTdNQ0JISDVONFRDMkZBTkJHUjExIiwidyI6MTM3NiwiaCI6NDMzLCJkIjowLCJtdCI6ImltYWdlL2pwZWciLCJkaCI6MTQxNTMxMTA0NTQzMjE3MjIzOTN9?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
 <p>检测写偏序的理论基础的两篇论文，说明读写冲突行为之间的逻辑关系</p>
 <ul>
 <li>《weak consistency: A Generalized Theory and Optimistic Implementations for Distributed Transactions》：定义了读写依赖，通过读写依赖表明不可串行化必须是多版本可串行化图(MVSG multivertion serialization graphc)存在两条读写依赖边形成的环。</li>
@@ -749,11 +800,10 @@
 <p>在并发事务之间，根据事务之间的三种关系，画出一幅有向事务关系图，表明事务操作数据时的前后关系，读写操作对新版本值的依赖关系。</p>
 <p>事务T1, T2, T3执行如下</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">T1          T2          T3</span><br><span class="line">W(z)</span><br><span class="line">W(x)</span><br><span class="line">W(y)</span><br><span class="line">                        W(x)</span><br><span class="line">C</span><br><span class="line">            R(x)</span><br><span class="line">            W(y)</span><br><span class="line">            C</span><br><span class="line">                        R(y)</span><br><span class="line">                        W(z)</span><br><span class="line">                        C</span><br></pre></td></tr></table></figure>
-
-<p>DSG图如下<br><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkVSN1ZFTVI1R1NHN0NJQ0ZRRlM1NkhEVkRCVU9TVDEwIiwidyI6NTc2LCJoIjoyMDcsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzI4NzE4NjQ3MjE2ODQ5OTIxfQ?format=originalOFGHLERTH" alt="image"></p>
+<p>DSG图如下 <img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkVSN1ZFTVI1R1NHN0NJQ0ZRRlM1NkhEVkRCVU9TVDEwIiwidyI6NTc2LCJoIjoyMDcsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzI4NzE4NjQ3MjE2ODQ5OTIxfQ?format=originalOFGHLERTH" alt="image"></p>
 <p>《marking snapshot isolation serializable》中证明了，如果调度不是可序列化的，那么DSG必然存在由两条连续的rw-dependency边形成的环，且这两边边在两个并发事务中。</p>
 <blockquote>
-<p>Suppose H is a multiversion history produced under Snapshot Isolation that is not serializable. Then there is at least one cycle in the serialization graph DSG(H), and we claim that in every cycle there are three consecutive transactions Ti.1, Ti..2, Ti.3 (where it is possible that Ti.1 and Ti.3 are the same transaction) such that Ti.1 and Ti.2 are concurrent, with an edge Ti.1 –&gt; Ti.2, and Ti.2 and Ti.3 are concurrent with an edge Ti.2 –&gt; Ti.3.</p>
+<p>Suppose H is a multiversion history produced under Snapshot Isolation that is not serializable. Then there is at least one cycle in the serialization graph DSG(H), and we claim that in every cycle there are three consecutive transactions Ti.1, Ti..2, Ti.3 (where it is possible that Ti.1 and Ti.3 are the same transaction) such that Ti.1 and Ti.2 are concurrent, with an edge Ti.1 --&gt; Ti.2, and Ti.2 and Ti.3 are concurrent with an edge Ti.2 --&gt; Ti.3.</p>
 </blockquote>
 <blockquote>
 <p>any cycle must have two rw-dependency edges that occur consecutively, and further, each of these edges is between two concurrent transactions.</p>
@@ -762,7 +812,7 @@
 <p>然而要找出DSG中是否有环，成本是相当高的，所以论文定义了存在一种危险结构(dangerous structures)，只要在SDG(static dependency graph)图中存在这种危险结构，就会在DSG图中可能存在环，危险结构是出现环的必要非充分条件。同时得出结论，一个SI调度的SDA不存在这种危险结构，这个调度就是可序列化的SI。</p>
 <p>《marking snapshot isolation serializable》对dangerous structure的定义如下</p>
 <blockquote>
-<p>Definition 3.5 (Dangerous Structures). We say that the static dependency graph SDG(A) has a dangerous structure if it contains nodes P, Q and R (some of which may not be distinct) such that:<br>(a) There is a vulnerable anti-dependency edge from R to P<br>(b) There is a vulnerable anti-dependency edge from P to Q<br>(c) Either Q = R or else there is a path in the graph from Q to R; that is, (Q, R) is in the reflexive transitive closure of the edge relationship.</p>
+<p>Definition 3.5 (Dangerous Structures). We say that the static dependency graph SDG(A) has a dangerous structure if it contains nodes P, Q and R (some of which may not be distinct) such that: (a) There is a vulnerable anti-dependency edge from R to P (b) There is a vulnerable anti-dependency edge from P to Q (c) Either Q = R or else there is a path in the graph from Q to R; that is, (Q, R) is in the reflexive transitive closure of the edge relationship.</p>
 </blockquote>
 <p>其使用SDG图的概念，为了更容易理解，我们直接看《serializable isolation for snapshot database》，论文对这种结论进行了补充，且给出了SSI相关算法的实现。</p>
 <p>将rw分成两种情况</p>
@@ -772,47 +822,51 @@
 </ul>
 <p>DSG中(MVSG)，存在一个pivot节点（事务），这个节点有两条边（入边，出边），如果存在这个节点，则存在dangerous structure，则可能导致形成环。只要回滚此节点，则会打破环的形成，就可以确保调度是可串行化的。 这样虽然导致了回滚率增加，但是不需要再找出环，只需找出此pivot节点，从而效率大大提高了。</p>
 <blockquote>
-<p>所以这种危险结构是形成环的必要非充分条件。    </p>
+<p>所以这种危险结构是形成环的必要非充分条件。</p>
 </blockquote>
 <p>如下图，Tpivot存在入边和出边，所以产生了危险结构，就可能形成环(如果图中点虚线存在)，这个时候，我们只需要回滚Tpivot就破坏了这种结构。</p>
-<p><img src="https://auto.tancdn.com/v1/images/eyJpZCI6Ilg2SkZIQ0NCNlNLNFZSSDJMR041RlRQS1BRV0pNNTExIiwidyI6NTc0LCJoIjo0MzgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDIzNjAwMzAyNTEzMzU5NzIzMn0?format=originalOFGHLERTH" alt="image"></p>
-<h3 id="SSI"><a href="#SSI" class="headerlink" title="SSI"></a>SSI</h3><p>SSI在SI的基础上，增加一些其他判断和操作来实现SSI技术。    </p>
+<figure>
+<img src="https://auto.tancdn.com/v1/images/eyJpZCI6Ilg2SkZIQ0NCNlNLNFZSSDJMR041RlRQS1BRV0pNNTExIiwidyI6NTc0LCJoIjo0MzgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDIzNjAwMzAyNTEzMzU5NzIzMn0?format=originalOFGHLERTH" alt="image"><figcaption aria-hidden="true">image</figcaption>
+</figure>
+<h3 id="ssi">SSI</h3>
+<p>SSI在SI的基础上，增加一些其他判断和操作来实现SSI技术。</p>
 <p>数据库需要为每个事务维护两个boolean值，</p>
 <ul>
 <li>T.inConflict ： 此值指示是否存在rw-dependency从其他事务指向事务T</li>
 <li>T.outConflict ： 指示是否存在rw-dependency从事务T指向其他事务</li>
 </ul>
 <p>如果T.inConflict和T.outConflict都是true，既有入边也有出边，则代表此调度可能是非可串行化的。</p>
-<p><strong>Write lock</strong><br>写锁避免了事务并发执行的写写冲突，遵循SS2PL协议。</p>
-<p><strong>SIREAD lock</strong><br>事务读取了某个版本的数据后，则会在此数据上加上SIREAD锁。<br>SIREAD锁不阻塞写锁，仅仅是一种标志，代表访问此数据。</p>
+<p><strong>Write lock</strong><br>
+写锁避免了事务并发执行的写写冲突，遵循SS2PL协议。</p>
+<p><strong>SIREAD lock</strong><br>
+事务读取了某个版本的数据后，则会在此数据上加上SIREAD锁。 SIREAD锁不阻塞写锁，仅仅是一种标志，代表访问此数据。</p>
 <p><strong>事务开始</strong></p>
 <p>事务开始时，我们将事务的inConflict和outConflict都设置为false。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">modifified begin(T):</span><br><span class="line">    existing SI code for begin(T)</span><br><span class="line">    set T.inConflict = T.outConflict = false</span><br></pre></td></tr></table></figure>
-
 <p><strong>读操作</strong></p>
 <p>T不应该读到（在T开始时还没有完成提交的事务）但在T结束前已经提交的事务才会生成新的T读不到的版本。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">modifed read(T, x):</span><br><span class="line">    get lock(key=x, owner=T, mode=SIREAD)   // 设置x的SIREAD</span><br><span class="line">    // x有写锁时，则可能产生rw依赖，如果写事务不提交则不会产生冲突</span><br><span class="line">    if there is a WRITE lock(wl) on x:</span><br><span class="line">        set wl.owner.inConflict=true</span><br><span class="line">        set T.outConflict=true</span><br><span class="line"></span><br><span class="line">    // SSI依旧使用SI算法</span><br><span class="line">    existing SI code for read(T, x) // SI算法实现，读此快照数据</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    // 检查：比当前快照读读到的x值更新的数据版本</span><br><span class="line">    for each version(xNew) of x that is newer than what T read</span><br><span class="line">        // 如果新版本的事务已经提交，则当前事务对其构成rw依赖</span><br><span class="line">        // 如果新版本的事务对其他事务也构成rw依赖，那么就是pivot事务</span><br><span class="line">        if xNew.creator is committed and xNew.creator.outConflict=true:</span><br><span class="line">            abort(T)  // 两个相邻的rw-dep，回滚T</span><br><span class="line">            return UNSAFE_ERROR</span><br><span class="line">        // 否则这是一个rw-dependency关系，此关系是T指向数据x的新版本的创建者事务的</span><br><span class="line">        set xNew.creator.inConflict=true</span><br><span class="line">        set T.outConflict=true</span><br></pre></td></tr></table></figure>
-
 <p><strong>写操作</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">modified write(T,x, xNew):</span><br><span class="line">    get lock(key=x, locker=T, mode=WRITE) // x加WRITE锁</span><br><span class="line">    if there is a SIREAD lock(rl) on x    // 当有SIREAD</span><br><span class="line">      and rl.owner is running             // 且rl.owner(锁持有者)仍然未提交</span><br><span class="line">      or commit(rl.owner) &gt; begin(T)      // 或rl.owner提交晚于T开始时间</span><br><span class="line">        if rl.onwer is committed and rl.owner.inConflict:</span><br><span class="line">            abort(T)</span><br><span class="line">            return UNSAFE_ERROR</span><br><span class="line">        // 否则，这是一个rw-dependency关系，由创建SIREAD锁的事务指向本事务</span><br><span class="line">        set rl.owner.outConflict=true</span><br><span class="line">        set T.inConflict=true</span><br><span class="line">        </span><br><span class="line">    // SI算法实现</span><br><span class="line">    existing SI code for write(T, x, xNew)  </span><br><span class="line">    # do not get WRITE lock again</span><br></pre></td></tr></table></figure>
-
 <p><strong>提交</strong></p>
-<p>事务提交后他的SIREAD不释放，是因为提交后事务也会影响其他正在运行的事务。<br>直到所有这些事务都提交后才可以释放。</p>
+<p>事务提交后他的SIREAD不释放，是因为提交后事务也会影响其他正在运行的事务。 直到所有这些事务都提交后才可以释放。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">modified commit(T):</span><br><span class="line">    if T.inConflict and T.outConflict</span><br><span class="line">        abort(T)</span><br><span class="line">        return UNSAFE_ERROR</span><br><span class="line">    existing SI code for commit(T)</span><br><span class="line">    release WRITE locks held by T</span><br><span class="line">    do not release SIREAD locks</span><br></pre></td></tr></table></figure>
-
 <blockquote>
 <p>所以，可以看出SSI是一种乐观的实现方式，通过事务执行操作时来检测事务之间的依赖关系，如果读写不构成危险结构，则读写可以并发执行，如果构成，则以回滚pivot事务为代价来避免读写冲突。这样就实现了可串行化。</p>
 </blockquote>
-<h2 id="隔离级别-2"><a href="#隔离级别-2" class="headerlink" title="隔离级别"></a>隔离级别</h2><p>在RC和RR隔离级别下，SSI和SS2PL+MVCC实现几乎一样。但在可串行化下，SSI本质上是使用MVCC+行级锁+SIREAD来实现可串行化的。</p>
-<h1 id="SS2PL-MVCC-vs-SSI"><a href="#SS2PL-MVCC-vs-SSI" class="headerlink" title="SS2PL+MVCC vs SSI"></a>SS2PL+MVCC vs SSI</h1><p>MVCC技术避免了读写冲突，让读读，读写（快照读）可以并发的执行，但仅限制于只读事务与其他事务可以并发；而非快照读写冲突是无法避免的，这个时候就需要S2PL来避免冲突，保证事务的可串行化。  </p>
+<h2 id="隔离级别-2">隔离级别</h2>
+<p>在RC和RR隔离级别下，SSI和SS2PL+MVCC实现几乎一样。但在可串行化下，SSI本质上是使用MVCC+行级锁+SIREAD来实现可串行化的。</p>
+<h1 id="ss2plmvcc-vs-ssi">SS2PL+MVCC vs SSI</h1>
+<p>MVCC技术避免了读写冲突，让读读，读写（快照读）可以并发的执行，但仅限制于只读事务与其他事务可以并发；而非快照读写冲突是无法避免的，这个时候就需要S2PL来避免冲突，保证事务的可串行化。</p>
 <p>所以很多数据库就是通过这种MVCC+S2PL技术来实现其事务的可串行化。例如MySQL的InnoDB。然而这种方式是悲观的，有的读写冲突是不会造成异常的，有的却会引起写偏斜等异常，S2PL无法进行区分，所以就降低了事务的并发执行。</p>
 <p>而PostgreSQL则是通过SSI来实现其事务的可串行化执行，SSI是乐观的实现方式，读写操作时进行检测，如果存在危险结构则可能造成异常，回滚其pivot事务即可，这种方式可以允许一定的读写并发执行，所以相对于MVCC+S2PL的方式性能更为优异。</p>
-<p>例如，对于下面的两个事务，    </p>
+<p>例如，对于下面的两个事务，</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">T1         T2</span><br><span class="line"></span><br><span class="line">R(x)</span><br><span class="line">          R(z)</span><br><span class="line">W(y)</span><br><span class="line">          W(x)</span><br></pre></td></tr></table></figure>
-
-<p>T1读取了x，而T2修改了x，所以<code>T1 -- rw --&gt; T2</code>，有读写依赖，<br>而T2读取了z，如果没有其他并发事务修改z，则T2不会与其他事务产生rw依赖，则T2不会pivot事务，对于这种情况，SSI是运行并发执行的，而S2PL由于读写冲突，是不允许并发执行的。所以，从这点看，SSI的并发度更高。</p>
-<p>而论文对SI、SS2PL和SSI的并发度测试结果，也证明了SSI的性能远优异于S2PL。<br><img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkRLVVlGWFdUVDdWSFpZQko3NkVaUlNBTUhaUUhLWDEwIiwidyI6NjcyLCJoIjo0NzUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTA1MDEzOTkyNjgzMzA2MTU3Mn0?format=originalOFGHLERTH" alt="image"></p>
-<h1 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h1><p>并发控制的实现技术非常多，还有基于时间戳的并发控制，基于有效性检查的并发控制等等，但是大多数RDBMS还是基于上面两种技术，也是相对较为主流的实现方案。</p>
+<p>T1读取了x，而T2修改了x，所以<code>T1 -- rw --&gt; T2</code>，有读写依赖，<br>
+而T2读取了z，如果没有其他并发事务修改z，则T2不会与其他事务产生rw依赖，则T2不会pivot事务，对于这种情况，SSI是运行并发执行的，而S2PL由于读写冲突，是不允许并发执行的。所以，从这点看，SSI的并发度更高。</p>
+<p>而论文对SI、SS2PL和SSI的并发度测试结果，也证明了SSI的性能远优异于S2PL。 <img src="https://auto.tancdn.com/v1/images/eyJpZCI6IkRLVVlGWFdUVDdWSFpZQko3NkVaUlNBTUhaUUhLWDEwIiwidyI6NjcyLCJoIjo0NzUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTA1MDEzOTkyNjgzMzA2MTU3Mn0?format=originalOFGHLERTH" alt="image"></p>
+<h1 id="最后">最后</h1>
+<p>并发控制的实现技术非常多，还有基于时间戳的并发控制，基于有效性检查的并发控制等等，但是大多数RDBMS还是基于上面两种技术，也是相对较为主流的实现方案。</p>
 <p>本文主要系统性的讲了并发控制相关的理论，然而数据库在工程上的实现是非常复杂的，如PostgreSQL就对锁做了很多优化，还有SSI等等。</p>
 <p>我阅读了很多并发控制和事务相关的论文、书籍和资料，不断思考和总结写出本文，希望能给大家带来帮助。如有错误之处，欢迎指正。</p>
 <p>主要阅读参考的资料如下：</p>
@@ -977,7 +1031,7 @@
       
         
           <blockquote>
-<p>对要枚举出查询树上所有路径，从中找出一个代价最小的路径，是个NP问题，计算成本是非常高昂的。而当查询树的关系(表、子查询等)较少时，可以使用动态规划算法枚举出所有的路径找出最优解，但是当关系较多时，枚举的计算成本是我们无法接收的，这时就需要使用一些折中方案，如贪心算法、遗传算法。遗传算法借鉴自然界“优胜劣汰”的法则对路径进化，从而能找出相对较优的查询路径……
+<p>对要枚举出查询树上所有路径，从中找出一个代价最小的路径，是个NP问题，计算成本是非常高昂的。而当查询树的关系(表、子查询等)较少时，可以使用动态规划算法枚举出所有的路径找出最优解，但是当关系较多时，枚举的计算成本是我们无法接收的，这时就需要使用一些折中方案，如贪心算法、遗传算法。遗传算法借鉴自然界“优胜劣汰”的法则对路径进化，从而能找出相对较优的查询路径......
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2022/02/20/database-postgresql-path/#more" rel="contents">
@@ -1134,7 +1188,7 @@
       
         
           <blockquote>
-<p>云原生最重要的组件之一，竟然“雪崩”了……
+<p>云原生最重要的组件之一，竟然“雪崩”了......
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2021/10/26/kubernetes_case/#more" rel="contents">
@@ -1291,7 +1345,7 @@
       
         
           <blockquote>
-<p>从使用者，DBA，内核开发三个不同角度来分析SQL的性能问题 ……
+<p>从使用者，DBA，内核开发三个不同角度来分析SQL的性能问题 ......
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2021/09/10/postgresql_sql_case/#more" rel="contents">

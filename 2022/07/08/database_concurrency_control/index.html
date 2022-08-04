@@ -79,13 +79,13 @@
 
 
 
-<meta name="description" content="本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。  概述 并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。 广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。 事务的正确性主要体现在ACID特性上，而">
+<meta name="description" content="本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。">
 <meta name="keywords" content="database,PostgreSQL,Concurrency Control">
 <meta property="og:type" content="article">
 <meta property="og:title" content="数据库并发控制理论">
 <meta property="og:url" content="http://yoursite.com/2022/07/08/database_concurrency_control/index.html">
 <meta property="og:site_name" content="Ken&#39;s blog">
-<meta property="og:description" content="本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。  概述 并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。 广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。 事务的正确性主要体现在ACID特性上，而">
+<meta property="og:description" content="本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IjU3SDVVUVVBNUxUU01UMk82RzM2TVRJVVgzWVNRRjEwIiwidyI6MzAzLCJoIjoxMzYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNTEwMjQ5NDgzMDUxNzgyNjcyfQ?format=originalOFGHLERTH">
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkFKQkJLTEJIN1VINk1IV1lZMzdSQVNGTjZFM0tSSjExIiwidyI6NjAwLCJoIjo0MDAsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjo3MDEwMjE5NDQ1MTQ3NDkyNzY5fQ?format=originalOFGHLERTH">
@@ -97,10 +97,10 @@
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkVSN1ZFTVI1R1NHN0NJQ0ZRRlM1NkhEVkRCVU9TVDEwIiwidyI6NTc2LCJoIjoyMDcsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMzI4NzE4NjQ3MjE2ODQ5OTIxfQ?format=originalOFGHLERTH">
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6Ilg2SkZIQ0NCNlNLNFZSSDJMR041RlRQS1BRV0pNNTExIiwidyI6NTc0LCJoIjo0MzgsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxMDIzNjAwMzAyNTEzMzU5NzIzMn0?format=originalOFGHLERTH">
 <meta property="og:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IkRLVVlGWFdUVDdWSFpZQko3NkVaUlNBTUhaUUhLWDEwIiwidyI6NjcyLCJoIjo0NzUsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjoxNTA1MDEzOTkyNjgzMzA2MTU3Mn0?format=originalOFGHLERTH">
-<meta property="og:updated_time" content="2022-07-08T05:55:03.220Z">
+<meta property="og:updated_time" content="2022-08-04T02:54:37.736Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="数据库并发控制理论">
-<meta name="twitter:description" content="本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。  概述 并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。 广义上看，并发控制属于事务调度，调度的种类非常多，串行化、可串行化、不可恢复性等等；在这里，我们更多从狭义上来讲调度，指可串行化的调度。 事务的正确性主要体现在ACID特性上，而">
+<meta name="twitter:description" content="本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。">
 <meta name="twitter:image" content="https://auto.tancdn.com/v1/images/eyJpZCI6IjU3SDVVUVVBNUxUU01UMk82RzM2TVRJVVgzWVNRRjEwIiwidyI6MzAzLCJoIjoxMzYsImQiOjAsIm10IjoiaW1hZ2UvanBlZyIsImRoIjozNTEwMjQ5NDgzMDUxNzgyNjcyfQ?format=originalOFGHLERTH">
 
 
@@ -421,7 +421,7 @@
 
       
         <blockquote>
-<p>本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。</p>
+<p>本文主要系统性的讲了并发控制相关的理论，但不会过多涉及MySQL等数据库的实现细节，避免局限于这些数据库的具体实现。 <a id="more"></a></p>
 </blockquote>
 <h1 id="概述">概述</h1>
 <p>并发控制技术，是数据库事务实现的基石，在确保事务隔离性正确的前提下，尽可能提高事务的并发度。</p>
